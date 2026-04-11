@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Param, Body, UseGuards, Req, Patch, ForbiddenException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -13,6 +14,7 @@ interface AuthenticatedRequest {
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post()
   async create(
     @Body() dto: CreateOrderDto,

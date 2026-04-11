@@ -1,9 +1,11 @@
-import { Controller, Get, Param, Req, Query } from '@nestjs/common';
+import { Controller, Get, Param, Req, Query, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ProductsService, RecommendedProductDto } from './products.service';
 import { ProductResponseDto } from './dto/product-response.dto';
 import { Request } from 'express';
 
 @Controller('products')
+@UseInterceptors(CacheInterceptor)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
@@ -14,11 +16,13 @@ export class ProductsController {
   }
 
   @Get(':id')
+  @CacheTTL(300000) // 5 minutes
   async findById(@Param('id') id: string) {
     return this.productsService.findById(id);
   }
 
   @Get()
+  @CacheTTL(300000) // 5 minutes
   async findAll(@Query() query: any): Promise<ProductResponseDto[]> {
     return this.productsService.findAll(query);
   }
