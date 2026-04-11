@@ -104,23 +104,45 @@ const products = [
 async function main() {
   console.log('🌱 Updating products with filter attributes...');
 
-  // Get all existing products
-  const existingProducts = await prisma.product.findMany();
-  
-  // Update each product with new attributes
-  for (let i = 0; i < Math.min(existingProducts.length, products.length); i++) {
-    await prisma.product.update({
-      where: { id: existingProducts[i].id },
-      data: {
-        isSpicy: products[i].isSpicy,
-        isVegetarian: products[i].isVegetarian,
-        calories: products[i].calories,
-        tags: products[i].tags,
-      },
+  for (const product of products) {
+    const existing = await prisma.product.findFirst({
+      where: { name: product.name }
     });
+
+    if (existing) {
+      await prisma.product.update({
+        where: { id: existing.id },
+        data: {
+          description: product.description,
+          price: product.price,
+          image: product.image,
+          category: product.category,
+          isAvailable: product.isAvailable,
+          isSpicy: product.isSpicy,
+          isVegetarian: product.isVegetarian,
+          calories: product.calories,
+          tags: product.tags,
+        },
+      });
+    } else {
+      await prisma.product.create({
+        data: {
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          image: product.image,
+          category: product.category,
+          isAvailable: product.isAvailable,
+          isSpicy: product.isSpicy,
+          isVegetarian: product.isVegetarian,
+          calories: product.calories,
+          tags: product.tags,
+        },
+      });
+    }
   }
 
-  console.log(`✅ Updated ${Math.min(existingProducts.length, products.length)} products successfully!`);
+  console.log(`✅ Seeded ${products.length} products successfully!`);
 }
 
 main()
