@@ -17,4 +17,4 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/tsconfig.json ./
 COPY --from=builder /app/prisma ./prisma
 EXPOSE ${PORT:-4000}
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/src/main"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx prisma db seed && node dist/src/main"]
