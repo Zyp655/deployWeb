@@ -141,6 +141,7 @@ export class SellerService {
         tags: data.tags || [],
         saleStartTime: data.saleStartTime || null,
         saleEndTime: data.saleEndTime || null,
+        options: data.options || null,
         storeId: store.id,
       },
     });
@@ -173,10 +174,34 @@ export class SellerService {
     if (!product) {
       throw new NotFoundException('Sản phẩm không thuộc cửa hàng của bạn');
     }
-
     return this.prisma.product.update({
       where: { id: productId },
       data: { isAvailable: !product.isAvailable },
+    });
+  }
+
+  async deleteProduct(userId: string, productId: string) {
+    const store = await this.getStoreByOwner(userId);
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, storeId: store.id },
+      include: {
+        _count: { select: { orderItems: true } },
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Sản phẩm không thuộc cửa hàng của bạn');
+    }
+
+    if (product._count.orderItems > 0) {
+      return this.prisma.product.update({
+        where: { id: productId },
+        data: { isAvailable: false },
+      });
+    }
+
+    return this.prisma.product.delete({
+      where: { id: productId },
     });
   }
 

@@ -29,6 +29,8 @@ model User {
   reviews      Review[]
   wishlists    Wishlist[]
   store        Store?
+  sentMessages ChatMessage[] @relation("SentMessages")
+  receivedMessages ChatMessage[] @relation("ReceivedMessages")
 
   @@map("users")
 }
@@ -64,6 +66,7 @@ model Store {
   owner    User      @relation(fields: [ownerId], references: [id])
   products Product[]
   orders   Order[]
+  coupons  Coupon[]
 
   @@map("stores")
 }
@@ -85,6 +88,7 @@ model Product {
   storeId      String?  @map("store_id")
   saleStartTime String? @map("sale_start_time")
   saleEndTime   String? @map("sale_end_time")
+  options      Json?    // Stores OptionGroups e.g. [{ name: "Size", isRequired: true, isMultiple: false, choices: [{name: "M", price: 0}] }]
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -127,6 +131,7 @@ model Order {
   items        OrderItem[]
   transactions Transaction[]
   history      OrderHistory[]
+  chatMessages ChatMessage[]
 
   @@map("orders")
 }
@@ -147,6 +152,7 @@ model OrderItem {
   productId String @map("product_id")
   quantity  Int
   price     Float
+  selectedOptions Json? // Stores Array of { group: string, choice: string, price: number }
 
   order   Order   @relation(fields: [orderId], references: [id])
   product Product @relation(fields: [productId], references: [id])
@@ -201,6 +207,8 @@ model Review {
   productId String   @map("product_id")
   rating    Int
   comment   String
+  sellerReply String?  @map("seller_reply")
+  replyAt   DateTime?  @map("reply_at")
   createdAt DateTime @default(now()) @map("created_at")
 
   user    User    @relation(fields: [userId], references: [id])
@@ -224,7 +232,10 @@ model Coupon {
   usedCount     Int      @default(0) @map("used_count")
   isActive      Boolean  @default(true) @map("is_active")
   expiresAt     DateTime? @map("expires_at")
+  storeId       String?   @map("store_id")
   createdAt     DateTime @default(now()) @map("created_at")
+
+  store         Store?    @relation(fields: [storeId], references: [id])
 
   @@map("coupons")
 }
@@ -242,5 +253,23 @@ model Wishlist {
 
   @@unique([userId, productId])
   @@map("wishlists")
+}
+
+// ─── Chat Message ────────────────────────────────────
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  orderId    String   @map("order_id")
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  content    String
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  order      Order    @relation(fields: [orderId], references: [id])
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@map("chat_messages")
 }
 

@@ -4,11 +4,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { fetchProductById, fetchProductReviews, fetchProductRating, createReview, fetchMyOrders, ProductDetail, Review } from '@/lib/api/client';
+import { fetchProductById, fetchProductReviews, fetchProductRating, createReview, fetchMyOrders, ProductDetail, Review, SelectedOption } from '@/lib/api/client';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
 import StarRating from '@/components/StarRating';
 import WishlistButton from '@/components/WishlistButton';
+import OptionSelector from '@/components/OptionSelector';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -39,6 +40,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
   const [hasOrderedProduct, setHasOrderedProduct] = useState(false);
   const [checkingOrders, setCheckingOrders] = useState(false);
 
@@ -100,18 +102,29 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product) return;
+
+    if (product.options) {
+      const missingRequired = product.options.find(
+        (g) => g.isRequired && !selectedOptions.some((opt) => opt.group === g.name)
+      );
+      if (missingRequired) {
+        alert(`Vui lòng chọn ${missingRequired.name}`);
+        return;
+      }
+    }
+
     try {
       for (let i = 0; i < quantity; i++) {
-        addItem(product);
+        addItem(product, selectedOptions);
       }
     } catch (err: any) {
       if (err.message === 'DIFFERENT_STORE') {
         const confirmClear = window.confirm('Quán bạn chọn khác với quán của các món trong giỏ hàng. Xóa giỏ hàng hiện tại và thêm món này?');
         if (confirmClear) {
-          useCartStore.getState().clearAndAddItem(product);
+          useCartStore.getState().clearAndAddItem(product, selectedOptions);
           // Restore the rest of quantity
           for (let i = 1; i < quantity; i++) {
-             useCartStore.getState().addItem(product);
+             useCartStore.getState().addItem(product, selectedOptions);
           }
         }
       }
@@ -236,10 +249,21 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
+              {/* Options Selector */}
+              {product.options && product.options.length > 0 && (
+                <div className="mt-6 border-t border-gray-100 pt-2">
+                  <OptionSelector 
+                    options={product.options} 
+                    selectedOptions={selectedOptions} 
+                    onChange={setSelectedOptions} 
+                  />
+                </div>
+              )}
+
               {/* Price + Add to Cart */}
-              <div className="mt-6 flex flex-col sm:flex-row items-center gap-4">
+              <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 border-t border-gray-100 pt-6">
                 <span className="text-3xl font-extrabold text-primary">
-                  {formatPrice(product.price)}
+                  {formatPrice(product.price + selectedOptions.reduce((acc, opt) => acc + opt.price, 0))}
                 </span>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center rounded-xl border-2 border-gray-200 bg-white">
@@ -414,6 +438,22 @@ function ReviewCard({ review }: { review: Review }) {
         <StarRating value={review.rating} readOnly size="sm" />
       </div>
       <p className="mt-3 text-sm text-gray-600 leading-relaxed">{review.comment}</p>
+      
+      {review.sellerReply && (
+        <div className="mt-4 bg-primary/5 border border-primary/10 rounded-xl p-3 relative">
+          <div className="absolute -top-2 left-4 w-3 h-3 bg-primary/5 border-t border-l border-primary/10 transform rotate-45"></div>
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-xs font-bold text-primary flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Phản hồi từ quán
+            </span>
+            <span className="text-[10px] text-gray-400">
+              {review.replyAt ? new Date(review.replyAt).toLocaleDateString('vi-VN') : ''}
+            </span>
+          </div>
+          <p className="text-sm text-gray-700">{review.sellerReply}</p>
+        </div>
+      )}
     </div>
   );
 }

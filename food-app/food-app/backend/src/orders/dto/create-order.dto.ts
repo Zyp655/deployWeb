@@ -12,6 +12,10 @@ export class CreateOrderItemDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  @IsArray()
+  selectedOptions?: any[];
 }
 
 export class CreateOrderDto {

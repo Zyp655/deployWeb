@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import { Product } from '@/lib/api/client';
+import { Product, SelectedOption } from '@/lib/api/client';
 
 export interface CartItem {
+  cartItemId: string; // Unique ID for product + options combination
   product: Product;
   quantity: number;
   note: string;
+  selectedOptions?: SelectedOption[];
 }
 
 interface CartStore {
@@ -13,15 +15,23 @@ interface CartStore {
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
-  addItem: (product: Product) => void;
-  clearAndAddItem: (product: Product) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  updateNote: (productId: string, note: string) => void;
+  addItem: (product: Product, selectedOptions?: SelectedOption[]) => void;
+  clearAndAddItem: (product: Product, selectedOptions?: SelectedOption[]) => void;
+  removeItem: (cartItemId: string) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void;
+  updateNote: (cartItemId: string, note: string) => void;
   clearCart: () => void;
   totalItems: () => number;
   totalPrice: () => number;
 }
+
+const generateCartItemId = (productId: string, options?: SelectedOption[]) => {
+  if (!options || options.length === 0) return productId;
+  const sortedOptions = [...options].sort(
+    (a, b) => a.group.localeCompare(b.group) || a.choice.localeCompare(b.choice)
+  );
+  return `${productId}-${JSON.stringify(sortedOptions)}`;
+};
 
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
@@ -31,7 +41,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
   closeCart: () => set({ isOpen: false }),
   toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
 
-  addItem: (product: Product) => {
+  addItem: (product: Product, selectedOptions?: SelectedOption[]) => {
     set((state) => {
       // Logic for single-store cart rule
       if (state.items.length > 0) {
@@ -41,45 +51,47 @@ export const useCartStore = create<CartStore>((set, get) => ({
         }
       }
 
-      const existing = state.items.find((item) => item.product.id === product.id);
+      const cartItemId = generateCartItemId(product.id, selectedOptions);
+      const existing = state.items.find((item) => item.cartItemId === cartItemId);
       if (existing) {
         return {
           items: state.items.map((item) =>
-            item.product.id === product.id
+            item.cartItemId === cartItemId
               ? { ...item, quantity: item.quantity + 1 }
               : item
           ),
         };
       }
-      return { items: [...state.items, { product, quantity: 1, note: '' }] };
+      return { items: [...state.items, { cartItemId, product, quantity: 1, note: '', selectedOptions }] };
     });
   },
 
-  clearAndAddItem: (product: Product) => {
-    set({ items: [{ product, quantity: 1, note: '' }] });
+  clearAndAddItem: (product: Product, selectedOptions?: SelectedOption[]) => {
+    const cartItemId = generateCartItemId(product.id, selectedOptions);
+    set({ items: [{ cartItemId, product, quantity: 1, note: '', selectedOptions }] });
   },
 
-  removeItem: (productId: string) => {
+  removeItem: (cartItemId: string) => {
     set((state) => ({
-      items: state.items.filter((item) => item.product.id !== productId),
+      items: state.items.filter((item) => item.cartItemId !== cartItemId),
     }));
   },
 
-  updateQuantity: (productId: string, quantity: number) => {
+  updateQuantity: (cartItemId: string, quantity: number) => {
     set((state) => ({
       items:
         quantity <= 0
-          ? state.items.filter((item) => item.product.id !== productId)
+          ? state.items.filter((item) => item.cartItemId !== cartItemId)
           : state.items.map((item) =>
-              item.product.id === productId ? { ...item, quantity } : item
+              item.cartItemId === cartItemId ? { ...item, quantity } : item
             ),
     }));
   },
 
-  updateNote: (productId: string, note: string) => {
+  updateNote: (cartItemId: string, note: string) => {
     set((state) => ({
       items: state.items.map((item) =>
-        item.product.id === productId ? { ...item, note } : item
+        item.cartItemId === cartItemId ? { ...item, note } : item
       ),
     }));
   },
@@ -89,5 +101,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
   totalItems: () => get().items.reduce((sum, item) => sum + item.quantity, 0),
 
   totalPrice: () =>
-    get().items.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+    get().items.reduce((sum, item) => {
+      let optionsPrice = 0;
+      if (item.selectedOptions) {
+        optionsPrice = item.selectedOptions.reduce((optSum, opt) => optSum + (Number(opt.price) || 0), 0);
+      }
+      return sum + (item.product.price + optionsPrice) * item.quantity;
+    }, 0),
 }));

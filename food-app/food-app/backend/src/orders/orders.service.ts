@@ -42,8 +42,12 @@ export class OrdersService {
     const storeId = storeIds[0] || null;
 
     let total = dto.items.reduce((sum, item) => {
-      const price = priceMap.get(item.productId) || 0;
-      return sum + price * item.quantity;
+      const basePrice = priceMap.get(item.productId) || 0;
+      let optionsPrice = 0;
+      if (item.selectedOptions && Array.isArray(item.selectedOptions)) {
+        optionsPrice = item.selectedOptions.reduce((optSum, opt) => optSum + (Number(opt.price) || 0), 0);
+      }
+      return sum + (basePrice + optionsPrice) * item.quantity;
     }, 0);
 
     let discount = 0;
@@ -74,6 +78,7 @@ export class OrdersService {
 
       if (coupon && coupon.isActive && coupon.usedCount < coupon.usageLimit &&
           (!coupon.expiresAt || coupon.expiresAt >= new Date()) &&
+          (!coupon.storeId || coupon.storeId === storeId) &&
           total >= coupon.minOrderValue) {
         if (coupon.discountType === 'PERCENT') {
           discount = (total * coupon.discountValue) / 100;
@@ -123,11 +128,19 @@ export class OrdersService {
         deliveryLng: dto.userLng || null,
         paymentMethod: dto.paymentMethod,
         items: {
-          create: dto.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: priceMap.get(item.productId) || 0,
-          })),
+          create: dto.items.map((item) => {
+            const basePrice = priceMap.get(item.productId) || 0;
+            let optionsPrice = 0;
+            if (item.selectedOptions && Array.isArray(item.selectedOptions)) {
+              optionsPrice = item.selectedOptions.reduce((optSum, opt) => optSum + (Number(opt.price) || 0), 0);
+            }
+            return {
+              productId: item.productId,
+              quantity: item.quantity,
+              price: basePrice + optionsPrice,
+              selectedOptions: item.selectedOptions || null,
+            };
+          }),
         },
         transactions: {
           create: {
@@ -166,6 +179,7 @@ export class OrdersService {
         productName: item.product.name,
         quantity: item.quantity,
         price: item.price,
+        selectedOptions: item.selectedOptions,
       })),
       createdAt: order.createdAt,
     };
@@ -193,6 +207,7 @@ export class OrdersService {
         productName: item.product.name,
         quantity: item.quantity,
         price: item.price,
+        selectedOptions: item.selectedOptions,
       })),
       createdAt: order.createdAt,
     }));
@@ -203,6 +218,7 @@ export class OrdersService {
       where: { id: orderId, userId },
       include: {
         store: { select: { name: true, address: true, phone: true } },
+        driver: { select: { id: true, name: true, phone: true } },
         items: {
           include: { product: true },
         },
@@ -226,6 +242,7 @@ export class OrdersService {
       note: order.note,
       paymentMethod: order.paymentMethod,
       store: order.store,
+      driver: order.driver,
       items: order.items.map((item) => ({
         id: item.id,
         productName: item.product.name,
@@ -233,6 +250,7 @@ export class OrdersService {
         productCategory: item.product.category,
         quantity: item.quantity,
         price: item.price,
+        selectedOptions: item.selectedOptions,
       })),
       history: order.history.map((h) => ({
         status: h.status,

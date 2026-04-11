@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import { fetchOrderById, Order, submitOrderReview } from '@/lib/api/client';
 import { initSocket, disconnectSocket } from '@/lib/api/socket';
 import StarRating from '@/components/StarRating';
+import LiveChatWidget from '@/components/LiveChatWidget';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -23,7 +24,7 @@ const STEPS = [
 export default function OrderDetailPage() {
   const params = useParams();
   const orderId = params.id as string;
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -195,6 +196,11 @@ export default function OrderDetailPage() {
                   <p className="text-xs text-gray-400">
                     {formatPrice(item.price)} × {item.quantity}
                   </p>
+                  {item.selectedOptions && item.selectedOptions.length > 0 && (
+                    <p className="text-[11px] text-gray-500 leading-relaxed mt-0.5">
+                      {item.selectedOptions.map(opt => `${opt.group}: ${opt.choice}`).join(' | ')}
+                    </p>
+                  )}
                 </div>
                 <span className="text-sm font-bold text-gray-700 ml-4">
                   {formatPrice(item.price * item.quantity)}
@@ -318,6 +324,17 @@ export default function OrderDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Live Chat with Driver */}
+      {order.driver && user && (
+        <LiveChatWidget 
+          orderId={order.id}
+          receiverId={order.driver.id}
+          receiverName={order.driver.name}
+          receiverRole="DRIVER"
+          currentUserId={user.id}
+        />
+      )}
     </main>
   );
 }

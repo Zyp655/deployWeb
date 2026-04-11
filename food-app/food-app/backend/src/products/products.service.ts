@@ -125,6 +125,8 @@ export class ProductsService {
         id: r.id,
         rating: r.rating,
         comment: r.comment,
+        sellerReply: r.sellerReply,
+        replyAt: r.replyAt,
         createdAt: r.createdAt,
         user: r.user,
       })),

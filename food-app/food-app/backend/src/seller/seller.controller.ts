@@ -55,6 +55,11 @@ export class SellerController {
     return this.sellerService.toggleProduct(req.user.id, id);
   }
 
+  @Delete('products/:id')
+  async deleteProduct(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.sellerService.deleteProduct(req.user.id, id);
+  }
+
   @Get('orders')
   async getOrders(@Request() req: AuthenticatedRequest) {
     return this.sellerService.getOrders(req.user.id);

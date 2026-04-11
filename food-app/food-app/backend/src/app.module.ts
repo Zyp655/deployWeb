@@ -19,11 +19,21 @@ import { WishlistModule } from './wishlist/wishlist.module';
 import { StoresModule } from './stores/stores.module';
 import { DriverModule } from './driver/driver.module';
 import { AiModule } from './ai/ai.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { UploadModule } from './upload/upload.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     
+    // Serve Static Uploads
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'public'),
+      serveRoot: '/',
+    }),
+
     // Redis Caching
     CacheModule.registerAsync({
       isGlobal: true,
@@ -68,6 +78,8 @@ import { AiModule } from './ai/ai.module';
     StoresModule,
     DriverModule,
     AiModule,
+    UploadModule,
+    ChatModule,
   ],
   providers: [
     {

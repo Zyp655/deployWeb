@@ -2,11 +2,13 @@
 import { useAuthStore } from '@/store/auth';
 import { fetchDriverMyOrders, completeOrder, DriverOrder } from '@/lib/api/client';
 import { useEffect, useState } from 'react';
+import LiveChatWidget from '@/components/LiveChatWidget';
 
 export default function DriverMyOrders() {
   const [orders, setOrders] = useState<DriverOrder[]>([]);
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [activeChatOrder, setActiveChatOrder] = useState<DriverOrder | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -90,12 +92,17 @@ export default function DriverMyOrders() {
                   </div>
                 </div>
 
-                <div className="px-4">
                   <button
                     onClick={() => handleComplete(order.id)}
                     className="w-full py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 hover:shadow-lg transition-all focus:ring-4 focus:ring-green-200"
                   >
                     Hoàn Thành Đơn
+                  </button>
+                  <button
+                    onClick={() => setActiveChatOrder(order)}
+                    className="w-full py-3 mt-2 border-2 border-primary text-primary rounded-lg font-bold hover:bg-primary-50 transition-colors"
+                  >
+                    Chat với Khách
                   </button>
                 </div>
               </div>
@@ -140,6 +147,17 @@ export default function DriverMyOrders() {
           </div>
         )}
       </section>
+
+      {/* Live Chat with Customer */}
+      {activeChatOrder && activeChatOrder.user && user && (
+        <LiveChatWidget 
+          orderId={activeChatOrder.id}
+          receiverId={activeChatOrder.user.id}
+          receiverName={activeChatOrder.user.name}
+          receiverRole="CUSTOMER"
+          currentUserId={user.id}
+        />
+      )}
     </div>
   );
 }

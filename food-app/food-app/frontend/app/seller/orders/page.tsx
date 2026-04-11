@@ -118,9 +118,16 @@ export default function SellerOrdersPage() {
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {order.items.map((item, idx) => (
-                    <span key={idx} className="inline-flex items-center rounded-lg bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700">
-                      {item.productName || 'Món ăn'} × {item.quantity}
-                    </span>
+                    <div key={idx} className="inline-flex flex-col rounded-lg bg-gray-50 px-3 py-1.5 border border-gray-100">
+                      <span className="text-xs font-medium text-gray-700">
+                        {item.productName || 'Món ăn'} × {item.quantity}
+                      </span>
+                      {item.selectedOptions && item.selectedOptions.length > 0 && (
+                        <span className="text-[10px] text-gray-500 mt-0.5">
+                          {item.selectedOptions.map(o => o.choice).join(', ')}
+                        </span>
+                      )}
+                    </div>
                   ))}
                 </div>
 

@@ -72,9 +72,62 @@ export class ReviewsService {
       id: r.id,
       rating: r.rating,
       comment: r.comment,
+      sellerReply: r.sellerReply,
+      replyAt: r.replyAt,
       createdAt: r.createdAt,
       user: r.user,
     }));
+  }
+
+  async findBySellerStoreId(sellerId: string) {
+    const store = await this.prisma.store.findUnique({ where: { ownerId: sellerId } });
+    if (!store) throw new NotFoundException('Bạn chưa có cửa hàng');
+
+    return this.prisma.review.findMany({
+      where: { product: { storeId: store.id } },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, name: true } },
+        product: { select: { id: true, name: true, image: true } },
+      },
+    });
+  }
+
+  async replyToReview(sellerId: string, reviewId: string, reply: string) {
+    const store = await this.prisma.store.findUnique({ where: { ownerId: sellerId } });
+    if (!store) throw new NotFoundException('Bạn chưa có cửa hàng');
+
+    const review = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+      include: { product: true },
+    });
+
+    if (!review) throw new NotFoundException('Không tìm thấy đánh giá');
+    if (review.product.storeId !== store.id) throw new ForbiddenException('Bạn không có quyền trả lời đánh giá này');
+
+    return this.prisma.review.update({
+      where: { id: reviewId },
+      data: {
+        sellerReply: reply,
+        replyAt: new Date(),
+      },
+    });
+  }
+
+  async findAll() {
+    return this.prisma.review.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        product: { select: { id: true, name: true, storeId: true } },
+      },
+    });
+  }
+
+  async delete(reviewId: string) {
+    return this.prisma.review.delete({
+      where: { id: reviewId },
+    });
   }
 
   async getProductRating(productId: string) {

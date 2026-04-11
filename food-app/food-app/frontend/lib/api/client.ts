@@ -5,6 +5,24 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // ─── Types ───────────────────────────────────────────
 
+export interface OptionItem {
+  name: string;
+  price: number;
+}
+
+export interface OptionGroup {
+  name: string;
+  isRequired: boolean;
+  isMultiple: boolean;
+  choices: OptionItem[];
+}
+
+export interface SelectedOption {
+  group: string;
+  choice: string;
+  price: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -22,6 +40,7 @@ export interface Product {
   saleEndTime?: string | null;
   averageRating?: number;
   totalReviews?: number;
+  options?: OptionGroup[];
 }
 
 export interface AuthUser {
@@ -40,6 +59,8 @@ export interface Review {
   id: string;
   rating: number;
   comment: string;
+  sellerReply?: string;
+  replyAt?: string;
   createdAt: string;
   user: { id: string; name: string };
 }
@@ -253,6 +274,7 @@ export interface OrderItem {
   productCategory?: string;
   quantity: number;
   price: number;
+  selectedOptions?: SelectedOption[];
 }
 
 export interface OrderHistoryItem {
@@ -273,7 +295,7 @@ export interface Order {
   deliveryPhone?: string;
   paymentMethod?: string;
   store?: { name: string; address: string | null; phone: string | null };
-  driver?: { name: string; phone: string | null };
+  driver?: { id: string; name: string; phone: string | null };
   items: OrderItem[];
   history: OrderHistoryItem[];
   storeRating?: number | null;
@@ -283,7 +305,12 @@ export interface Order {
 }
 
 export interface CreateOrderPayload {
-  items: { productId: string; quantity: number; note?: string }[];
+  items: { 
+    productId: string; 
+    quantity: number; 
+    note?: string;
+    selectedOptions?: SelectedOption[];
+  }[];
   address: string;
   paymentMethod: string;
   note?: string;
@@ -526,6 +553,13 @@ export async function toggleSellerProduct(productId: string, token: string) {
   });
 }
 
+export async function deleteSellerProduct(productId: string, token: string) {
+  return apiClient(`/seller/products/${productId}`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
 export interface Store {
   id: string;
   name: string;
@@ -608,4 +642,22 @@ export async function completeOrder(orderId: string, token: string): Promise<Dri
 
 export async function fetchDriverMyOrders(token: string): Promise<DriverOrder[]> {
   return apiClient<DriverOrder[]>('/driver/orders/my-orders', { token });
+}
+
+export async function uploadImage(file: File, token: string): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const tokenOpts = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+  const res = await fetch(`${API_BASE_URL}/upload`, {
+    method: 'POST',
+    headers: tokenOpts,
+    body: formData
+  });
+
+  if (!res.ok) {
+    throw new Error('Upload failed');
+  }
+  return res.json();
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/api/client';
 import { useCartStore } from '@/store/cart';
 import StarRating from './StarRating';
@@ -11,6 +12,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
 
@@ -83,6 +85,13 @@ export default function ProductCard({ product }: ProductCardProps) {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              
+              if (product.options && product.options.length > 0) {
+                // Must select options first
+                router.push(`/menu/${product.id}`);
+                return;
+              }
+
               try {
                 addItem(product);
                 openCart();
@@ -129,8 +138,8 @@ function getCategoryEmoji(category: string): string {
 
 function getTagStyle(tag: string): string {
   const styles: Record<string, string> = {
-    'Bán chạy': 'bg-red-500/90 text-white',
-    'Hot': 'bg-red-500/90 text-white',
+    'Bán chạy': 'bg-red-500/90 text-white animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]',
+    'Hot': 'bg-red-500/90 text-white animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]',
     'Cay': 'bg-orange-500/90 text-white',
     'Chay': 'bg-green-500/90 text-white',
     'Healthy': 'bg-emerald-500/90 text-white',

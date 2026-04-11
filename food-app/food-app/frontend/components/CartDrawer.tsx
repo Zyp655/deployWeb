@@ -107,8 +107,12 @@ export default function CartDrawer() {
             </div>
           ) : (
             <ul className="divide-y divide-gray-50 px-5">
-              {items.map((item) => (
-                <li key={item.product.id} className="py-4">
+              {items.map((item) => {
+                const optionsPrice = item.selectedOptions?.reduce((sum, opt) => sum + opt.price, 0) || 0;
+                const unitPrice = item.product.price + optionsPrice;
+
+                return (
+                <li key={item.cartItemId} className="py-4">
                   <div className="flex gap-3">
                     {/* Emoji avatar */}
                     <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 via-accent-50 to-highlight-50">
@@ -124,7 +128,7 @@ export default function CartDrawer() {
                           {item.product.name}
                         </h3>
                         <button
-                          onClick={() => removeItem(item.product.id)}
+                          onClick={() => removeItem(item.cartItemId)}
                           className="flex-shrink-0 rounded p-1 text-gray-300 transition-colors hover:bg-red-50 hover:text-red-500"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
@@ -134,14 +138,20 @@ export default function CartDrawer() {
                       </div>
 
                       <p className="text-sm font-semibold text-primary">
-                        {formatPrice(item.product.price)}
+                        {formatPrice(unitPrice)}
                       </p>
+
+                      {item.selectedOptions && item.selectedOptions.length > 0 && (
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                          {item.selectedOptions.map(opt => `${opt.group}: ${opt.choice}`).join(' | ')}
+                        </p>
+                      )}
 
                       {/* Quantity controls */}
                       <div className="mt-2 flex items-center gap-2">
                         <div className="flex items-center rounded-lg border border-gray-200">
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
                             className="flex h-8 w-8 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-primary rounded-l-lg"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
@@ -152,7 +162,7 @@ export default function CartDrawer() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
                             className="flex h-8 w-8 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-primary rounded-r-lg"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
@@ -161,7 +171,7 @@ export default function CartDrawer() {
                           </button>
                         </div>
                         <span className="text-sm font-semibold text-accent">
-                          {formatPrice(item.product.price * item.quantity)}
+                          {formatPrice(unitPrice * item.quantity)}
                         </span>
                       </div>
 
@@ -170,15 +180,15 @@ export default function CartDrawer() {
                         type="text"
                         value={item.note}
                         onChange={(e) =>
-                          updateNote(item.product.id, e.target.value)
+                          updateNote(item.cartItemId, e.target.value)
                         }
-                        placeholder="Ghi chú: ít đá, không cay..."
+                        placeholder="Ghi chú thêm..."
                         className="mt-2 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-600 placeholder:text-gray-300 focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 transition-colors"
                       />
                     </div>
                   </div>
                 </li>
-              ))}
+              )})}
             </ul>
           )}
         </div>

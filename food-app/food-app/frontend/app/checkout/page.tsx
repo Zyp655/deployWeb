@@ -97,6 +97,7 @@ export default function CheckoutPage() {
             productId: item.product.id,
             quantity: item.quantity,
             note: item.note || undefined,
+            selectedOptions: item.selectedOptions || undefined,
           })),
           address: address.trim(),
           paymentMethod,
@@ -170,13 +171,18 @@ export default function CheckoutPage() {
                     <p className="text-sm font-semibold text-gray-900 truncate">
                       {item.product.name}
                     </p>
-                    <p className="text-xs text-gray-400">
-                      {formatPrice(item.product.price)} × {item.quantity}
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {formatPrice(item.product.price + (item.selectedOptions?.reduce((acc, opt) => acc + opt.price, 0) || 0))} × {item.quantity}
                       {item.note && ` • ${item.note}`}
                     </p>
+                    {item.selectedOptions && item.selectedOptions.length > 0 && (
+                      <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                         {item.selectedOptions.map(opt => `${opt.group}: ${opt.choice}`).join(' | ')}
+                      </p>
+                    )}
                   </div>
                   <span className="text-sm font-bold text-primary ml-4">
-                    {formatPrice(item.product.price * item.quantity)}
+                    {formatPrice((item.product.price + (item.selectedOptions?.reduce((acc, opt) => acc + opt.price, 0) || 0)) * item.quantity)}
                   </span>
                 </li>
               ))}
