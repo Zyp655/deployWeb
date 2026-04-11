@@ -39,7 +39,7 @@ export default function SellerLayout({ children }: { children: ReactNode }) {
         <aside className="w-64 bg-[#1A1A2E] text-white flex flex-col shadow-xl z-20">
           <div className="p-6 border-b border-white/10">
             <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-              🍜 FoodSeller
+              🍜 HOANG FOOD
             </h1>
           </div>
 

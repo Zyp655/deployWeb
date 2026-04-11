@@ -11,7 +11,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <aside className="w-64 bg-gray-900 text-white flex flex-col shadow-xl z-20">
           <div className="p-6 border-b border-gray-800">
             <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-              FoodAdmin
+              HOANG FOOD
             </h1>
           </div>
           <nav className="flex-1 px-4 py-6 space-y-2">

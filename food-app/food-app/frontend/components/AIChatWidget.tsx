@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/auth';
 export default function AIChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'bot'; content: string }[]>([
-    { role: 'bot', content: 'Xin chào! Tôi là trợ lý ảo Food App. Tôi có thể giúp bạn tìm món ăn ngon hôm nay nha! 😋' },
+    { role: 'bot', content: 'Xin chào! Tôi là trợ lý ảo HOANG FOOD. Tôi có thể giúp bạn tìm món ăn ngon hôm nay nha! 😋' },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
