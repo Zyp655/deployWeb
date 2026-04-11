@@ -1,0 +1,175 @@
+{
+  "timestamp": "2026-04-05T08:53:40.021210",
+  "total_tests": 16,
+  "passed": 13,
+  "failed": 3,
+  "success_rate": 81.25,
+  "results": [
+    {
+      "timestamp": "2026-04-05T08:53:35.463196",
+      "module": "Module 1",
+      "test": "Retrieve all products",
+      "method": "GET",
+      "endpoint": "/products",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "list"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.468630",
+      "module": "Module 1",
+      "test": "Get single product",
+      "method": "GET",
+      "endpoint": "/products/{id}",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "dict"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.486208",
+      "module": "Module 1",
+      "test": "Get product rating",
+      "method": "GET",
+      "endpoint": "/products/{id}/rating",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "dict"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.490369",
+      "module": "Module 1",
+      "test": "Get product reviews",
+      "method": "GET",
+      "endpoint": "/products/{id}/reviews",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "list"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.566702",
+      "module": "Module 2",
+      "test": "Register new user",
+      "method": "POST",
+      "endpoint": "/auth/register",
+      "status_code": 201,
+      "success": "✅ PASS",
+      "response_type": "dict"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.629867",
+      "module": "Module 2",
+      "test": "Login with credentials",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "status_code": 201,
+      "success": "✅ PASS",
+      "response_type": "dict"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.690888",
+      "module": "Module 2",
+      "test": "Admin login",
+      "method": "POST",
+      "endpoint": "/auth/login (admin)",
+      "status_code": 201,
+      "success": "✅ PASS",
+      "response_type": "dict"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.715696",
+      "module": "Module 3",
+      "test": "Get recommended products",
+      "method": "GET",
+      "endpoint": "/products/recommended",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "list"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.723163",
+      "module": "Module 4",
+      "test": "Create order",
+      "method": "POST",
+      "endpoint": "/orders",
+      "status_code": 400,
+      "success": "❌ FAIL",
+      "response_type": "dict"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.746781",
+      "module": "Module 4",
+      "test": "List user orders",
+      "method": "GET",
+      "endpoint": "/orders/my",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "list"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.787305",
+      "module": "Module 6",
+      "test": "Create product review",
+      "method": "POST",
+      "endpoint": "/reviews",
+      "status_code": 403,
+      "success": "❌ FAIL",
+      "response_type": "dict"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.790370",
+      "module": "Module 6",
+      "test": "Get product reviews",
+      "method": "GET",
+      "endpoint": "/products/{id}/reviews",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "list"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.836948",
+      "module": "Module 7",
+      "test": "Get admin dashboard stats",
+      "method": "GET",
+      "endpoint": "/admin/stats",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "dict"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.842783",
+      "module": "Module 7",
+      "test": "List all products (admin)",
+      "method": "GET",
+      "endpoint": "/admin/products",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "list"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.857453",
+      "module": "Module 7",
+      "test": "List all orders (admin)",
+      "method": "GET",
+      "endpoint": "/admin/orders",
+      "status_code": 200,
+      "success": "✅ PASS",
+      "response_type": "list"
+    },
+    {
+      "timestamp": "2026-04-05T08:53:35.859477",
+      "module": "Module 7",
+      "test": "List all users (admin)",
+      "method": "GET",
+      "endpoint": "/admin/users",
+      "status_code": 404,
+      "success": "❌ FAIL",
+      "response_type": "dict"
+    }
+  ],
+  "test_data": {
+    "user_id": "f38c5a2d-d713-4644-9715-081a7f0796db",
+    "admin_id": "8534a504-ec3d-4002-9de8-48e51707ae7b",
+    "order_id": null,
+    "product_id": "89c3e666-e6c2-474c-a7e7-bd66ef3237ca"
+  }
+}

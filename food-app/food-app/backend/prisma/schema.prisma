@@ -1,0 +1,157 @@
+// Prisma Schema — Food Ordering Platform
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  password  String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders       Order[]
+  transactions Transaction[]
+  reviews      Review[]
+
+  @@map("users")
+}
+
+enum Role {
+  CUSTOMER
+  RESTAURANT
+  ADMIN
+}
+
+// ─── Product ─────────────────────────────────────────
+
+model Product {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  price        Float
+  image        String?
+  category     String
+  isAvailable  Boolean  @default(true) @map("is_available")
+  isSpicy      Boolean  @default(false) @map("is_spicy")
+  isVegetarian Boolean  @default(false) @map("is_vegetarian")
+  calories     Int?
+  tags         String[] @default([])
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+  reviews    Review[]
+
+  @@map("products")
+}
+
+// ─── Order ───────────────────────────────────────────
+
+model Order {
+  id            String      @id @default(uuid())
+  userId        String      @map("user_id")
+  status        OrderStatus @default(PENDING)
+  total         Float
+  note          String?
+  paymentMethod String?     @default("COD") @map("payment_method")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  user         User           @relation(fields: [userId], references: [id])
+  items        OrderItem[]
+  transactions Transaction[]
+  history      OrderHistory[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  DELIVERING
+  DELIVERED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String @map("order_id")
+  productId String @map("product_id")
+  quantity  Int
+  price     Float
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// ─── Transaction ─────────────────────────────────────
+
+model Transaction {
+  id             String            @id @default(uuid())
+  orderId        String            @map("order_id")
+  userId         String            @map("user_id")
+  amount         Float
+  method         String
+  status         TransactionStatus @default(PENDING)
+  idempotencyKey String            @unique @map("idempotency_key")
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@map("transactions")
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+// ─── Order History ───────────────────────────────────
+
+model OrderHistory {
+  id        String      @id @default(uuid())
+  orderId   String      @map("order_id")
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("order_history")
+}
+
+// ─── Review ──────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}

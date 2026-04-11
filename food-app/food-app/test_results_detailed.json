@@ -1,0 +1,820 @@
+{
+  "timestamp": "2026-04-05T08:51:00.100087",
+  "total_tests": 13,
+  "passed": 8,
+  "failed": 5,
+  "success_rate": 61.53846153846154,
+  "test_data": {
+    "test_token": null,
+    "admin_token": null,
+    "user_id": "74ec6308-80ec-4183-a595-0aaf5f201e83",
+    "order_id": null,
+    "product_id": "89c3e666-e6c2-474c-a7e7-bd66ef3237ca",
+    "product_ids": [
+      "89c3e666-e6c2-474c-a7e7-bd66ef3237ca",
+      "66925290-0cd3-475d-8929-d0a1f7d19e5a",
+      "e9c86f19-4071-4a05-9616-af48f99035a2",
+      "383527e8-1ab4-45ae-97c7-37aa54e5000a",
+      "23ec67fc-5f8e-4402-9f90-0dff9c1d9a3d",
+      "2db43d33-6cc9-4bd3-bd46-ab5ce1668d2a",
+      "b4f5bec8-7c3c-4df2-8b9e-100217cc679a",
+      "addd34cf-a26b-44d8-8f77-0488f2be68aa"
+    ],
+    "results": [
+      {
+        "timestamp": "2026-04-05T08:50:55.687152",
+        "module": "Module 1",
+        "test": "Retrieve all products",
+        "method": "GET",
+        "endpoint": "/products",
+        "status_code": 200,
+        "success": true,
+        "details": "[{'id': '89c3e666-e6c2-474c-a7e7-bd66ef3237ca', 'name': 'Bánh Mì Thịt Nướng', 'description': 'Bánh m",
+        "response": [
+          {
+            "id": "89c3e666-e6c2-474c-a7e7-bd66ef3237ca",
+            "name": "Bánh Mì Thịt Nướng",
+            "description": "Bánh mì giòn rụm, nhân thịt nướng đậm đà, đồ chua, rau mùi, ớt tươi.",
+            "price": 30000,
+            "image": "/images/banh-mi.jpg",
+            "category": "Món khô",
+            "isAvailable": true,
+            "isSpicy": false,
+            "isVegetarian": false,
+            "calories": 450,
+            "tags": [
+              "Bán chạy",
+              "Truyền thống"
+            ],
+            "averageRating": 0,
+            "totalReviews": 0
+          },
+          {
+            "id": "66925290-0cd3-475d-8929-d0a1f7d19e5a",
+            "name": "Cơm Tấm Sườn Bì Chả",
+            "description": "Cơm tấm Sài Gòn đặc biệt: sườn nướng, bì, chả trứng, mỡ hành, nước mắm.",
+            "price": 60000,
+            "image": "/images/com-tam.jpg",
+            "category": "Cơm",
+            "isAvailable": true,
+            "isSpicy": false,
+            "isVegetarian": false,
+            "calories": 520,
+            "tags": [
+              "Bán chạy",
+              "Đặc sản Hà Nội"
+            ],
+            "averageRating": 0,
+            "totalReviews": 0
+          },
+          {
+            "id": "e9c86f19-4071-4a05-9616-af48f99035a2",
+            "name": "Gỏi Cuốn Tôm Thịt",
+            "description": "Gỏi cuốn tươi mát với tôm, thịt luộc, bún, rau sống, chấm tương đậu phộng.",
+            "price": 35000,
+            "image": "/images/goi-cuon.jpg",
+            "category": "Khai vị",
+            "isAvailable": true,
+            "isSpicy": true,
+            "isVegetarian": false,
+            "calories": 380,
+            "tags": [
+              "Cay",
+              "Nhanh gọn"
+            ],
+            "averageRating": 0,
+            "totalReviews": 0
+          },
+          {
+            "id": "383527e8-1ab4-45ae-97c7-37aa54e5000a",
+            "name": "Bò Lúc Lắc",
+            "description": "Thịt bò Úc xào lúc lắc với tỏi, tiêu đen, ăn kèm cơm trắng nóng hổi.",
+            "price": 85000,
+            "image": "/images/bo-luc-lac.jpg",
+            "category": "Món mặn",
+            "isAvailable": true,
+            "isSpicy": false,
+            "isVegetarian": false,
+            "calories": 680,
+            "tags": [
+              "Bán chạy",
+              "Đặc sản Sài Gòn"
+            ],
+            "averageRating": 0,
+            "totalReviews": 0
+          },
+          {
+            "id": "23ec67fc-5f8e-4402-9f90-0dff9c1d9a3d",
+            "name": "Chè Thái",
+            "description": "Chè thập cẩm kiểu Thái với nước cốt dừa, trái cây tươi, thạch lá dứa.",
+            "price": 25000,
+            "image": "/images/che-thai.jpg",
+            "category": "Tráng miệng",
+            "isAvailable": true,
+            "isSpicy": false,
+            "isVegetarian": false,
+            "calories": 280,
+            "tags": [
+              "Healthy",
+              "Ít calo"
+            ],
+            "averageRating": 0,
+            "totalReviews": 0
+          },
+          {
+            "id": "2db43d33-6cc9-4bd3-bd46-ab5ce1668d2a",
+            "name": "Trà Sen Vàng",
+            "description": "Trà ướp sen tươi Tây Hồ, hương thơm nhẹ nhàng, thanh mát giải nhiệt.",
+            "price": 20000,
+            "image": "/images/tra-sen.jpg",
+            "category": "Đồ uống",
+            "isAvailable": true,
+            "isSpicy": false,
+            "isVegetarian": false,
+            "calories": 620,
+            "tags": [
+              "Cao cấp",
+              "Bò Úc"
+            ],
+            "averageRating": 0,
+            "totalReviews": 0
+          },
+          {
+            "id": "b4f5bec8-7c3c-4df2-8b9e-100217cc679a",
+            "name": "Phở Bò Tái",
+            "description": "Phở bò truyền thống với nước dùng ninh xương 12 tiếng, thịt bò tái mềm, rau thơm tươi.",
+            "price": 55000,
+            "image": "/images/pho-bo.jpg",
+            "category": "Món nước",
+            "isAvailable": true,
+            "isSpicy": false,
+            "isVegetarian": true,
+            "calories": 320,
+            "tags": [
+              "Chay",
+              "Ngọt mát"
+            ],
+            "averageRating": 0,
+            "totalReviews": 0
+          },
+          {
+            "id": "addd34cf-a26b-44d8-8f77-0488f2be68aa",
+            "name": "Bún Chả Hà Nội",
+            "description": "Bún chả nướng than hoa thơm lừng, kèm nước mắm pha chua ngọt và rau sống.",
+            "price": 50000,
+            "image": "/images/bun-cha.jpg",
+            "category": "Món nước",
+            "isAvailable": true,
+            "isSpicy": false,
+            "isVegetarian": true,
+            "calories": 50,
+            "tags": [
+              "Chay",
+              "Ít calo",
+              "Healthy"
+            ],
+            "averageRating": 0,
+            "totalReviews": 0
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-04-05T08:50:55.691397",
+        "module": "Module 1",
+        "test": "Get single product by ID",
+        "method": "GET",
+        "endpoint": "/products/89c3e666-e6c2-474c-a7e7-bd66ef3237ca",
+        "status_code": 200,
+        "success": true,
+        "details": "{'id': '89c3e666-e6c2-474c-a7e7-bd66ef3237ca', 'name': 'Bánh Mì Thịt Nướng', 'description': 'Bánh mì",
+        "response": {
+          "id": "89c3e666-e6c2-474c-a7e7-bd66ef3237ca",
+          "name": "Bánh Mì Thịt Nướng",
+          "description": "Bánh mì giòn rụm, nhân thịt nướng đậm đà, đồ chua, rau mùi, ớt tươi.",
+          "price": 30000,
+          "image": "/images/banh-mi.jpg",
+          "category": "Món khô",
+          "isAvailable": true,
+          "averageRating": 0,
+          "totalReviews": 0,
+          "reviews": []
+        }
+      },
+      {
+        "timestamp": "2026-04-05T08:50:55.698070",
+        "module": "Module 1",
+        "test": "Get product rating",
+        "method": "GET",
+        "endpoint": "/products/89c3e666-e6c2-474c-a7e7-bd66ef3237ca/rating",
+        "status_code": 200,
+        "success": true,
+        "details": "{'averageRating': 0, 'totalReviews': 0}",
+        "response": {
+          "averageRating": 0,
+          "totalReviews": 0
+        }
+      },
+      {
+        "timestamp": "2026-04-05T08:50:55.702543",
+        "module": "Module 1",
+        "test": "Get product reviews",
+        "method": "GET",
+        "endpoint": "/products/89c3e666-e6c2-474c-a7e7-bd66ef3237ca/reviews",
+        "status_code": 200,
+        "success": true,
+        "details": "[]",
+        "response": []
+      },
+      {
+        "timestamp": "2026-04-05T08:50:55.768600",
+        "module": "Module 2",
+        "test": "Register new user",
+        "method": "POST",
+        "endpoint": "/auth/register",
+        "status_code": 201,
+        "success": true,
+        "details": "{'user': {'id': '74ec6308-80ec-4183-a595-0aaf5f201e83', 'name': 'Test User', 'email': 'testuser17753",
+        "response": {
+          "user": {
+            "id": "74ec6308-80ec-4183-a595-0aaf5f201e83",
+            "name": "Test User",
+            "email": "testuser1775353855@foodapp.vn",
+            "role": "CUSTOMER"
+          },
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NGVjNjMwOC04MGVjLTQxODMtYTU5NS0wYWFmNWYyMDFlODMiLCJlbWFpbCI6InRlc3R1c2VyMTc3NTM1Mzg1NUBmb29kYXBwLnZuIiwicm9sZSI6IkNVU1RPTUVSIiwiaWF0IjoxNzc1MzUzODU1LCJleHAiOjE3NzUzNTQ3NTV9.LwvK_u2eaBDvdsqKY8zJsq62tZiBN12GtL97WgnSWek"
+        }
+      },
+      {
+        "timestamp": "2026-04-05T08:50:55.828793",
+        "module": "Module 2",
+        "test": "Login with credentials",
+        "method": "POST",
+        "endpoint": "/auth/login",
+        "status_code": 201,
+        "success": true,
+        "details": "{'user': {'id': '74ec6308-80ec-4183-a595-0aaf5f201e83', 'name': 'Test User', 'email': 'testuser17753",
+        "response": {
+          "user": {
+            "id": "74ec6308-80ec-4183-a595-0aaf5f201e83",
+            "name": "Test User",
+            "email": "testuser1775353855@foodapp.vn",
+            "role": "CUSTOMER"
+          },
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NGVjNjMwOC04MGVjLTQxODMtYTU5NS0wYWFmNWYyMDFlODMiLCJlbWFpbCI6InRlc3R1c2VyMTc3NTM1Mzg1NUBmb29kYXBwLnZuIiwicm9sZSI6IkNVU1RPTUVSIiwiaWF0IjoxNzc1MzUzODU1LCJleHAiOjE3NzUzNTQ3NTV9.LwvK_u2eaBDvdsqKY8zJsq62tZiBN12GtL97WgnSWek"
+        }
+      },
+      {
+        "timestamp": "2026-04-05T08:50:55.888649",
+        "module": "Module 2",
+        "test": "Admin login",
+        "method": "POST",
+        "endpoint": "/auth/login",
+        "status_code": 201,
+        "success": true,
+        "details": "{'user': {'id': '8534a504-ec3d-4002-9de8-48e51707ae7b', 'name': 'System Admin', 'email': 'admin@food",
+        "response": {
+          "user": {
+            "id": "8534a504-ec3d-4002-9de8-48e51707ae7b",
+            "name": "System Admin",
+            "email": "admin@foodapp.com",
+            "role": "ADMIN"
+          },
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4NTM0YTUwNC1lYzNkLTQwMDItOWRlOC00OGU1MTcwN2FlN2IiLCJlbWFpbCI6ImFkbWluQGZvb2RhcHAuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzc1MzUzODU1LCJleHAiOjE3NzUzNTQ3NTV9.7GAcsK59nnnp8293wBwNpn32KrtMspvLhTWPB7Uqnq4"
+        }
+      },
+      {
+        "timestamp": "2026-04-05T08:50:57.957960",
+        "module": "Module 8",
+        "test": "Get AI API docs",
+        "method": "GET",
+        "endpoint": "http://localhost:8000/docs",
+        "status_code": 200,
+        "success": true,
+        "details": "",
+        "response": null
+      },
+      {
+        "timestamp": "2026-04-05T08:51:00.070406",
+        "module": "Module 8",
+        "test": "Get AI recommendations",
+        "method": "POST",
+        "endpoint": "http://localhost:8000/recommend",
+        "status_code": 422,
+        "success": false,
+        "details": "{'detail': [{'type': 'model_attributes_type', 'loc': ['body', 'availableProducts', 0], 'msg': 'Input",
+        "response": {
+          "detail": [
+            {
+              "type": "model_attributes_type",
+              "loc": [
+                "body",
+                "availableProducts",
+                0
+              ],
+              "msg": "Input should be a valid dictionary or object to extract fields from",
+              "input": "89c3e666-e6c2-474c-a7e7-bd66ef3237ca"
+            },
+            {
+              "type": "model_attributes_type",
+              "loc": [
+                "body",
+                "availableProducts",
+                1
+              ],
+              "msg": "Input should be a valid dictionary or object to extract fields from",
+              "input": "66925290-0cd3-475d-8929-d0a1f7d19e5a"
+            },
+            {
+              "type": "model_attributes_type",
+              "loc": [
+                "body",
+                "availableProducts",
+                2
+              ],
+              "msg": "Input should be a valid dictionary or object to extract fields from",
+              "input": "e9c86f19-4071-4a05-9616-af48f99035a2"
+            },
+            {
+              "type": "model_attributes_type",
+              "loc": [
+                "body",
+                "availableProducts",
+                3
+              ],
+              "msg": "Input should be a valid dictionary or object to extract fields from",
+              "input": "383527e8-1ab4-45ae-97c7-37aa54e5000a"
+            },
+            {
+              "type": "model_attributes_type",
+              "loc": [
+                "body",
+                "availableProducts",
+                4
+              ],
+              "msg": "Input should be a valid dictionary or object to extract fields from",
+              "input": "23ec67fc-5f8e-4402-9f90-0dff9c1d9a3d"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-04-05T08:51:00.085946",
+        "module": "Module 9",
+        "test": "Admin endpoint without auth",
+        "method": "GET",
+        "endpoint": "/admin/stats",
+        "status_code": 401,
+        "success": false,
+        "details": "{'message': 'Unauthorized', 'statusCode': 401}",
+        "response": {
+          "message": "Unauthorized",
+          "statusCode": 401
+        }
+      },
+      {
+        "timestamp": "2026-04-05T08:51:00.092060",
+        "module": "Module 9",
+        "test": "Get non-existent product",
+        "method": "GET",
+        "endpoint": "/products/00000000-0000-0000-0000-000000000000",
+        "status_code": 404,
+        "success": false,
+        "details": "{'message': 'Sản phẩm không tồn tại', 'error': 'Not Found', 'statusCode': 404}",
+        "response": {
+          "message": "Sản phẩm không tồn tại",
+          "error": "Not Found",
+          "statusCode": 404
+        }
+      },
+      {
+        "timestamp": "2026-04-05T08:51:00.095996",
+        "module": "Module 9",
+        "test": "Register with invalid email",
+        "method": "POST",
+        "endpoint": "/auth/register",
+        "status_code": 400,
+        "success": false,
+        "details": "{'message': ['email must be an email'], 'error': 'Bad Request', 'statusCode': 400}",
+        "response": {
+          "message": [
+            "email must be an email"
+          ],
+          "error": "Bad Request",
+          "statusCode": 400
+        }
+      },
+      {
+        "timestamp": "2026-04-05T08:51:00.099238",
+        "module": "Module 9",
+        "test": "Create order with missing fields",
+        "method": "POST",
+        "endpoint": "/orders",
+        "status_code": 401,
+        "success": false,
+        "details": "{'message': 'Unauthorized', 'statusCode': 401}",
+        "response": {
+          "message": "Unauthorized",
+          "statusCode": 401
+        }
+      }
+    ]
+  },
+  "results": [
+    {
+      "timestamp": "2026-04-05T08:50:55.687152",
+      "module": "Module 1",
+      "test": "Retrieve all products",
+      "method": "GET",
+      "endpoint": "/products",
+      "status_code": 200,
+      "success": true,
+      "details": "[{'id': '89c3e666-e6c2-474c-a7e7-bd66ef3237ca', 'name': 'Bánh Mì Thịt Nướng', 'description': 'Bánh m",
+      "response": [
+        {
+          "id": "89c3e666-e6c2-474c-a7e7-bd66ef3237ca",
+          "name": "Bánh Mì Thịt Nướng",
+          "description": "Bánh mì giòn rụm, nhân thịt nướng đậm đà, đồ chua, rau mùi, ớt tươi.",
+          "price": 30000,
+          "image": "/images/banh-mi.jpg",
+          "category": "Món khô",
+          "isAvailable": true,
+          "isSpicy": false,
+          "isVegetarian": false,
+          "calories": 450,
+          "tags": [
+            "Bán chạy",
+            "Truyền thống"
+          ],
+          "averageRating": 0,
+          "totalReviews": 0
+        },
+        {
+          "id": "66925290-0cd3-475d-8929-d0a1f7d19e5a",
+          "name": "Cơm Tấm Sườn Bì Chả",
+          "description": "Cơm tấm Sài Gòn đặc biệt: sườn nướng, bì, chả trứng, mỡ hành, nước mắm.",
+          "price": 60000,
+          "image": "/images/com-tam.jpg",
+          "category": "Cơm",
+          "isAvailable": true,
+          "isSpicy": false,
+          "isVegetarian": false,
+          "calories": 520,
+          "tags": [
+            "Bán chạy",
+            "Đặc sản Hà Nội"
+          ],
+          "averageRating": 0,
+          "totalReviews": 0
+        },
+        {
+          "id": "e9c86f19-4071-4a05-9616-af48f99035a2",
+          "name": "Gỏi Cuốn Tôm Thịt",
+          "description": "Gỏi cuốn tươi mát với tôm, thịt luộc, bún, rau sống, chấm tương đậu phộng.",
+          "price": 35000,
+          "image": "/images/goi-cuon.jpg",
+          "category": "Khai vị",
+          "isAvailable": true,
+          "isSpicy": true,
+          "isVegetarian": false,
+          "calories": 380,
+          "tags": [
+            "Cay",
+            "Nhanh gọn"
+          ],
+          "averageRating": 0,
+          "totalReviews": 0
+        },
+        {
+          "id": "383527e8-1ab4-45ae-97c7-37aa54e5000a",
+          "name": "Bò Lúc Lắc",
+          "description": "Thịt bò Úc xào lúc lắc với tỏi, tiêu đen, ăn kèm cơm trắng nóng hổi.",
+          "price": 85000,
+          "image": "/images/bo-luc-lac.jpg",
+          "category": "Món mặn",
+          "isAvailable": true,
+          "isSpicy": false,
+          "isVegetarian": false,
+          "calories": 680,
+          "tags": [
+            "Bán chạy",
+            "Đặc sản Sài Gòn"
+          ],
+          "averageRating": 0,
+          "totalReviews": 0
+        },
+        {
+          "id": "23ec67fc-5f8e-4402-9f90-0dff9c1d9a3d",
+          "name": "Chè Thái",
+          "description": "Chè thập cẩm kiểu Thái với nước cốt dừa, trái cây tươi, thạch lá dứa.",
+          "price": 25000,
+          "image": "/images/che-thai.jpg",
+          "category": "Tráng miệng",
+          "isAvailable": true,
+          "isSpicy": false,
+          "isVegetarian": false,
+          "calories": 280,
+          "tags": [
+            "Healthy",
+            "Ít calo"
+          ],
+          "averageRating": 0,
+          "totalReviews": 0
+        },
+        {
+          "id": "2db43d33-6cc9-4bd3-bd46-ab5ce1668d2a",
+          "name": "Trà Sen Vàng",
+          "description": "Trà ướp sen tươi Tây Hồ, hương thơm nhẹ nhàng, thanh mát giải nhiệt.",
+          "price": 20000,
+          "image": "/images/tra-sen.jpg",
+          "category": "Đồ uống",
+          "isAvailable": true,
+          "isSpicy": false,
+          "isVegetarian": false,
+          "calories": 620,
+          "tags": [
+            "Cao cấp",
+            "Bò Úc"
+          ],
+          "averageRating": 0,
+          "totalReviews": 0
+        },
+        {
+          "id": "b4f5bec8-7c3c-4df2-8b9e-100217cc679a",
+          "name": "Phở Bò Tái",
+          "description": "Phở bò truyền thống với nước dùng ninh xương 12 tiếng, thịt bò tái mềm, rau thơm tươi.",
+          "price": 55000,
+          "image": "/images/pho-bo.jpg",
+          "category": "Món nước",
+          "isAvailable": true,
+          "isSpicy": false,
+          "isVegetarian": true,
+          "calories": 320,
+          "tags": [
+            "Chay",
+            "Ngọt mát"
+          ],
+          "averageRating": 0,
+          "totalReviews": 0
+        },
+        {
+          "id": "addd34cf-a26b-44d8-8f77-0488f2be68aa",
+          "name": "Bún Chả Hà Nội",
+          "description": "Bún chả nướng than hoa thơm lừng, kèm nước mắm pha chua ngọt và rau sống.",
+          "price": 50000,
+          "image": "/images/bun-cha.jpg",
+          "category": "Món nước",
+          "isAvailable": true,
+          "isSpicy": false,
+          "isVegetarian": true,
+          "calories": 50,
+          "tags": [
+            "Chay",
+            "Ít calo",
+            "Healthy"
+          ],
+          "averageRating": 0,
+          "totalReviews": 0
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T08:50:55.691397",
+      "module": "Module 1",
+      "test": "Get single product by ID",
+      "method": "GET",
+      "endpoint": "/products/89c3e666-e6c2-474c-a7e7-bd66ef3237ca",
+      "status_code": 200,
+      "success": true,
+      "details": "{'id': '89c3e666-e6c2-474c-a7e7-bd66ef3237ca', 'name': 'Bánh Mì Thịt Nướng', 'description': 'Bánh mì",
+      "response": {
+        "id": "89c3e666-e6c2-474c-a7e7-bd66ef3237ca",
+        "name": "Bánh Mì Thịt Nướng",
+        "description": "Bánh mì giòn rụm, nhân thịt nướng đậm đà, đồ chua, rau mùi, ớt tươi.",
+        "price": 30000,
+        "image": "/images/banh-mi.jpg",
+        "category": "Món khô",
+        "isAvailable": true,
+        "averageRating": 0,
+        "totalReviews": 0,
+        "reviews": []
+      }
+    },
+    {
+      "timestamp": "2026-04-05T08:50:55.698070",
+      "module": "Module 1",
+      "test": "Get product rating",
+      "method": "GET",
+      "endpoint": "/products/89c3e666-e6c2-474c-a7e7-bd66ef3237ca/rating",
+      "status_code": 200,
+      "success": true,
+      "details": "{'averageRating': 0, 'totalReviews': 0}",
+      "response": {
+        "averageRating": 0,
+        "totalReviews": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-05T08:50:55.702543",
+      "module": "Module 1",
+      "test": "Get product reviews",
+      "method": "GET",
+      "endpoint": "/products/89c3e666-e6c2-474c-a7e7-bd66ef3237ca/reviews",
+      "status_code": 200,
+      "success": true,
+      "details": "[]",
+      "response": []
+    },
+    {
+      "timestamp": "2026-04-05T08:50:55.768600",
+      "module": "Module 2",
+      "test": "Register new user",
+      "method": "POST",
+      "endpoint": "/auth/register",
+      "status_code": 201,
+      "success": true,
+      "details": "{'user': {'id': '74ec6308-80ec-4183-a595-0aaf5f201e83', 'name': 'Test User', 'email': 'testuser17753",
+      "response": {
+        "user": {
+          "id": "74ec6308-80ec-4183-a595-0aaf5f201e83",
+          "name": "Test User",
+          "email": "testuser1775353855@foodapp.vn",
+          "role": "CUSTOMER"
+        },
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NGVjNjMwOC04MGVjLTQxODMtYTU5NS0wYWFmNWYyMDFlODMiLCJlbWFpbCI6InRlc3R1c2VyMTc3NTM1Mzg1NUBmb29kYXBwLnZuIiwicm9sZSI6IkNVU1RPTUVSIiwiaWF0IjoxNzc1MzUzODU1LCJleHAiOjE3NzUzNTQ3NTV9.LwvK_u2eaBDvdsqKY8zJsq62tZiBN12GtL97WgnSWek"
+      }
+    },
+    {
+      "timestamp": "2026-04-05T08:50:55.828793",
+      "module": "Module 2",
+      "test": "Login with credentials",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "status_code": 201,
+      "success": true,
+      "details": "{'user': {'id': '74ec6308-80ec-4183-a595-0aaf5f201e83', 'name': 'Test User', 'email': 'testuser17753",
+      "response": {
+        "user": {
+          "id": "74ec6308-80ec-4183-a595-0aaf5f201e83",
+          "name": "Test User",
+          "email": "testuser1775353855@foodapp.vn",
+          "role": "CUSTOMER"
+        },
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NGVjNjMwOC04MGVjLTQxODMtYTU5NS0wYWFmNWYyMDFlODMiLCJlbWFpbCI6InRlc3R1c2VyMTc3NTM1Mzg1NUBmb29kYXBwLnZuIiwicm9sZSI6IkNVU1RPTUVSIiwiaWF0IjoxNzc1MzUzODU1LCJleHAiOjE3NzUzNTQ3NTV9.LwvK_u2eaBDvdsqKY8zJsq62tZiBN12GtL97WgnSWek"
+      }
+    },
+    {
+      "timestamp": "2026-04-05T08:50:55.888649",
+      "module": "Module 2",
+      "test": "Admin login",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "status_code": 201,
+      "success": true,
+      "details": "{'user': {'id': '8534a504-ec3d-4002-9de8-48e51707ae7b', 'name': 'System Admin', 'email': 'admin@food",
+      "response": {
+        "user": {
+          "id": "8534a504-ec3d-4002-9de8-48e51707ae7b",
+          "name": "System Admin",
+          "email": "admin@foodapp.com",
+          "role": "ADMIN"
+        },
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4NTM0YTUwNC1lYzNkLTQwMDItOWRlOC00OGU1MTcwN2FlN2IiLCJlbWFpbCI6ImFkbWluQGZvb2RhcHAuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzc1MzUzODU1LCJleHAiOjE3NzUzNTQ3NTV9.7GAcsK59nnnp8293wBwNpn32KrtMspvLhTWPB7Uqnq4"
+      }
+    },
+    {
+      "timestamp": "2026-04-05T08:50:57.957960",
+      "module": "Module 8",
+      "test": "Get AI API docs",
+      "method": "GET",
+      "endpoint": "http://localhost:8000/docs",
+      "status_code": 200,
+      "success": true,
+      "details": "",
+      "response": null
+    },
+    {
+      "timestamp": "2026-04-05T08:51:00.070406",
+      "module": "Module 8",
+      "test": "Get AI recommendations",
+      "method": "POST",
+      "endpoint": "http://localhost:8000/recommend",
+      "status_code": 422,
+      "success": false,
+      "details": "{'detail': [{'type': 'model_attributes_type', 'loc': ['body', 'availableProducts', 0], 'msg': 'Input",
+      "response": {
+        "detail": [
+          {
+            "type": "model_attributes_type",
+            "loc": [
+              "body",
+              "availableProducts",
+              0
+            ],
+            "msg": "Input should be a valid dictionary or object to extract fields from",
+            "input": "89c3e666-e6c2-474c-a7e7-bd66ef3237ca"
+          },
+          {
+            "type": "model_attributes_type",
+            "loc": [
+              "body",
+              "availableProducts",
+              1
+            ],
+            "msg": "Input should be a valid dictionary or object to extract fields from",
+            "input": "66925290-0cd3-475d-8929-d0a1f7d19e5a"
+          },
+          {
+            "type": "model_attributes_type",
+            "loc": [
+              "body",
+              "availableProducts",
+              2
+            ],
+            "msg": "Input should be a valid dictionary or object to extract fields from",
+            "input": "e9c86f19-4071-4a05-9616-af48f99035a2"
+          },
+          {
+            "type": "model_attributes_type",
+            "loc": [
+              "body",
+              "availableProducts",
+              3
+            ],
+            "msg": "Input should be a valid dictionary or object to extract fields from",
+            "input": "383527e8-1ab4-45ae-97c7-37aa54e5000a"
+          },
+          {
+            "type": "model_attributes_type",
+            "loc": [
+              "body",
+              "availableProducts",
+              4
+            ],
+            "msg": "Input should be a valid dictionary or object to extract fields from",
+            "input": "23ec67fc-5f8e-4402-9f90-0dff9c1d9a3d"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-04-05T08:51:00.085946",
+      "module": "Module 9",
+      "test": "Admin endpoint without auth",
+      "method": "GET",
+      "endpoint": "/admin/stats",
+      "status_code": 401,
+      "success": false,
+      "details": "{'message': 'Unauthorized', 'statusCode': 401}",
+      "response": {
+        "message": "Unauthorized",
+        "statusCode": 401
+      }
+    },
+    {
+      "timestamp": "2026-04-05T08:51:00.092060",
+      "module": "Module 9",
+      "test": "Get non-existent product",
+      "method": "GET",
+      "endpoint": "/products/00000000-0000-0000-0000-000000000000",
+      "status_code": 404,
+      "success": false,
+      "details": "{'message': 'Sản phẩm không tồn tại', 'error': 'Not Found', 'statusCode': 404}",
+      "response": {
+        "message": "Sản phẩm không tồn tại",
+        "error": "Not Found",
+        "statusCode": 404
+      }
+    },
+    {
+      "timestamp": "2026-04-05T08:51:00.095996",
+      "module": "Module 9",
+      "test": "Register with invalid email",
+      "method": "POST",
+      "endpoint": "/auth/register",
+      "status_code": 400,
+      "success": false,
+      "details": "{'message': ['email must be an email'], 'error': 'Bad Request', 'statusCode': 400}",
+      "response": {
+        "message": [
+          "email must be an email"
+        ],
+        "error": "Bad Request",
+        "statusCode": 400
+      }
+    },
+    {
+      "timestamp": "2026-04-05T08:51:00.099238",
+      "module": "Module 9",
+      "test": "Create order with missing fields",
+      "method": "POST",
+      "endpoint": "/orders",
+      "status_code": 401,
+      "success": false,
+      "details": "{'message': 'Unauthorized', 'statusCode': 401}",
+      "response": {
+        "message": "Unauthorized",
+        "statusCode": 401
+      }
+    }
+  ]
+}

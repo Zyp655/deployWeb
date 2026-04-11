@@ -1,0 +1,318 @@
+{
+  "timestamp": "2026-04-05T08:49:09.838176",
+  "total_tests": 15,
+  "passed": 7,
+  "failed": 8,
+  "success_rate": 46.666666666666664,
+  "test_data": {
+    "test_token": null,
+    "admin_token": null,
+    "user_id": "cfe81834-3c03-4978-b267-32b0ac7c3436",
+    "order_id": null,
+    "product_id": 1,
+    "results": [
+      {
+        "timestamp": "2026-04-05T08:49:05.354120",
+        "module": "Module 1",
+        "test": "GET /products (all products)",
+        "method": "GET",
+        "endpoint": "/products",
+        "status_code": 200,
+        "success": true,
+        "details": "[{'id': '89c3e666-e6c2-474c-a7e7-bd66ef3237ca', 'name': 'B\u00e1nh M\u00ec Th\u1ecbt N\u01b0\u1edbng', 'description': 'B\u00e1nh m"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:05.366142",
+        "module": "Module 1",
+        "test": "GET /products/1 (single product)",
+        "method": "GET",
+        "endpoint": "/products/1",
+        "status_code": 404,
+        "success": false,
+        "details": "{'message': 'S\u1ea3n ph\u1ea9m kh\u00f4ng t\u1ed3n t\u1ea1i', 'error': 'Not Found', 'statusCode': 404}"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:05.386450",
+        "module": "Module 1",
+        "test": "GET /products/1/rating",
+        "method": "GET",
+        "endpoint": "/products/1/rating",
+        "status_code": 200,
+        "success": true,
+        "details": "{'averageRating': 0, 'totalReviews': 0}"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:05.391052",
+        "module": "Module 1",
+        "test": "GET /products/1/reviews",
+        "method": "GET",
+        "endpoint": "/products/1/reviews",
+        "status_code": 200,
+        "success": true,
+        "details": "[]"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:05.506477",
+        "module": "Module 2",
+        "test": "POST /auth/register",
+        "method": "POST",
+        "endpoint": "/auth/register",
+        "status_code": 201,
+        "success": true,
+        "details": "{'user': {'id': 'cfe81834-3c03-4978-b267-32b0ac7c3436', 'name': 'Test User', 'email': 'testuser@food"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:05.568954",
+        "module": "Module 2",
+        "test": "POST /auth/login",
+        "method": "POST",
+        "endpoint": "/auth/login",
+        "status_code": 201,
+        "success": true,
+        "details": "{'user': {'id': 'cfe81834-3c03-4978-b267-32b0ac7c3436', 'name': 'Test User', 'email': 'testuser@food"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:05.598936",
+        "module": "Module 2",
+        "test": "POST /auth/login (admin)",
+        "method": "POST",
+        "endpoint": "/auth/login (admin)",
+        "status_code": 404,
+        "success": false,
+        "details": "{'message': 'Cannot POST /auth/login%20(admin)', 'error': 'Not Found', 'statusCode': 404}"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:05.603411",
+        "module": "Module 2",
+        "test": "GET /orders/my (authenticated)",
+        "method": "GET",
+        "endpoint": "/orders/my",
+        "status_code": 401,
+        "success": false,
+        "details": "{'message': 'Unauthorized', 'statusCode': 401}"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:05.682715",
+        "module": "Module 3",
+        "test": "GET /products/recommended",
+        "method": "GET",
+        "endpoint": "/products/recommended",
+        "status_code": 200,
+        "success": true,
+        "details": "[{'id': '89c3e666-e6c2-474c-a7e7-bd66ef3237ca', 'name': 'B\u00e1nh M\u00ec Th\u1ecbt N\u01b0\u1edbng', 'description': 'B\u00e1nh m"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:07.717996",
+        "module": "Module 8",
+        "test": "GET /docs (AI Service)",
+        "method": "GET",
+        "endpoint": "http://localhost:8000/docs",
+        "status_code": 200,
+        "success": true,
+        "details": ""
+      },
+      {
+        "timestamp": "2026-04-05T08:49:09.786459",
+        "module": "Module 8",
+        "test": "POST /recommend (AI Service)",
+        "method": "POST",
+        "endpoint": "http://localhost:8000/recommend",
+        "status_code": 422,
+        "success": false,
+        "details": "{'detail': [{'type': 'missing', 'loc': ['body', 'availableProducts'], 'msg': 'Field required', 'inpu"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:09.790482",
+        "module": "Module 9",
+        "test": "GET /admin/stats (without auth)",
+        "method": "GET",
+        "endpoint": "/admin/stats",
+        "status_code": 401,
+        "success": false,
+        "details": "{'message': 'Unauthorized', 'statusCode': 401}"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:09.799204",
+        "module": "Module 9",
+        "test": "GET /products/99999 (non-existent)",
+        "method": "GET",
+        "endpoint": "/products/99999",
+        "status_code": 404,
+        "success": false,
+        "details": "{'message': 'S\u1ea3n ph\u1ea9m kh\u00f4ng t\u1ed3n t\u1ea1i', 'error': 'Not Found', 'statusCode': 404}"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:09.830302",
+        "module": "Module 9",
+        "test": "POST /auth/register (invalid email)",
+        "method": "POST",
+        "endpoint": "/auth/register",
+        "status_code": 400,
+        "success": false,
+        "details": "{'message': ['email must be an email'], 'error': 'Bad Request', 'statusCode': 400}"
+      },
+      {
+        "timestamp": "2026-04-05T08:49:09.836373",
+        "module": "Module 9",
+        "test": "POST /orders (missing fields)",
+        "method": "POST",
+        "endpoint": "/orders",
+        "status_code": 401,
+        "success": false,
+        "details": "{'message': 'Unauthorized', 'statusCode': 401}"
+      }
+    ]
+  },
+  "results": [
+    {
+      "timestamp": "2026-04-05T08:49:05.354120",
+      "module": "Module 1",
+      "test": "GET /products (all products)",
+      "method": "GET",
+      "endpoint": "/products",
+      "status_code": 200,
+      "success": true,
+      "details": "[{'id': '89c3e666-e6c2-474c-a7e7-bd66ef3237ca', 'name': 'B\u00e1nh M\u00ec Th\u1ecbt N\u01b0\u1edbng', 'description': 'B\u00e1nh m"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:05.366142",
+      "module": "Module 1",
+      "test": "GET /products/1 (single product)",
+      "method": "GET",
+      "endpoint": "/products/1",
+      "status_code": 404,
+      "success": false,
+      "details": "{'message': 'S\u1ea3n ph\u1ea9m kh\u00f4ng t\u1ed3n t\u1ea1i', 'error': 'Not Found', 'statusCode': 404}"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:05.386450",
+      "module": "Module 1",
+      "test": "GET /products/1/rating",
+      "method": "GET",
+      "endpoint": "/products/1/rating",
+      "status_code": 200,
+      "success": true,
+      "details": "{'averageRating': 0, 'totalReviews': 0}"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:05.391052",
+      "module": "Module 1",
+      "test": "GET /products/1/reviews",
+      "method": "GET",
+      "endpoint": "/products/1/reviews",
+      "status_code": 200,
+      "success": true,
+      "details": "[]"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:05.506477",
+      "module": "Module 2",
+      "test": "POST /auth/register",
+      "method": "POST",
+      "endpoint": "/auth/register",
+      "status_code": 201,
+      "success": true,
+      "details": "{'user': {'id': 'cfe81834-3c03-4978-b267-32b0ac7c3436', 'name': 'Test User', 'email': 'testuser@food"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:05.568954",
+      "module": "Module 2",
+      "test": "POST /auth/login",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "status_code": 201,
+      "success": true,
+      "details": "{'user': {'id': 'cfe81834-3c03-4978-b267-32b0ac7c3436', 'name': 'Test User', 'email': 'testuser@food"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:05.598936",
+      "module": "Module 2",
+      "test": "POST /auth/login (admin)",
+      "method": "POST",
+      "endpoint": "/auth/login (admin)",
+      "status_code": 404,
+      "success": false,
+      "details": "{'message': 'Cannot POST /auth/login%20(admin)', 'error': 'Not Found', 'statusCode': 404}"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:05.603411",
+      "module": "Module 2",
+      "test": "GET /orders/my (authenticated)",
+      "method": "GET",
+      "endpoint": "/orders/my",
+      "status_code": 401,
+      "success": false,
+      "details": "{'message': 'Unauthorized', 'statusCode': 401}"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:05.682715",
+      "module": "Module 3",
+      "test": "GET /products/recommended",
+      "method": "GET",
+      "endpoint": "/products/recommended",
+      "status_code": 200,
+      "success": true,
+      "details": "[{'id': '89c3e666-e6c2-474c-a7e7-bd66ef3237ca', 'name': 'B\u00e1nh M\u00ec Th\u1ecbt N\u01b0\u1edbng', 'description': 'B\u00e1nh m"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:07.717996",
+      "module": "Module 8",
+      "test": "GET /docs (AI Service)",
+      "method": "GET",
+      "endpoint": "http://localhost:8000/docs",
+      "status_code": 200,
+      "success": true,
+      "details": ""
+    },
+    {
+      "timestamp": "2026-04-05T08:49:09.786459",
+      "module": "Module 8",
+      "test": "POST /recommend (AI Service)",
+      "method": "POST",
+      "endpoint": "http://localhost:8000/recommend",
+      "status_code": 422,
+      "success": false,
+      "details": "{'detail': [{'type': 'missing', 'loc': ['body', 'availableProducts'], 'msg': 'Field required', 'inpu"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:09.790482",
+      "module": "Module 9",
+      "test": "GET /admin/stats (without auth)",
+      "method": "GET",
+      "endpoint": "/admin/stats",
+      "status_code": 401,
+      "success": false,
+      "details": "{'message': 'Unauthorized', 'statusCode': 401}"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:09.799204",
+      "module": "Module 9",
+      "test": "GET /products/99999 (non-existent)",
+      "method": "GET",
+      "endpoint": "/products/99999",
+      "status_code": 404,
+      "success": false,
+      "details": "{'message': 'S\u1ea3n ph\u1ea9m kh\u00f4ng t\u1ed3n t\u1ea1i', 'error': 'Not Found', 'statusCode': 404}"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:09.830302",
+      "module": "Module 9",
+      "test": "POST /auth/register (invalid email)",
+      "method": "POST",
+      "endpoint": "/auth/register",
+      "status_code": 400,
+      "success": false,
+      "details": "{'message': ['email must be an email'], 'error': 'Bad Request', 'statusCode': 400}"
+    },
+    {
+      "timestamp": "2026-04-05T08:49:09.836373",
+      "module": "Module 9",
+      "test": "POST /orders (missing fields)",
+      "method": "POST",
+      "endpoint": "/orders",
+      "status_code": 401,
+      "success": false,
+      "details": "{'message': 'Unauthorized', 'statusCode': 401}"
+    }
+  ]
+}
