@@ -85,16 +85,14 @@ export default function AIChatWidget() {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {/* Nút bật/tắt (Bubble) */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary to-accent text-white shadow-xl hover:scale-105 active:scale-95 transition-all"
-      >
-        {isOpen ? (
-          <span className="text-2xl">✕</span>
-        ) : (
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary to-accent text-white shadow-xl hover:scale-105 active:scale-95 transition-all"
+        >
           <span className="text-3xl animate-bounce mt-1">🤖</span>
-        )}
-      </button>
+        </button>
+      )}
 
       {/* Cửa sổ Chat */}
       {isOpen && (

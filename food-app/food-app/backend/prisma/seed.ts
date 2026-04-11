@@ -1,148 +1,170 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-const products = [
-  {
-    name: 'Phở Bò Tái',
-    description: 'Phở bò truyền thống với nước dùng ninh xương 12 tiếng, thịt bò tái mềm, rau thơm tươi.',
-    price: 55000,
-    image: '/images/pho-bo.jpg',
-    category: 'Món nước',
-    isAvailable: true,
-    isSpicy: false,
-    isVegetarian: false,
-    calories: 450,
-    tags: ['Bán chạy', 'Truyền thống'],
-  },
-  {
-    name: 'Bún Chả Hà Nội',
-    description: 'Bún chả nướng than hoa thơm lừng, kèm nước mắm pha chua ngọt và rau sống.',
-    price: 50000,
-    image: '/images/bun-cha.jpg',
-    category: 'Món nước',
-    isAvailable: true,
-    isSpicy: false,
-    isVegetarian: false,
-    calories: 520,
-    tags: ['Bán chạy', 'Đặc sản Hà Nội'],
-  },
-  {
-    name: 'Bánh Mì Thịt Nướng',
-    description: 'Bánh mì giòn rụm, nhân thịt nướng đậm đà, đồ chua, rau mùi, ớt tươi.',
-    price: 30000,
-    image: '/images/banh-mi.jpg',
-    category: 'Món khô',
-    isAvailable: true,
-    isSpicy: true,
-    isVegetarian: false,
-    calories: 380,
-    tags: ['Cay', 'Nhanh gọn'],
-  },
-  {
-    name: 'Cơm Tấm Sườn Bì Chả',
-    description: 'Cơm tấm Sài Gòn đặc biệt: sườn nướng, bì, chả trứng, mỡ hành, nước mắm.',
-    price: 60000,
-    image: '/images/com-tam.jpg',
-    category: 'Cơm',
-    isAvailable: true,
-    isSpicy: false,
-    isVegetarian: false,
-    calories: 680,
-    tags: ['Bán chạy', 'Đặc sản Sài Gòn'],
-  },
-  {
-    name: 'Gỏi Cuốn Tôm Thịt',
-    description: 'Gỏi cuốn tươi mát với tôm, thịt luộc, bún, rau sống, chấm tương đậu phộng.',
-    price: 35000,
-    image: '/images/goi-cuon.jpg',
-    category: 'Khai vị',
-    isAvailable: true,
-    isSpicy: false,
-    isVegetarian: false,
-    calories: 280,
-    tags: ['Healthy', 'Ít calo'],
-  },
-  {
-    name: 'Bò Lúc Lắc',
-    description: 'Thịt bò Úc xào lúc lắc với tỏi, tiêu đen, ăn kèm cơm trắng nóng hổi.',
-    price: 85000,
-    image: '/images/bo-luc-lac.jpg',
-    category: 'Món mặn',
-    isAvailable: true,
-    isSpicy: false,
-    isVegetarian: false,
-    calories: 620,
-    tags: ['Cao cấp', 'Bò Úc'],
-  },
-  {
-    name: 'Chè Thái',
-    description: 'Chè thập cẩm kiểu Thái với nước cốt dừa, trái cây tươi, thạch lá dứa.',
-    price: 25000,
-    image: '/images/che-thai.jpg',
-    category: 'Tráng miệng',
-    isAvailable: true,
-    isSpicy: false,
-    isVegetarian: true,
-    calories: 320,
-    tags: ['Chay', 'Ngọt mát'],
-  },
-  {
-    name: 'Trà Sen Vàng',
-    description: 'Trà ướp sen tươi Tây Hồ, hương thơm nhẹ nhàng, thanh mát giải nhiệt.',
-    price: 20000,
-    image: '/images/tra-sen.jpg',
-    category: 'Đồ uống',
-    isAvailable: true,
-    isSpicy: false,
-    isVegetarian: true,
-    calories: 50,
-    tags: ['Chay', 'Ít calo', 'Healthy'],
-  },
+const HA_DONG_COORDS = [
+  { lat: 20.9716, lng: 105.7725 }, // Gần Cầu Trắng, Hà Đông
+  { lat: 20.9760, lng: 105.7790 }, // Gần Văn Quán, Hà Đông
+  { lat: 20.9630, lng: 105.7650 }, // Gần La Khê, Hà Đông
 ];
 
 async function main() {
-  console.log('🌱 Updating products with filter attributes...');
+  console.log('🌱 Bắt đầu tạo dữ liệu Seed (Users, Stores, Products)...');
 
-  for (const product of products) {
-    const existing = await prisma.product.findFirst({
-      where: { name: product.name }
-    });
+  const passwordHash = await bcrypt.hash('123456', 10);
 
-    if (existing) {
-      await prisma.product.update({
-        where: { id: existing.id },
-        data: {
-          description: product.description,
-          price: product.price,
-          image: product.image,
-          category: product.category,
-          isAvailable: product.isAvailable,
-          isSpicy: product.isSpicy,
-          isVegetarian: product.isVegetarian,
-          calories: product.calories,
-          tags: product.tags,
-        },
-      });
+  // 1. Tạo Customer User
+  const customer = await prisma.user.upsert({
+    where: { email: 'khachhang_hadong@test.com' },
+    update: {},
+    create: {
+      email: 'khachhang_hadong@test.com',
+      name: 'Khách Hàng Hà Đông',
+      password: passwordHash,
+      role: 'CUSTOMER',
+      phone: '0987654321',
+    },
+  });
+  console.log(`✅ Khách hàng tạo thành công: ${customer.email} / 123456`);
+
+  // 2. Tạo Seller 1
+  const seller1 = await prisma.user.upsert({
+    where: { email: 'seller_hadong_1@test.com' },
+    update: {},
+    create: {
+      email: 'seller_hadong_1@test.com',
+      name: 'Chủ Quán Phở',
+      password: passwordHash,
+      role: 'RESTAURANT',
+      phone: '0911111111',
+    },
+  });
+
+  const store1 = await prisma.store.upsert({
+    where: { ownerId: seller1.id },
+    update: { lat: HA_DONG_COORDS[0].lat, lng: HA_DONG_COORDS[0].lng },
+    create: {
+      name: 'Quán Phở Bò Tái - Hà Đông',
+      ownerId: seller1.id,
+      address: 'Đường Trần Phú, Cầu Trắng, Hà Đông, Hà Nội',
+      phone: '0911111111',
+      description: 'Phở bò gia truyền ngon nhất khu vực Hà Đông',
+      lat: HA_DONG_COORDS[0].lat,
+      lng: HA_DONG_COORDS[0].lng,
+      rating: 4.8,
+    },
+  });
+  console.log(`✅ Seller 1 tạo thành công: ${seller1.email} / 123456 - Store: ${store1.name}`);
+
+  // 3. Tạo Seller 2
+  const seller2 = await prisma.user.upsert({
+    where: { email: 'seller_hadong_2@test.com' },
+    update: {},
+    create: {
+      email: 'seller_hadong_2@test.com',
+      name: 'Chủ Bún Chả',
+      password: passwordHash,
+      role: 'RESTAURANT',
+      phone: '0922222222',
+    },
+  });
+
+  const store2 = await prisma.store.upsert({
+    where: { ownerId: seller2.id },
+    update: { lat: HA_DONG_COORDS[1].lat, lng: HA_DONG_COORDS[1].lng },
+    create: {
+      name: 'Bún Chả Văn Quán - Hà Đông',
+      ownerId: seller2.id,
+      address: 'Khu Đô Thị Văn Quán, Hà Đông, Hà Nội',
+      phone: '0922222222',
+      description: 'Bún chả nướng than hoa thơm lừng',
+      lat: HA_DONG_COORDS[1].lat,
+      lng: HA_DONG_COORDS[1].lng,
+      rating: 4.5,
+    },
+  });
+  console.log(`✅ Seller 2 tạo thành công: ${seller2.email} / 123456 - Store: ${store2.name}`);
+
+  // 4. Products cho Seller 1
+  const products1 = [
+    {
+      name: 'Phở Bò Tái Nạm',
+      description: 'Phở bò truyền thống với nước dùng ninh xương 12 tiếng, thịt bò tái chín, nạm gầu, rau thơm tươi.',
+      price: 55000,
+      image: '/images/pho-bo.jpg',
+      category: 'Món nước',
+      isAvailable: true,
+      isSpicy: false,
+      isVegetarian: false,
+      calories: 450,
+      tags: ['Bán chạy', 'Truyền thống'],
+      storeId: store1.id,
+    },
+    {
+      name: 'Phở Bò Gầu Giòn',
+      description: 'Phở bò với gầu bò giòn sần sật, đặc biệt ngon vào buổi sáng.',
+      price: 65000,
+      image: '/images/pho-bo.jpg',
+      category: 'Món nước',
+      isAvailable: true,
+      isSpicy: false,
+      isVegetarian: false,
+      calories: 500,
+      tags: ['Cao cấp'],
+      storeId: store1.id,
+    }
+  ];
+
+  for (const product of products1) {
+    const existing = await prisma.product.findFirst({ where: { name: product.name, storeId: store1.id } });
+    if (!existing) {
+      await prisma.product.create({ data: product });
     } else {
-      await prisma.product.create({
-        data: {
-          name: product.name,
-          description: product.description,
-          price: product.price,
-          image: product.image,
-          category: product.category,
-          isAvailable: product.isAvailable,
-          isSpicy: product.isSpicy,
-          isVegetarian: product.isVegetarian,
-          calories: product.calories,
-          tags: product.tags,
-        },
-      });
+      await prisma.product.update({ where: { id: existing.id }, data: product });
     }
   }
 
-  console.log(`✅ Seeded ${products.length} products successfully!`);
+  // 5. Products cho Seller 2
+  const products2 = [
+    {
+      name: 'Bún Chả Hà Nội Đầy Đủ',
+      description: 'Bún chả nướng than hoa thơm lừng, kèm nước mắm pha chua ngọt và rau sống.',
+      price: 50000,
+      image: '/images/bun-cha.jpg',
+      category: 'Món nước',
+      isAvailable: true,
+      isSpicy: false,
+      isVegetarian: false,
+      calories: 520,
+      tags: ['Bán chạy', 'Đặc sản Hà Nội'],
+      storeId: store2.id,
+    },
+    {
+      name: 'Nem Cua Bể Rán (2 Chiếc)',
+      description: 'Nem cua bể rán giòn rụm, nhân thịt, tôm, cua biển.',
+      price: 40000,
+      image: '/images/bun-cha.jpg', // Dùng mock image
+      category: 'Khai vị',
+      isAvailable: true,
+      isSpicy: false,
+      isVegetarian: false,
+      calories: 300,
+      tags: ['Ngon'],
+      storeId: store2.id,
+    }
+  ];
+
+  for (const product of products2) {
+    const existing = await prisma.product.findFirst({ where: { name: product.name, storeId: store2.id } });
+    if (!existing) {
+      await prisma.product.create({ data: product });
+    } else {
+      await prisma.product.update({ where: { id: existing.id }, data: product });
+    }
+  }
+
+  console.log(`✅ Đã tạo dữ liệu các món ăn cho 2 quán ở Hà Đông!`);
 }
 
 main()
