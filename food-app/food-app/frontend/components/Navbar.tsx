@@ -14,7 +14,6 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        {/* Logo */}
         <Link
           href="/"
           className="flex items-center gap-2 text-xl font-extrabold text-primary transition-colors hover:text-primary-600"
@@ -23,7 +22,6 @@ export default function Navbar() {
           <span className="hidden sm:inline">Food App</span>
         </Link>
 
-        {/* Navigation Links */}
         <div className="flex items-center gap-3 sm:gap-5">
           <Link
             href="/menu"
@@ -32,17 +30,45 @@ export default function Navbar() {
             Thực đơn
           </Link>
 
-          {/* Auth section */}
+          {user && (
+            <>
+              <Link
+                href="/profile"
+                className="text-sm font-semibold text-gray-600 transition-colors hover:text-primary hidden sm:block"
+              >
+                Tài khoản
+              </Link>
+
+              {user.role === 'RESTAURANT' && (
+                <Link
+                  href="/seller"
+                  className="text-sm font-semibold text-accent-500 transition-colors hover:text-accent-600"
+                >
+                  🏪 Seller
+                </Link>
+              )}
+
+              {user.role === 'ADMIN' && (
+                <Link
+                  href="/admin"
+                  className="text-sm font-semibold text-red-500 transition-colors hover:text-red-600"
+                >
+                  ⚙️ Admin
+                </Link>
+              )}
+            </>
+          )}
+
           {user ? (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
+              <Link href="/profile" className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-white">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
                 <span className="hidden text-sm font-semibold text-gray-700 sm:inline">
                   {user.name}
                 </span>
-              </div>
+              </Link>
               <button
                 onClick={logout}
                 className="rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
@@ -59,7 +85,6 @@ export default function Navbar() {
             </button>
           )}
 
-          {/* Cart icon with badge */}
           <button
             onClick={toggleCart}
             className="relative rounded-full bg-gray-100 p-2.5 transition-colors hover:bg-primary-50"

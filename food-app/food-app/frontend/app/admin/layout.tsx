@@ -23,6 +23,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Link href="/admin/products" className="block px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors">
               🍔 Quản lý Món ăn
             </Link>
+            <Link href="/admin/users" className="block px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors">
+              👥 Quản lý Người dùng
+            </Link>
           </nav>
           <div className="p-6 border-t border-gray-800">
             <Link href="/menu" className="block px-4 py-3 text-center rounded-xl bg-gray-800 text-sm font-semibold text-gray-300 hover:text-white transition-colors">

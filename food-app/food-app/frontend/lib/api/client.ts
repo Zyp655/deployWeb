@@ -282,3 +282,115 @@ export async function createVNPayPayment(
     token,
   });
 }
+
+// ─── Profile ─────────────────────────────────────────
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  createdAt: string;
+}
+
+export async function fetchProfile(token: string): Promise<UserProfile> {
+  return apiClient<UserProfile>('/users/me', { token });
+}
+
+export async function updateProfile(
+  data: { name?: string; phone?: string },
+  token: string,
+): Promise<UserProfile> {
+  return apiClient<UserProfile>('/users/me', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+  token: string,
+): Promise<{ message: string }> {
+  return apiClient('/users/me/password', {
+    method: 'PATCH',
+    body: JSON.stringify({ currentPassword, newPassword }),
+    token,
+  });
+}
+
+// ─── Admin User Management ───────────────────────────
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  isBlocked: boolean;
+  createdAt: string;
+  _count: { orders: number };
+}
+
+export async function fetchAdminUsers(token: string, role?: string, blocked?: string): Promise<AdminUser[]> {
+  const params = new URLSearchParams();
+  if (role) params.append('role', role);
+  if (blocked) params.append('blocked', blocked);
+  const query = params.toString();
+  return apiClient<AdminUser[]>(`/admin/users${query ? `?${query}` : ''}`, { token });
+}
+
+export async function updateUserRole(userId: string, role: string, token: string) {
+  return apiClient(`/admin/users/${userId}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+    token,
+  });
+}
+
+export async function toggleBlockUser(userId: string, isBlocked: boolean, token: string) {
+  return apiClient(`/admin/users/${userId}/block`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isBlocked }),
+    token,
+  });
+}
+
+// ─── Seller ──────────────────────────────────────────
+
+export interface SellerStats {
+  ordersToday: number;
+  revenueToday: number;
+  totalProducts: number;
+  averageRating: number;
+  totalOrders: number;
+  chartData: { date: string; orders: number; revenue: number }[];
+  topProducts: { name: string; totalSold: number }[];
+}
+
+export async function fetchSellerStats(token: string): Promise<SellerStats> {
+  return apiClient<SellerStats>('/seller/stats', { token });
+}
+
+export interface SellerOrder extends Order {
+  user: { name: string; email: string; phone: string | null };
+}
+
+export async function fetchSellerOrders(token: string): Promise<SellerOrder[]> {
+  return apiClient<SellerOrder[]>('/seller/orders', { token });
+}
+
+export async function updateSellerOrderStatus(orderId: string, status: string, token: string) {
+  return apiClient(`/seller/orders/${orderId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+    token,
+  });
+}
+
+export async function fetchSellerProducts(token: string): Promise<Product[]> {
+  return apiClient<Product[]>('/seller/products', { token });
+}
+

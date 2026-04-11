@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { registerUser, loginUser } from '@/lib/api/client';
 
 export default function AuthModal() {
+  const router = useRouter();
   const { isAuthModalOpen, authModalMode, closeAuthModal, setAuthModalMode, setAuth } =
     useAuthStore();
 
@@ -40,6 +42,14 @@ export default function AuthModal() {
 
       setAuth({ id: res.user.id, name: res.user.name, email: res.user.email, role: res.user.role }, res.accessToken);
       resetForm();
+      closeAuthModal();
+      
+      if (res.user.role === 'ADMIN') {
+        router.push('/admin');
+      } else if (res.user.role === 'RESTAURANT') {
+        router.push('/seller');
+      }
+
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Đã có lỗi xảy ra';
       setError(message);

@@ -13,6 +13,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { AdminModule } from './admin/admin.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SellerModule } from './seller/seller.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     GatewayModule,
     AdminModule,
     ReviewsModule,
+    SellerModule,
   ],
   providers: [
     {
