@@ -17,7 +17,7 @@ export class UploadController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: uploadDir,
-        filename: (req, file, cb) => {
+        filename: (req: any, file: any, cb: any) => {
           const uniqueSuffix = uuidv4();
           const ext = extname(file.originalname);
           cb(null, `${uniqueSuffix}${ext}`);

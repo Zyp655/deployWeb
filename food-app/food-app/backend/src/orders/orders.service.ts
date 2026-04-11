@@ -135,10 +135,10 @@ export class OrdersService {
               optionsPrice = item.selectedOptions.reduce((optSum, opt) => optSum + (Number(opt.price) || 0), 0);
             }
             return {
-              productId: item.productId,
+              product: { connect: { id: item.productId } },
               quantity: item.quantity,
               price: basePrice + optionsPrice,
-              selectedOptions: item.selectedOptions || null,
+              selectedOptions: item.selectedOptions ? (item.selectedOptions as any) : undefined,
             };
           }),
         },
@@ -174,7 +174,7 @@ export class OrdersService {
       deliveryAddress: order.deliveryAddress,
       deliveryPhone: order.deliveryPhone,
       paymentMethod: dto.paymentMethod,
-      items: order.items.map((item) => ({
+      items: (order as any).items.map((item: any) => ({
         id: item.id,
         productName: item.product.name,
         quantity: item.quantity,
