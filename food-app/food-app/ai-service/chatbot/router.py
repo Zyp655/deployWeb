@@ -1,9 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
+import time
+from database import log_ai_interaction
 
 router = APIRouter(prefix="/chat", tags=["Chatbot"])
 
 class ChatRequest(BaseModel):
+    userId: str = "anonymous"
     message: str
 
 class ChatResponse(BaseModel):
@@ -11,10 +14,11 @@ class ChatResponse(BaseModel):
     status: str
 
 @router.post("/", response_model=ChatResponse)
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
     """
     Chatbot hỗ trợ khách hàng về menu món ăn
     """
+    start_time = time.time()
     message = req.message.lower().strip()
     
     # Simple keyword-based responses
@@ -43,4 +47,16 @@ async def chat(req: ChatRequest):
     else:
         reply = "Tôi có thể giúp bạn tìm món ăn ngon! Bạn muốn ăn phở, bún, cơm hay món gì khác?"
     
-    return ChatResponse(reply=reply, status="ok")
+    response = ChatResponse(reply=reply, status="ok")
+    latency_ms = int((time.time() - start_time) * 1000)
+    
+    background_tasks.add_task(
+        log_ai_interaction,
+        "chatbot",
+        req.userId,
+        req.model_dump(),
+        response.model_dump(),
+        latency_ms
+    )
+    
+    return response

@@ -9,10 +9,17 @@ FastAPI server cung cấp các chức năng AI:
 Chỉ nhận request từ backend (internal network).
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Header, HTTPException
+import os
 from recommendation.router import router as recommendation_router
 from chatbot.router import router as chatbot_router
 from search.router import router as search_router
+
+API_KEY = os.environ.get("AI_SERVICE_API_KEY", "DEV_SECRET_KEY")
+
+async def verify_api_key(x_api_key: str = Header(None)):
+    if not x_api_key or x_api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Forbidden: Invalid API Key")
 
 app = FastAPI(
     title="Food App AI Service",
@@ -24,6 +31,6 @@ app = FastAPI(
 async def health_check():
     return {"status": "ok", "service": "ai-service"}
 
-app.include_router(recommendation_router)
-app.include_router(chatbot_router)
-app.include_router(search_router)
+app.include_router(recommendation_router, dependencies=[Depends(verify_api_key)])
+app.include_router(chatbot_router, dependencies=[Depends(verify_api_key)])
+app.include_router(search_router, dependencies=[Depends(verify_api_key)])

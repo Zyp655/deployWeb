@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import * as crypto from 'crypto';
 
@@ -8,9 +8,14 @@ export class PaymentsService {
 
   // MoMo Payment
   async createMoMoPayment(orderId: string, amount: number, orderInfo: string) {
-    const accessKey = process.env.MOMO_ACCESS_KEY || 'F8BBA842ECF85';
-    const secretKey = process.env.MOMO_SECRET_KEY || 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
-    const partnerCode = process.env.MOMO_PARTNER_CODE || 'MOMO';
+    const accessKey = process.env.MOMO_ACCESS_KEY;
+    const secretKey = process.env.MOMO_SECRET_KEY;
+    const partnerCode = process.env.MOMO_PARTNER_CODE;
+    
+    if (!accessKey || !secretKey || !partnerCode) {
+      throw new InternalServerErrorException('Thiếu cấu hình MoMo Secret Key');
+    }
+
     const redirectUrl = process.env.MOMO_REDIRECT_URL || 'http://localhost:3000/payment/result';
     const ipnUrl = process.env.MOMO_IPN_URL || 'http://localhost:4000/payments/momo/callback';
     const requestType = 'payWithMethod';
@@ -62,8 +67,13 @@ export class PaymentsService {
 
   // VNPay Payment
   async createVNPayPayment(orderId: string, amount: number, orderInfo: string, ipAddr: string) {
-    const tmnCode = process.env.VNPAY_TMN_CODE || 'DEMOSHOP';
-    const secretKey = process.env.VNPAY_SECRET_KEY || 'RAOEXHYVSDDIIENYWSLDIIZTANXUXZFJ';
+    const tmnCode = process.env.VNPAY_TMN_CODE;
+    const secretKey = process.env.VNPAY_SECRET_KEY;
+    
+    if (!tmnCode || !secretKey) {
+      throw new InternalServerErrorException('Thiếu cấu hình VNPay Secret Key');
+    }
+
     const vnpUrl = process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
     const returnUrl = process.env.VNPAY_RETURN_URL || 'http://localhost:3000/payment/result';
 
@@ -139,7 +149,12 @@ export class PaymentsService {
     delete query.vnp_SecureHashType;
 
     const sortedParams = this.sortObject(query);
-    const secretKey = process.env.VNPAY_SECRET_KEY || 'RAOEXHYVSDDIIENYWSLDIIZTANXUXZFJ';
+    const secretKey = process.env.VNPAY_SECRET_KEY;
+    
+    if (!secretKey) {
+      throw new InternalServerErrorException('Thiếu cấu hình VNPay Secret Key');
+    }
+
     const signData = new URLSearchParams(sortedParams).toString();
     const hmac = crypto.createHmac('sha512', secretKey);
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');

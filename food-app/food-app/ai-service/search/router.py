@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, BackgroundTasks
 from pydantic import BaseModel
 from typing import List
 import unicodedata
+import time
+from database import log_ai_interaction
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
@@ -130,10 +132,15 @@ def calculate_score(item: dict, query_normalized: str) -> float:
     return score
 
 @router.get("/", response_model=SearchResponse)
-async def search(q: str = Query(..., min_length=1, description="Từ khóa tìm kiếm")):
+async def search(
+    q: str = Query(..., min_length=1, description="Từ khóa tìm kiếm"),
+    userId: str = Query("anonymous", description="User ID"),
+    background_tasks: BackgroundTasks = None
+):
     """
-    Tìm kiếm món ăn theo từ khóa (hỗ trợ tiếng Việt có dấu và không dấu)
+    Tìm kiếm món ăn theo từ khóa
     """
+    start_time = time.time()
     query_normalized = remove_accents(q.lower().strip())
     
     # Tính điểm cho từng món
@@ -162,4 +169,10 @@ async def search(q: str = Query(..., min_length=1, description="Từ khóa tìm 
         for si in scored_items
     ]
     
-    return SearchResponse(results=results, query=q)
+    response = SearchResponse(results=results, query=q)
+    latency_ms = int((time.time() - start_time) * 1000)
+    if background_tasks:
+        background_tasks.add_task(
+            log_ai_interaction, "search", userId, {"q": q}, response.model_dump(), latency_ms
+        )
+    return response

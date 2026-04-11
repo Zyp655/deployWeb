@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
+import time
+from database import log_ai_interaction
 from typing import List, Optional
 from collections import Counter
 import random
@@ -28,17 +30,24 @@ class RecommendResponseItem(BaseModel):
     reason: str
 
 @router.post("/", response_model=List[RecommendResponseItem])
-async def recommend_products(req: RecommendRequest):
+async def recommend_products(req: RecommendRequest, background_tasks: BackgroundTasks):
+    start_time = time.time()
+    
     if not req.userId or not req.orderHistory:
         # Fallback: Guest or no history -> Top popular / diverse items
         selected = req.availableProducts[:req.limit]
-        return [
+        response = [
             RecommendResponseItem(
                 productId=p.id,
                 score=5.0,
                 reason="Món phổ biến đang được yêu thích"
             ) for p in selected
         ]
+        latency_ms = int((time.time() - start_time) * 1000)
+        background_tasks.add_task(
+            log_ai_interaction, "recommendation", req.userId or "anonymous", req.model_dump(), [r.model_dump() for r in response], latency_ms
+        )
+        return response
     
     # Content-based filtering based on historical category preferences
     cat_scores = Counter()
@@ -69,7 +78,14 @@ async def recommend_products(req: RecommendRequest):
     scored_products.sort(key=lambda x: x[1], reverse=True)
     top = scored_products[:req.limit]
     
-    return [
+    response = [
         RecommendResponseItem(productId=pid, score=round(sc, 2), reason=res)
         for pid, sc, res in top
     ]
+    
+    latency_ms = int((time.time() - start_time) * 1000)
+    background_tasks.add_task(
+        log_ai_interaction, "recommendation", req.userId or "anonymous", req.model_dump(), [r.model_dump() for r in response], latency_ms
+    )
+    
+    return response

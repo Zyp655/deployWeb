@@ -148,12 +148,22 @@ export class ProductsService {
     });
 
     try {
+      const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+      const aiApiKey = process.env.AI_SERVICE_API_KEY;
+      
+      if (!aiApiKey) {
+        throw new Error('Thiếu cấu hình AI_SERVICE_API_KEY');
+      }
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3500);
       
-      const response = await fetch('http://localhost:8000/recommend', {
+      const response = await fetch(`${aiServiceUrl}/recommend`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-KEY': aiApiKey
+        },
         body: JSON.stringify({
           userId,
           orderHistory,
