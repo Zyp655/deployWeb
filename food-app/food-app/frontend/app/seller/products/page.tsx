@@ -217,7 +217,7 @@ export default function SellerProductsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {products.map((product) => (
-            <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 transition-all hover:shadow-md flex flex-col group">
+            <div key={product.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm border transition-all hover:shadow-md flex flex-col group ${product.isAvailable ? 'border-gray-100' : 'border-red-100 opacity-75'}`}>
               <div className="h-40 bg-gradient-to-br from-primary-50 to-accent-50 flex items-center justify-center relative">
                 {product.image && product.image !== '/images/default.jpg' ? (
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -225,11 +225,13 @@ export default function SellerProductsPage() {
                   <span className="text-6xl">{getCategoryEmoji(product.category)}</span>
                 )}
                 
-                {/* Overlay actions */}
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openProductModal(product)} className="w-8 h-8 rounded-full bg-white/90 backdrop-blur text-blue-600 flex items-center justify-center shadow hover:bg-blue-50" title="Sửa chi tiết">✏️</button>
-                  <button onClick={() => handleDeleteProduct(product.id, product.name)} className="w-8 h-8 rounded-full bg-white/90 backdrop-blur text-red-600 flex items-center justify-center shadow hover:bg-red-50" title="Xóa món">🗑️</button>
-                </div>
+                {!product.isAvailable && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span className="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                      🔴 Đã ẩn
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="p-4 flex-1 flex flex-col">
@@ -258,12 +260,43 @@ export default function SellerProductsPage() {
 
                 <div className="mt-3 flex flex-none items-center justify-between pt-3 border-t border-gray-50">
                   <span className="text-lg font-black text-primary">{formatPrice(product.price)}</span>
-                  <button 
-                    onClick={() => handleToggle(product.id)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all hover:scale-105 active:scale-95 ${product.isAvailable ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
-                  >
-                    {product.isAvailable ? '🟢 Đang bán' : '🔴 Tạm ẩn'}
-                  </button>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between bg-gray-50/80 rounded-xl px-3 py-2.5 border border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleToggle(product.id)}
+                      className={`relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                        product.isAvailable 
+                          ? 'bg-green-500 focus:ring-green-300' 
+                          : 'bg-gray-300 focus:ring-gray-200'
+                      }`}
+                      title={product.isAvailable ? 'Ẩn sản phẩm' : 'Hiện sản phẩm'}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${
+                        product.isAvailable ? 'translate-x-6' : 'translate-x-0'
+                      }`} />
+                    </button>
+                    <span className={`text-xs font-bold ${product.isAvailable ? 'text-green-700' : 'text-gray-500'}`}>
+                      {product.isAvailable ? 'Đang bán' : 'Đã ẩn'}
+                    </span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => openProductModal(product)}
+                      className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-all active:scale-90"
+                      title="Chỉnh sửa"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProduct(product.id, product.name)}
+                      className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-all active:scale-90"
+                      title="Xóa"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

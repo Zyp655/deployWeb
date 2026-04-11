@@ -22,11 +22,11 @@ export class UsersService {
     return this.prisma.user.create({ data });
   }
 
-  async updateProfile(id: string, data: { name?: string; phone?: string }) {
+  async updateProfile(id: string, data: { name?: string; phone?: string; avatar?: string }) {
     return this.prisma.user.update({
       where: { id },
       data,
-      select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
+      select: { id: true, name: true, email: true, phone: true, avatar: true, role: true, createdAt: true },
     });
   }
 

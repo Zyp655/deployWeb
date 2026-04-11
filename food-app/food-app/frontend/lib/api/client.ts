@@ -47,6 +47,7 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  avatar?: string | null;
   role: string;
 }
 
@@ -156,6 +157,58 @@ export async function validateCoupon(code: string, orderTotal: number, token: st
   return apiClient<CouponValidation>('/coupons/validate', {
     method: 'POST',
     body: JSON.stringify({ code, orderTotal }),
+    token,
+  });
+}
+
+export interface CouponPublic {
+  code: string;
+  description: string | null;
+  discountType: string;
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscount: number | null;
+  expiresAt: string | null;
+  storeId: string | null;
+}
+
+export interface CouponFull extends CouponPublic {
+  id: string;
+  isActive: boolean;
+  usageLimit: number;
+  usedCount: number;
+  createdAt: string;
+}
+
+export async function fetchActiveCoupons(token: string, storeId?: string): Promise<CouponPublic[]> {
+  const query = storeId ? `?storeId=${storeId}` : '';
+  return apiClient<CouponPublic[]>(`/coupons${query}`, { token });
+}
+
+export async function fetchAdminCoupons(token: string): Promise<CouponFull[]> {
+  return apiClient<CouponFull[]>('/coupons/admin', { token });
+}
+
+export async function createAdminCoupon(data: {
+  code: string;
+  description?: string;
+  discountType: string;
+  discountValue: number;
+  minOrderValue?: number;
+  maxDiscount?: number | null;
+  usageLimit?: number;
+  expiresAt?: string | null;
+}, token: string): Promise<CouponFull> {
+  return apiClient<CouponFull>('/coupons', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function deleteAdminCoupon(id: string, token: string): Promise<void> {
+  return apiClient<void>(`/coupons/${id}`, {
+    method: 'DELETE',
     token,
   });
 }
@@ -367,22 +420,6 @@ export async function updateOrderStatus(orderId: string, status: string, token: 
   });
 }
 
-export async function createAdminProduct(payload: Partial<Product>, token: string): Promise<Product> {
-  return apiClient<Product>('/admin/products', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    token,
-  });
-}
-
-export async function updateAdminProduct(id: string, payload: Partial<Product>, token: string): Promise<Product> {
-  return apiClient<Product>(`/admin/products/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-    token,
-  });
-}
-
 // ─── Payments ────────────────────────────────────────
 
 export async function createMoMoPayment(
@@ -418,6 +455,7 @@ export interface UserProfile {
   name: string;
   email: string;
   phone: string | null;
+  avatar: string | null;
   role: string;
   createdAt: string;
 }
@@ -427,7 +465,7 @@ export async function fetchProfile(token: string): Promise<UserProfile> {
 }
 
 export async function updateProfile(
-  data: { name?: string; phone?: string },
+  data: { name?: string; phone?: string; avatar?: string },
   token: string,
 ): Promise<UserProfile> {
   return apiClient<UserProfile>('/users/me', {
@@ -644,15 +682,18 @@ export async function fetchDriverMyOrders(token: string): Promise<DriverOrder[]>
   return apiClient<DriverOrder[]>('/driver/orders/my-orders', { token });
 }
 
+export const api = { baseUrl: API_BASE_URL };
+
 export async function uploadImage(file: File, token: string): Promise<{ url: string }> {
   const formData = new FormData();
   formData.append('file', file);
   
-  const tokenOpts = token ? { 'Authorization': `Bearer ${token}` } : {};
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const res = await fetch(`${API_BASE_URL}/upload`, {
     method: 'POST',
-    headers: tokenOpts,
+    headers,
     body: formData
   });
 

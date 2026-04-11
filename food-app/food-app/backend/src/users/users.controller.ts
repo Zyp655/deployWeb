@@ -20,13 +20,14 @@ export class UsersController {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      avatar: user.avatar,
       role: user.role,
       createdAt: user.createdAt,
     };
   }
 
   @Patch('me')
-  async updateProfile(@Request() req: any, @Body() body: { name?: string; phone?: string }) {
+  async updateProfile(@Request() req: any, @Body() body: { name?: string; phone?: string; avatar?: string }) {
     return this.usersService.updateProfile(req.user.id, body);
   }
 

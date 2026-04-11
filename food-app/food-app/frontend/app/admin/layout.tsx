@@ -1,6 +1,7 @@
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import LogoutButton from '@/components/LogoutButton';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -29,11 +30,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Link href="/admin/reviews" className="block px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors">
               ⭐ Quản lý Đánh giá
             </Link>
+            <Link href="/admin/coupons" className="block px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors">
+              🏷️ Mã giảm giá
+            </Link>
           </nav>
           <div className="p-6 border-t border-gray-800">
-            <Link href="/menu" className="block px-4 py-3 text-center rounded-xl bg-gray-800 text-sm font-semibold text-gray-300 hover:text-white transition-colors">
-              ← Quay lại Cửa hàng
-            </Link>
+            <LogoutButton className="block w-full px-4 py-3 text-center rounded-xl bg-gray-800 text-sm font-semibold text-gray-300 hover:text-white transition-colors" />
           </div>
         </aside>
 

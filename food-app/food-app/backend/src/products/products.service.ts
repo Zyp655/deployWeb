@@ -13,7 +13,7 @@ export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async findAll(query?: any): Promise<ProductResponseDto[]> {
     const where: any = { isAvailable: true };
@@ -141,7 +141,7 @@ export class ProductsService {
       try {
         const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
         userId = payload.sub;
-        
+
         const orders = await this.prisma.order.findMany({
           where: { userId },
           include: { items: { include: { product: true } } },
@@ -169,17 +169,17 @@ export class ProductsService {
     try {
       const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
       const aiApiKey = process.env.AI_SERVICE_API_KEY;
-      
+
       if (!aiApiKey) {
         throw new Error('Thiếu cấu hình AI_SERVICE_API_KEY');
       }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3500);
-      
+
       const response = await fetch(`${aiServiceUrl}/recommend`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'X-API-KEY': aiApiKey
         },
@@ -192,17 +192,17 @@ export class ProductsService {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         throw new Error(`AI Service returned ${response.status}`);
       }
-      
+
       const aiData: { productId: string; score: number; reason: string }[] = await response.json();
-      
+
       const productsMap = await this.prisma.product.findMany({
         where: { id: { in: aiData.map((d) => d.productId) } },
       });
-      
+
       const results = aiData.map((ai) => {
         const product = productsMap.find((p) => p.id === ai.productId);
         if (!product) return null;
@@ -217,7 +217,7 @@ export class ProductsService {
           recommendReason: ai.reason,
         };
       }).filter(Boolean).filter((p: any) => isProductTimeValid(p.saleStartTime, p.saleEndTime)) as RecommendedProductDto[];
-      
+
       return results;
     } catch (e) {
       console.error('AI Service Error:', e);

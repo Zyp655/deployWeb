@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
-import { createOrder, createMoMoPayment, createVNPayPayment } from '@/lib/api/client';
+import { createOrder, createMoMoPayment, createVNPayPayment, fetchActiveCoupons, CouponPublic } from '@/lib/api/client';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -26,7 +26,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  
+
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
@@ -37,13 +37,14 @@ export default function CheckoutPage() {
     finalTotal: number;
   } | null>(null);
 
-  // If not logged in, open auth modal
+  const [availableCoupons, setAvailableCoupons] = useState<CouponPublic[]>([]);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [showCouponPicker, setShowCouponPicker] = useState(false);
+
   useEffect(() => {
     if (!user || !token) {
       openAuthModal('login');
     }
-    
-    // Auto-fetch location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -53,27 +54,46 @@ export default function CheckoutPage() {
     }
   }, [user, token, openAuthModal]);
 
-  // If cart is empty, redirect to menu
   useEffect(() => {
     if (items.length === 0) {
       router.push('/menu');
     }
   }, [items.length, router]);
 
-  const handleApplyCoupon = async () => {
-    if (!token || !couponCode.trim()) return;
+  useEffect(() => {
+    if (!token) return;
+    setCouponsLoading(true);
+    const storeId = items[0]?.product?.storeId || undefined;
+    fetchActiveCoupons(token, storeId)
+      .then(setAvailableCoupons)
+      .catch(() => {})
+      .finally(() => setCouponsLoading(false));
+  }, [token, items]);
+
+  const handleApplyCoupon = async (codeOverride?: string) => {
+    const code = codeOverride || couponCode;
+    if (!token || !code.trim()) return;
+    setCouponCode(code);
     setCouponLoading(true);
     setCouponError('');
     try {
       const { validateCoupon } = await import('@/lib/api/client');
-      const res = await validateCoupon(couponCode, totalPrice(), token);
+      const res = await validateCoupon(code, totalPrice(), token);
       setCouponResult(res);
+      setShowCouponPicker(false);
     } catch (err: unknown) {
       setCouponError(err instanceof Error ? err.message : 'Lỗi mã giảm giá');
       setCouponResult(null);
     } finally {
       setCouponLoading(false);
     }
+  };
+
+  const formatDiscount = (c: CouponPublic) => {
+    if (c.discountType === 'PERCENT') {
+      return `Giảm ${c.discountValue}%${c.maxDiscount ? ` (tối đa ${formatPrice(c.maxDiscount)})` : ''}`;
+    }
+    return `Giảm ${formatPrice(c.discountValue)}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,7 +131,6 @@ export default function CheckoutPage() {
 
       clearCart();
 
-      // Handle payment method
       if (paymentMethod === 'MOMO') {
         const momoResult = await createMoMoPayment(
           order.id,
@@ -136,7 +155,6 @@ export default function CheckoutPage() {
         }
       }
 
-      // COD or fallback
       router.push(`/orders/${order.id}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Đã có lỗi xảy ra';
@@ -209,9 +227,78 @@ export default function CheckoutPage() {
             </div>
           </section>
 
-          {/* Coupon Code */}
+          {/* Coupon Section */}
           <section className="rounded-2xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">🏷️ Mã giảm giá</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-gray-900">🏷️ Mã giảm giá</h2>
+              {availableCoupons.length > 0 && !couponResult && (
+                <button
+                  type="button"
+                  onClick={() => setShowCouponPicker(!showCouponPicker)}
+                  className="text-sm font-bold text-primary hover:underline transition-all flex items-center gap-1"
+                >
+                  {showCouponPicker ? 'Ẩn bớt' : `Xem ${availableCoupons.length} mã có sẵn`}
+                  <span className="text-xs">{showCouponPicker ? '▲' : '▼'}</span>
+                </button>
+              )}
+            </div>
+
+            {showCouponPicker && !couponResult && (
+              <div className="mb-4 space-y-2 max-h-60 overflow-y-auto pr-1">
+                {couponsLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : availableCoupons.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">Chưa có mã giảm giá nào</p>
+                ) : (
+                  availableCoupons.map((c) => {
+                    const isEligible = totalPrice() >= c.minOrderValue;
+                    return (
+                      <button
+                        key={c.code}
+                        type="button"
+                        disabled={!isEligible || couponLoading}
+                        onClick={() => handleApplyCoupon(c.code)}
+                        className={`w-full text-left rounded-xl border-2 p-3 transition-all ${
+                          isEligible
+                            ? 'border-primary/30 bg-primary/5 hover:border-primary hover:shadow-sm cursor-pointer'
+                            : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-primary/10 text-primary text-xs font-black px-2.5 py-1 rounded-lg tracking-wider">
+                              {c.code}
+                            </span>
+                            <span className="text-sm font-bold text-gray-900">
+                              {formatDiscount(c)}
+                            </span>
+                          </div>
+                          {isEligible && (
+                            <span className="text-primary text-xs font-bold">Áp dụng →</span>
+                          )}
+                        </div>
+                        {c.description && (
+                          <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{c.description}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-400">
+                          {c.minOrderValue > 0 && (
+                            <span className={isEligible ? 'text-green-600' : 'text-red-500 font-semibold'}>
+                              Đơn tối thiểu {formatPrice(c.minOrderValue)}
+                            </span>
+                          )}
+                          {c.expiresAt && (
+                            <span>HSD: {new Date(c.expiresAt).toLocaleDateString('vi-VN')}</span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
             <div className="flex gap-2">
               <input
                 type="text"
@@ -219,14 +306,14 @@ export default function CheckoutPage() {
                 onChange={(e) => {
                   setCouponCode(e.target.value);
                   setCouponError('');
-                  if (couponResult) setCouponResult(null); // Reset when changing
+                  if (couponResult) setCouponResult(null);
                 }}
                 placeholder="Nhập mã giảm giá..."
                 className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium uppercase"
               />
               <button
                 type="button"
-                onClick={handleApplyCoupon}
+                onClick={() => handleApplyCoupon()}
                 disabled={!couponCode.trim() || couponLoading || !!couponResult}
                 className="rounded-xl px-5 py-3 text-sm font-bold text-white bg-gray-900 shadow-sm transition-all hover:bg-gray-800 disabled:opacity-50"
               >
@@ -234,7 +321,25 @@ export default function CheckoutPage() {
               </button>
             </div>
             {couponError && <p className="mt-2 text-sm text-red-600 font-medium">{couponError}</p>}
-            {couponResult && <p className="mt-2 text-sm text-green-600 font-medium">✅ Áp dụng thành công! Giảm {formatPrice(couponResult.discount)}</p>}
+            {couponResult && (
+              <div className="mt-3 flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                <div>
+                  <p className="text-sm text-green-700 font-bold">✅ Áp dụng thành công!</p>
+                  <p className="text-xs text-green-600 mt-0.5">Giảm {formatPrice(couponResult.discount)} với mã {couponResult.code}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCouponResult(null);
+                    setCouponCode('');
+                    setCouponError('');
+                  }}
+                  className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors"
+                >
+                  Bỏ mã
+                </button>
+              </div>
+            )}
           </section>
 
           {/* Delivery Address */}

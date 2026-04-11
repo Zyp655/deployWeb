@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-8">
       <header className="mb-8">
         <h2 className="text-3xl font-extrabold text-gray-900">Tổng quan</h2>
-        <p className="text-gray-500 mt-1">Số liệu hoạt động của hệ thống Food App</p>
+        <p className="text-gray-500 mt-1">Số liệu hoạt động của hệ thống HOANG FOOD</p>
       </header>
 
       {/* 4 Stat Cards */}

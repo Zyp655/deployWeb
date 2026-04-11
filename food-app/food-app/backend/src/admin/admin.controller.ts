@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -70,28 +70,6 @@ export class AdminController {
   async getProducts() {
     return this.prisma.product.findMany({
       orderBy: { createdAt: 'desc' }
-    });
-  }
-
-  @Post('products')
-  async createProduct(@Body() data: any) {
-    return this.prisma.product.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        price: Number(data.price),
-        image: data.image || '/images/buncha.png',
-        category: data.category
-      }
-    });
-  }
-
-  @Patch('products/:id')
-  async updateProduct(@Param('id') id: string, @Body() data: any) {
-    if (data.price !== undefined) data.price = Number(data.price);
-    return this.prisma.product.update({
-      where: { id },
-      data
     });
   }
 

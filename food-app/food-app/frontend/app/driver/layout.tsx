@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import LogoutButton from '@/components/LogoutButton';
 
 export default function DriverLayout({
   children,
@@ -39,6 +40,9 @@ export default function DriverLayout({
               Đơn Đã Nhận
             </Link>
           </nav>
+          <div className="mt-auto absolute bottom-6 w-64 px-6 border-t pt-4">
+            <LogoutButton className="block w-full px-4 py-2 text-center rounded-md bg-gray-100 text-sm font-semibold text-gray-600 hover:bg-gray-200 transition-colors" />
+          </div>
         </div>
       </div>
       <div className="flex-1 p-8 overflow-auto">{children}</div>

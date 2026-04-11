@@ -92,6 +92,7 @@ export default function DriverMyOrders() {
                   </div>
                 </div>
 
+                <div className="px-4 pb-4 flex flex-col gap-2">
                   <button
                     onClick={() => handleComplete(order.id)}
                     className="w-full py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 hover:shadow-lg transition-all focus:ring-4 focus:ring-green-200"
@@ -100,7 +101,7 @@ export default function DriverMyOrders() {
                   </button>
                   <button
                     onClick={() => setActiveChatOrder(order)}
-                    className="w-full py-3 mt-2 border-2 border-primary text-primary rounded-lg font-bold hover:bg-primary-50 transition-colors"
+                    className="w-full py-3 border-2 border-primary text-primary rounded-lg font-bold hover:bg-primary-50 transition-colors"
                   >
                     Chat với Khách
                   </button>
