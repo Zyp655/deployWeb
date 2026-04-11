@@ -14,6 +14,11 @@ import { GatewayModule } from './gateway/gateway.module';
 import { AdminModule } from './admin/admin.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SellerModule } from './seller/seller.module';
+import { CouponsModule } from './coupons/coupons.module';
+import { WishlistModule } from './wishlist/wishlist.module';
+import { StoresModule } from './stores/stores.module';
+import { DriverModule } from './driver/driver.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -58,6 +63,11 @@ import { SellerModule } from './seller/seller.module';
     AdminModule,
     ReviewsModule,
     SellerModule,
+    CouponsModule,
+    WishlistModule,
+    StoresModule,
+    DriverModule,
+    AiModule,
   ],
   providers: [
     {

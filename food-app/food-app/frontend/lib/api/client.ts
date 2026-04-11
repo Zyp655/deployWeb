@@ -17,6 +17,9 @@ export interface Product {
   isVegetarian?: boolean;
   calories?: number | null;
   tags?: string[];
+  storeId?: string | null;
+  saleStartTime?: string | null;
+  saleEndTime?: string | null;
   averageRating?: number;
   totalReviews?: number;
 }
@@ -87,14 +90,70 @@ export async function fetchProducts(filters?: {
   vegetarian?: boolean;
   spicy?: boolean;
   maxCalories?: number;
+  search?: string;
 }): Promise<Product[]> {
   const params = new URLSearchParams();
   if (filters?.vegetarian) params.append('vegetarian', 'true');
   if (filters?.spicy !== undefined) params.append('spicy', filters.spicy ? 'true' : 'false');
   if (filters?.maxCalories) params.append('maxCalories', filters.maxCalories.toString());
+  if (filters?.search) params.append('search', filters.search);
   
   const query = params.toString();
   return apiClient<Product[]>(`/products${query ? `?${query}` : ''}`);
+}
+
+// ─── Stores (For Customers) ──────────────────────────
+
+export async function fetchStores(lat?: number, lng?: number): Promise<Store[]> {
+  const params = new URLSearchParams();
+  if (lat) params.append('lat', lat.toString());
+  if (lng) params.append('lng', lng.toString());
+  const query = params.toString();
+  return apiClient<Store[]>(`/stores${query ? `?${query}` : ''}`);
+}
+
+export interface StoreDetail extends Store {
+  products: Product[];
+}
+
+export async function fetchStoreById(id: string): Promise<StoreDetail> {
+  return apiClient<StoreDetail>(`/stores/${id}`);
+}
+
+// ─── Coupons & Wishlist ──────────────────────────────
+
+export interface CouponValidation {
+  code: string;
+  description: string | null;
+  discountType: string;
+  discountValue: number;
+  discount: number;
+  finalTotal: number;
+}
+
+export async function validateCoupon(code: string, orderTotal: number, token: string): Promise<CouponValidation> {
+  return apiClient<CouponValidation>('/coupons/validate', {
+    method: 'POST',
+    body: JSON.stringify({ code, orderTotal }),
+    token,
+  });
+}
+
+export interface WishlistItem extends Product {
+  wishlistId: string;
+  addedAt: string;
+}
+
+export async function fetchWishlist(token: string): Promise<WishlistItem[]> {
+  return apiClient<WishlistItem[]>('/wishlist', { token });
+}
+
+export async function addToWishlist(productId: string, token: string) {
+  return apiClient(`/wishlist/${productId}`, { method: 'POST', token });
+}
+
+export async function removeFromWishlist(productId: string, token: string) {
+  return apiClient(`/wishlist/${productId}`, { method: 'DELETE', token });
 }
 
 export async function fetchProductById(id: string): Promise<ProductDetail> {
@@ -108,6 +167,36 @@ export interface RecommendedProduct extends Product {
 export async function fetchRecommendedProducts(token?: string): Promise<RecommendedProduct[]> {
   return apiClient<RecommendedProduct[]>('/products/recommended', { token });
 }
+
+export async function submitOrderReview(
+  orderId: string,
+  payload: { storeRating?: number; driverRating?: number; reviewComment?: string },
+  token: string,
+): Promise<Order> {
+  return apiClient<Order>(`/orders/${orderId}/review`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    token,
+  });
+}
+
+// ─── AI Assistant ────────────────────────────────────
+
+export async function sendChatMessage(message: string, token?: string): Promise<{ reply: string }> {
+  return apiClient<{ reply: string }>('/ai/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message }),
+    token, // Optional
+  });
+}
+
+export async function searchSemanticProducts(query: string, token?: string): Promise<{ results: Product[]; query: string }> {
+  return apiClient<{ results: Product[]; query: string }>(`/ai/search?q=${encodeURIComponent(query)}`, {
+    token,
+  });
+}
+
+// ─── Categories ─────────────────────────────────────────
 
 // ─── Reviews ─────────────────────────────────────────
 
@@ -176,11 +265,20 @@ export interface Order {
   id: string;
   status: string;
   total: number;
+  shippingFee?: number;
+  discount?: number;
+  couponCode?: string | null;
   note: string | null;
-  address?: string;
+  deliveryAddress?: string;
+  deliveryPhone?: string;
   paymentMethod?: string;
+  store?: { name: string; address: string | null; phone: string | null };
+  driver?: { name: string; phone: string | null };
   items: OrderItem[];
   history: OrderHistoryItem[];
+  storeRating?: number | null;
+  driverRating?: number | null;
+  reviewComment?: string | null;
   createdAt: string;
 }
 
@@ -189,6 +287,9 @@ export interface CreateOrderPayload {
   address: string;
   paymentMethod: string;
   note?: string;
+  couponCode?: string;
+  userLat?: number;
+  userLng?: number;
 }
 
 export async function createOrder(
@@ -390,7 +491,121 @@ export async function updateSellerOrderStatus(orderId: string, status: string, t
   });
 }
 
+export async function rejectSellerOrder(orderId: string, reason: string, token: string) {
+  return apiClient(`/seller/orders/${orderId}/reject`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason }),
+    token,
+  });
+}
+
 export async function fetchSellerProducts(token: string): Promise<Product[]> {
   return apiClient<Product[]>('/seller/products', { token });
 }
 
+export async function createSellerProduct(payload: Partial<Product>, token: string): Promise<Product> {
+  return apiClient<Product>('/seller/products', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    token,
+  });
+}
+
+export async function updateSellerProduct(id: string, payload: Partial<Product>, token: string): Promise<Product> {
+  return apiClient<Product>(`/seller/products/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+    token,
+  });
+}
+
+export async function toggleSellerProduct(productId: string, token: string) {
+  return apiClient(`/seller/products/${productId}/toggle`, {
+    method: 'PATCH',
+    token,
+  });
+}
+
+export interface Store {
+  id: string;
+  name: string;
+  description: string | null;
+  image: string | null;
+  coverImage: string | null;
+  address: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  phone: string | null;
+  isOpen: boolean;
+  openTime: string | null;
+  closeTime: string | null;
+  rating: number;
+  totalOrders: number;
+  distance?: number;
+}
+
+
+export async function fetchSellerStore(token: string): Promise<Store> {
+  return apiClient<Store>('/seller/store', { token });
+}
+
+export async function updateSellerStore(data: Partial<Store>, token: string): Promise<Store> {
+  return apiClient<Store>('/seller/store', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function toggleSellerStore(token: string): Promise<Store> {
+  return apiClient<Store>('/seller/store/toggle', {
+    method: 'PATCH',
+    token,
+  });
+}
+
+// ─── Driver ──────────────────────────────────────────
+
+export interface DriverOrder {
+  id: string;
+  total: number;
+  shippingFee: number;
+  deliveryAddress: string | null;
+  deliveryPhone: string | null;
+  paymentMethod: string;
+  status: string;
+  createdAt: string;
+  userId: string;
+  user?: {
+    id: string;
+    name: string;
+    phone: string | null;
+  };
+  store?: {
+    name: string;
+    address: string | null;
+    phone: string | null;
+  };
+}
+
+export async function fetchAvailableOrders(token: string): Promise<DriverOrder[]> {
+  return apiClient<DriverOrder[]>('/driver/available-orders', { token });
+}
+
+export async function acceptOrder(orderId: string, token: string): Promise<DriverOrder> {
+  return apiClient<DriverOrder>(`/driver/orders/${orderId}/accept`, {
+    method: 'POST',
+    token,
+  });
+}
+
+export async function completeOrder(orderId: string, token: string): Promise<DriverOrder> {
+  return apiClient<DriverOrder>(`/driver/orders/${orderId}/complete`, {
+    method: 'PATCH',
+    token,
+  });
+}
+
+export async function fetchDriverMyOrders(token: string): Promise<DriverOrder[]> {
+  return apiClient<DriverOrder[]>('/driver/orders/my-orders', { token });
+}

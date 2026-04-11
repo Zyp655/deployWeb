@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Product } from '@/lib/api/client';
 import { useCartStore } from '@/store/cart';
 import StarRating from './StarRating';
+import WishlistButton from './WishlistButton';
 
 interface ProductCardProps {
   product: Product;
@@ -22,6 +23,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+      {/* Wishlist Button */}
+      <WishlistButton productId={product.id} inCard={true} />
+      
       {/* Image placeholder — clickable to detail */}
       <Link href={`/menu/${product.id}`}>
         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary-100 via-accent-50 to-highlight-100 cursor-pointer">
@@ -79,8 +83,18 @@ export default function ProductCard({ product }: ProductCardProps) {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              addItem(product);
-              openCart();
+              try {
+                addItem(product);
+                openCart();
+              } catch (err: any) {
+                if (err.message === 'DIFFERENT_STORE') {
+                  const confirmClear = window.confirm('Quán bạn chọn khác với quán của các món trong giỏ hàng. Xóa giỏ hàng hiện tại và thêm món này?');
+                  if (confirmClear) {
+                    useCartStore.getState().clearAndAddItem(product);
+                    openCart();
+                  }
+                }
+              }
             }}
             className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
           >

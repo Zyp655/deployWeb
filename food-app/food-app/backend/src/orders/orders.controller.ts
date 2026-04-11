@@ -3,6 +3,7 @@ import { Throttle } from '@nestjs/throttler';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { CreateOrderReviewDto } from './dto/create-order-review.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 interface AuthenticatedRequest {
@@ -46,5 +47,14 @@ export class OrdersController {
       throw new ForbiddenException('Chỉ ADMIN mới được đổi trạng thái đơn hàng');
     }
     return this.ordersService.updateStatus(id, dto.status, dto.note);
+  }
+
+  @Post(':id/review')
+  async reviewOrder(
+    @Param('id') id: string,
+    @Body() dto: CreateOrderReviewDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.ordersService.reviewOrder(id, req.user.id, dto);
   }
 }

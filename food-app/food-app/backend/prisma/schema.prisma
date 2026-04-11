@@ -23,9 +23,12 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  orders       Order[]
+  orders       Order[]       @relation("UserOrders")
+  deliveries   Order[]       @relation("DriverOrders")
   transactions Transaction[]
   reviews      Review[]
+  wishlists    Wishlist[]
+  store        Store?
 
   @@map("users")
 }
@@ -34,6 +37,35 @@ enum Role {
   CUSTOMER
   RESTAURANT
   ADMIN
+  DRIVER
+}
+
+// ─── Store ───────────────────────────────────────────
+
+model Store {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  image       String?
+  coverImage  String?  @map("cover_image")
+  address     String?
+  phone       String?
+  lat         Float?
+  lng         Float?
+  isOpen      Boolean  @default(true) @map("is_open")
+  openTime    String?  @default("07:00") @map("open_time")
+  closeTime   String?  @default("22:00") @map("close_time")
+  rating      Float    @default(0)
+  totalOrders Int      @default(0) @map("total_orders")
+  ownerId     String   @unique @map("owner_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  owner    User      @relation(fields: [ownerId], references: [id])
+  products Product[]
+  orders   Order[]
+
+  @@map("stores")
 }
 
 // ─── Product ─────────────────────────────────────────
@@ -50,11 +82,16 @@ model Product {
   isVegetarian Boolean  @default(false) @map("is_vegetarian")
   calories     Int?
   tags         String[] @default([])
+  storeId      String?  @map("store_id")
+  saleStartTime String? @map("sale_start_time")
+  saleEndTime   String? @map("sale_end_time")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  store      Store?     @relation(fields: [storeId], references: [id])
   orderItems OrderItem[]
   reviews    Review[]
+  wishlists  Wishlist[]
 
   @@map("products")
 }
@@ -64,14 +101,29 @@ model Product {
 model Order {
   id            String      @id @default(uuid())
   userId        String      @map("user_id")
+  storeId       String?     @map("store_id")
+  driverId      String?     @map("driver_id")
   status        OrderStatus @default(PENDING)
   total         Float
+  discount      Float       @default(0)
+  shippingFee   Float       @default(15000) @map("shipping_fee")
+  couponCode    String?     @map("coupon_code")
   note          String?
+  deliveryAddress String?   @map("delivery_address")
+  deliveryPhone   String?   @map("delivery_phone")
+  deliveryLat     Float?    @map("delivery_lat")
+  deliveryLng     Float?    @map("delivery_lng")
+  rejectReason  String?     @map("reject_reason")
+  storeRating   Int?        @map("store_rating")
+  driverRating  Int?        @map("driver_rating")
+  reviewComment String?     @map("review_comment")
   paymentMethod String?     @default("COD") @map("payment_method")
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
 
-  user         User           @relation(fields: [userId], references: [id])
+  user         User           @relation("UserOrders", fields: [userId], references: [id])
+  driver       User?          @relation("DriverOrders", fields: [driverId], references: [id])
+  store        Store?         @relation(fields: [storeId], references: [id])
   items        OrderItem[]
   transactions Transaction[]
   history      OrderHistory[]
@@ -83,6 +135,7 @@ enum OrderStatus {
   PENDING
   CONFIRMED
   PREPARING
+  PREPARED
   DELIVERING
   DELIVERED
   CANCELLED
@@ -156,3 +209,38 @@ model Review {
   @@unique([userId, productId])
   @@map("reviews")
 }
+
+// ─── Coupon ──────────────────────────────────────────
+
+model Coupon {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  description   String?
+  discountType  String   @default("PERCENT") @map("discount_type")
+  discountValue Float    @map("discount_value")
+  minOrderValue Float    @default(0) @map("min_order_value")
+  maxDiscount   Float?   @map("max_discount")
+  usageLimit    Int      @default(100) @map("usage_limit")
+  usedCount     Int      @default(0) @map("used_count")
+  isActive      Boolean  @default(true) @map("is_active")
+  expiresAt     DateTime? @map("expires_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("coupons")
+}
+
+// ─── Wishlist ────────────────────────────────────────
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("wishlists")
+}
+

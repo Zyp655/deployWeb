@@ -2,11 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { fetchProducts, Product } from '@/lib/api/client';
-import { useCartStore } from '@/store/cart';
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+import { fetchStores, fetchRecommendedProducts, Store, RecommendedProduct } from '@/lib/api/client';
+import StarRating from '@/components/StarRating';
+import { useAuthStore } from '@/store/auth';
 
 const CATEGORIES = [
   { emoji: '🍜', name: 'Món nước' },
@@ -22,16 +20,41 @@ function getCategoryEmoji(category: string): string {
   return CATEGORIES.find((c) => c.name === category)?.emoji || '🍽️';
 }
 
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+
 export default function HomePage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const addItem = useCartStore((state) => state.addItem);
+  const { token } = useAuthStore();
+  const [stores, setStores] = useState<Store[]>([]);
+  const [recommended, setRecommended] = useState<RecommendedProduct[]>([]);
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
-    fetchProducts().then(setProducts).catch(console.error);
-  }, []);
+    // Tự động tìm vị trí
+    if (navigator.geolocation) {
+      setLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          fetchStores(lat, lng).then(setStores).catch(console.error).finally(() => setLocating(false));
+          fetchRecommendedProducts(token || undefined).then(setRecommended).catch(console.error);
+        },
+        (error) => {
+          console.warn("User denied or error GPS:", error);
+          // Fallback to normal fetch
+          fetchStores().then(setStores).catch(console.error).finally(() => setLocating(false));
+          fetchRecommendedProducts(token || undefined).then(setRecommended).catch(console.error);
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      fetchStores().then(setStores).catch(console.error);
+      fetchRecommendedProducts(token || undefined).then(setRecommended).catch(console.error);
+    }
+  }, [token]);
 
-  const popular = products.slice(0, 4);
-  const recommended = products.slice(4, 7);
+  const popularStores = stores.slice(0, 4);
 
   return (
     <main className="min-h-screen">
@@ -48,20 +71,20 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto max-w-6xl px-4 py-20 md:py-28 text-center">
           <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight leading-tight animate-fade-up">
-            Đặt món ngon,
+            Trải nghiệm ẩm thực,
             <br />
-            <span className="text-highlight-200">giao tận nơi</span>
+            <span className="text-highlight-200">từ quán ưa thích</span>
           </h1>
           <p className="mt-4 text-lg md:text-xl text-white/80 max-w-2xl mx-auto animate-fade-up-delay">
-            Nền tảng đặt đồ ăn trực tuyến tích hợp AI thông minh — gợi ý theo khẩu vị, giao hàng nhanh chóng
+            Nền tảng đặt đồ ăn trực tuyến tích hợp AI thông minh — Dẫn đường bạn đến hàng ngàn quán ngon
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-up-delay-2">
             <Link
-              href="/menu"
+              href="/stores"
               className="group flex items-center gap-2 rounded-full bg-white px-8 py-4 text-base font-bold text-primary shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-95"
             >
-              Khám phá thực đơn
+              Khám phá quán ngon
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 transition-transform group-hover:translate-x-1">
                 <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
               </svg>
@@ -70,8 +93,8 @@ export default function HomePage() {
 
           <div className="mt-12 grid grid-cols-3 gap-6 max-w-md mx-auto animate-fade-up-delay-2">
             <div className="text-center">
-              <p className="text-3xl font-extrabold text-white">{products.length}+</p>
-              <p className="text-sm text-white/60">Món ăn</p>
+              <p className="text-3xl font-extrabold text-white">{stores.length > 0 ? `${stores.length}+` : 'Nhiều'}</p>
+              <p className="text-sm text-white/60">Quán ăn</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-extrabold text-white">15p</p>
@@ -79,7 +102,7 @@ export default function HomePage() {
             </div>
             <div className="text-center">
               <p className="text-3xl font-extrabold text-white">4.8⭐</p>
-              <p className="text-sm text-white/60">Đánh giá</p>
+              <p className="text-sm text-white/60">Đánh giá chung</p>
             </div>
           </div>
         </div>
@@ -103,84 +126,82 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══════ POPULAR DISHES ═══════ */}
+      {/* ═══════ TOP STORES ═══════ */}
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-extrabold text-gray-900">🔥 Món ăn phổ biến</h2>
-            <p className="mt-1 text-gray-500">Những món được yêu thích nhất</p>
+            <h2 className="text-3xl font-extrabold text-gray-900">🏪 Quán ngon quanh bạn</h2>
+            <p className="mt-1 text-gray-500">Những tiệm ăn được yêu thích nhất</p>
           </div>
-          <Link href="/menu" className="text-sm font-bold text-primary hover:text-primary-600 transition-colors">
-            Xem tất cả →
+          <Link href="/stores" className="text-sm font-bold text-primary hover:text-primary-600 transition-colors">
+            Xem tất cả quán →
           </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {popular.map((product, idx) => (
-            <div
-              key={product.id}
-              className="group rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-              style={{ animationDelay: `${idx * 100}ms` }}
-            >
-              <div className="relative h-48 bg-gradient-to-br from-primary-50 via-accent-50 to-highlight-50 flex items-center justify-center">
-                <span className="text-8xl group-hover:scale-110 transition-transform duration-500">
-                  {getCategoryEmoji(product.category)}
-                </span>
-                {product.isSpicy && (
-                  <span className="absolute top-3 right-3 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                    🌶 Cay
+          {popularStores.map((store, idx) => (
+            <Link key={store.id} href={`/stores/${store.id}`}>
+              <div
+                className="group rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full flex flex-col"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <div className="relative h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
+                  {store.coverImage ? (
+                    <img src={store.coverImage} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={store.name} />
+                  ) : (
+                    <span className="text-6xl group-hover:scale-110 transition-transform duration-500">🏪</span>
+                  )}
+                  <span className={`absolute top-3 right-3 rounded-full px-2.5 py-1 text-xs font-bold shadow-sm backdrop-blur-sm ${store.isOpen ? 'bg-green-500/90 text-white' : 'bg-gray-500/90 text-white'}`}>
+                    {store.isOpen ? 'Đang mở' : 'Đóng cửa'}
                   </span>
-                )}
-              </div>
-              <div className="p-5">
-                <span className="inline-block text-xs font-bold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full mb-2">
-                  {product.category}
-                </span>
-                <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{product.name}</h3>
-                <p className="mt-1 text-sm text-gray-500 line-clamp-2">{product.description}</p>
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xl font-extrabold text-primary">{formatPrice(product.price)}</span>
-                  <button
-                    onClick={() => addItem(product)}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-primary to-accent text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-110 active:scale-90"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                      <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
-                    </svg>
-                  </button>
+                </div>
+                <div className="p-4 flex-1 flex flex-col">
+                  <h3 className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-primary transition-colors">{store.name}</h3>
+                  <div className="mt-1 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 line-clamp-1 w-full max-w-[70%]">
+                      📍 {store.address || 'Đang cập nhật'}
+                    </div>
+                    {store.distance !== undefined && (
+                      <div className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md whitespace-nowrap">
+                        {store.distance < 1 ? `${Math.round(store.distance * 1000)}m` : `${store.distance.toFixed(1)}km`}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-auto pt-4 flex items-center gap-2">
+                    <StarRating value={store.rating} readOnly size="sm" />
+                    <span className="text-xs text-gray-500 font-medium">{store.rating > 0 ? store.rating : 'Chưa có'}</span>
+                    <span className="mx-1 text-gray-300">•</span>
+                    <span className="text-xs text-gray-500">{store.totalOrders} đơn</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* ═══════ AI RECOMMENDATION ═══════ */}
+      {/* ═══════ AI RECOMMENDATION (Products) ═══════ */}
       <section className="bg-gray-900 py-16">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-extrabold text-white">🤖 AI Gợi ý cho bạn</h2>
+            <h2 className="text-3xl font-extrabold text-white">🤖 Món ngon AI Gợi Ý</h2>
             <p className="mt-2 text-gray-400">Dựa trên khẩu vị và xu hướng đặt hàng</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {recommended.map((product, idx) => {
-              const reasons = ['Phù hợp khẩu vị', 'Bán chạy nhất', 'Mới & Hot'];
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {recommended.slice(0, 4).map((product, idx) => {
               return (
                 <Link
                   key={product.id}
                   href={`/menu/${product.id}`}
-                  className="group relative rounded-2xl bg-gray-800/50 backdrop-blur border border-gray-700/50 p-6 transition-all duration-300 hover:bg-gray-800 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+                  className="group relative rounded-2xl bg-gray-800/50 backdrop-blur border border-gray-700/50 p-6 transition-all duration-300 hover:bg-gray-800 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 flex flex-col"
                 >
-                  <span className="absolute top-4 right-4 rounded-full bg-primary/20 px-3 py-1 text-xs font-bold text-primary-300">
-                    {reasons[idx % 3]}
-                  </span>
-                  <div className="w-20 h-20 rounded-2xl bg-gray-700/50 flex items-center justify-center mb-4">
-                    <span className="text-4xl">{getCategoryEmoji(product.category)}</span>
+                  <div className="w-16 h-16 rounded-2xl bg-gray-700/50 flex items-center justify-center mb-4 mx-auto">
+                    <span className="text-3xl">{getCategoryEmoji(product.category)}</span>
                   </div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-primary-300 transition-colors">{product.name}</h3>
-                  <p className="mt-1 text-sm text-gray-400 line-clamp-2">{product.description}</p>
-                  <p className="mt-3 text-xl font-extrabold text-primary-400">{formatPrice(product.price)}</p>
+                  <h3 className="text-md font-bold text-white group-hover:text-primary-300 transition-colors text-center line-clamp-1">{product.name}</h3>
+                  <p className="mt-1 flex-1 text-xs text-gray-400 line-clamp-2 text-center">{product.recommendReason || 'Món ngon mỗi ngày'}</p>
+                  <p className="mt-3 text-lg font-extrabold text-primary-400 text-center">{formatPrice(product.price)}</p>
                 </Link>
               );
             })}
@@ -195,21 +216,17 @@ export default function HomePage() {
           <div className="relative z-10">
             <span className="text-5xl">🎉</span>
             <h3 className="mt-4 text-3xl md:text-4xl font-extrabold text-white">
-              Giảm 20% cho đơn đầu tiên
+              Săn Deal Các Quán
             </h3>
             <p className="mt-2 text-lg text-white/80">
-              Áp dụng cho tất cả món ăn — Chỉ dành cho thành viên mới!
+              ShopeeFood - Freeship cho mọi nẻo đường
             </p>
             <div className="mt-6 flex items-center justify-center gap-4">
-              <div className="flex items-center gap-2 rounded-full bg-white/20 backdrop-blur px-5 py-2 text-white font-bold">
-                <span className="text-sm">⏰ Còn</span>
-                <span className="text-lg">2 ngày</span>
-              </div>
               <Link
-                href="/menu"
+                href="/stores"
                 className="rounded-full bg-white px-8 py-3 font-bold text-primary shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
               >
-                Áp dụng ngay →
+                Đặt quán ngay →
               </Link>
             </div>
           </div>
@@ -225,13 +242,13 @@ export default function HomePage() {
                 🍜 Food App
               </h4>
               <p className="mt-3 text-sm text-gray-500 max-w-sm leading-relaxed">
-                Nền tảng đặt đồ ăn trực tuyến tích hợp AI thông minh. Gợi ý theo khẩu vị, giao hàng nhanh, thanh toán tiện lợi.
+                Nền tảng đặt đồ ăn trực tuyến. Chọn quán gần bạn nhất, thêm món, thanh toán và theo dõi lộ trình Shipper tức thời!
               </p>
             </div>
             <div>
               <h5 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Liên kết</h5>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/menu" className="hover:text-white transition-colors">Thực đơn</Link></li>
+                <li><Link href="/stores" className="hover:text-white transition-colors">Quán ăn</Link></li>
                 <li><Link href="/orders" className="hover:text-white transition-colors">Đơn hàng</Link></li>
                 <li><Link href="/profile" className="hover:text-white transition-colors">Tài khoản</Link></li>
               </ul>

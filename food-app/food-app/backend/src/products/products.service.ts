@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ProductResponseDto } from './dto/product-response.dto';
 import { JwtService } from '@nestjs/jwt';
+import { isProductTimeValid } from '../utils/time-utils';
 
 export interface RecommendedProductDto extends ProductResponseDto {
   recommendReason: string;
@@ -37,6 +38,18 @@ export class ProductsService {
       }
     }
 
+    // Filter: search
+    if (query?.search) {
+      where.OR = [
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { description: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (query?.storeId) {
+      where.storeId = query.storeId;
+    }
+
     const products = await this.prisma.product.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -47,7 +60,9 @@ export class ProductsService {
       },
     });
 
-    return products.map((p) => {
+    const validProducts = products.filter(p => isProductTimeValid(p.saleStartTime, p.saleEndTime));
+
+    return validProducts.map((p) => {
       const ratings = p.reviews.map((r) => r.rating);
       const avgRating =
         ratings.length > 0
@@ -65,6 +80,7 @@ export class ProductsService {
         isVegetarian: p.isVegetarian,
         calories: p.calories,
         tags: p.tags,
+        storeId: p.storeId,
         averageRating: avgRating,
         totalReviews: ratings.length,
       };
@@ -102,6 +118,7 @@ export class ProductsService {
       image: product.image,
       category: product.category,
       isAvailable: product.isAvailable,
+      storeId: product.storeId,
       averageRating: avgRating,
       totalReviews: ratings.length,
       reviews: product.reviews.map((r) => ({
@@ -197,7 +214,7 @@ export class ProductsService {
           isAvailable: product.isAvailable,
           recommendReason: ai.reason,
         };
-      }).filter(Boolean) as RecommendedProductDto[];
+      }).filter(Boolean).filter((p: any) => isProductTimeValid(p.saleStartTime, p.saleEndTime)) as RecommendedProductDto[];
       
       return results;
     } catch (e) {
@@ -208,7 +225,8 @@ export class ProductsService {
         take: 4,
         orderBy: { createdAt: 'desc' }
       });
-      return fallbackProducts.map((p) => ({
+      const validFallback = fallbackProducts.filter(p => isProductTimeValid(p.saleStartTime, p.saleEndTime));
+      return validFallback.map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
@@ -216,7 +234,10 @@ export class ProductsService {
         image: p.image,
         category: p.category,
         isAvailable: p.isAvailable,
-        recommendReason: 'Món phổ biến đang được yêu thích'
+        recommendReason: 'Món phổ biến đang được yêu thích',
+        averageRating: 0,
+        totalReviews: 0,
+        storeId: p.storeId,
       }));
     }
   }

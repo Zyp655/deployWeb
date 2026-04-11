@@ -3,6 +3,8 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
+  MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
@@ -36,6 +38,12 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Join a room specific to this user based on their ID
       client.join(`user_${payload.sub}`);
       console.log(`Client connected: ${client.id} joined user_${payload.sub}`);
+
+      // If user is a driver, join 'drivers' room
+      if (payload.role === 'DRIVER') {
+        client.join('drivers');
+        console.log(`Client ${client.id} joined drivers room`);
+      }
     } catch {
       client.disconnect();
     }
@@ -50,6 +58,23 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
       orderId,
       status,
       note,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  broadcastToDrivers(event: string, payload: any) {
+    this.server.to('drivers').emit(event, payload);
+  }
+
+  @SubscribeMessage('update-driver-location')
+  handleDriverLocationUpdate(
+    @MessageBody() data: { orderId: string; customerId: string; lat: number; lng: number }
+  ) {
+    if (!data.customerId) return;
+    this.server.to(`user_${data.customerId}`).emit('driver-location-updated', {
+      orderId: data.orderId,
+      lat: data.lat,
+      lng: data.lng,
       timestamp: new Date().toISOString(),
     });
   }

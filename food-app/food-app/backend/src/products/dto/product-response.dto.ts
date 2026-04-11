@@ -10,6 +10,7 @@ export class ProductResponseDto {
   isVegetarian?: boolean;
   calories?: number | null;
   tags?: string[];
-  averageRating?: number;
-  totalReviews?: number;
+  storeId?: string | null;
+  averageRating: number;
+  totalReviews: number;
 }

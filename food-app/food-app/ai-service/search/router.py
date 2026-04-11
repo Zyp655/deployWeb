@@ -5,7 +5,12 @@ import unicodedata
 import time
 from database import log_ai_interaction
 
+import os
+import httpx
+
 router = APIRouter(prefix="/search", tags=["Search"])
+
+API_URL = os.environ.get("NEXT_PUBLIC_API_URL", "http://localhost:4000")
 
 class SearchResult(BaseModel):
     id: str
@@ -19,73 +24,7 @@ class SearchResponse(BaseModel):
     results: List[SearchResult]
     query: str
 
-# Mock database - danh sách món ăn
-MENU_ITEMS = [
-    {
-        "id": "1",
-        "name": "Phở Bò Tái",
-        "description": "Phở bò truyền thống với nước dùng ninh xương 12 tiếng, thịt bò tái mềm, rau thơm tươi",
-        "category": "Món nước",
-        "price": 55000,
-        "keywords": ["pho", "bo", "mon nuoc", "truyen thong"]
-    },
-    {
-        "id": "2",
-        "name": "Bún Chả Hà Nội",
-        "description": "Bún chả nướng than hoa thơm lừng, kèm nước mắm pha chua ngọt và rau sống",
-        "category": "Món nước",
-        "price": 50000,
-        "keywords": ["bun", "cha", "ha noi", "nuong", "mon nuoc"]
-    },
-    {
-        "id": "3",
-        "name": "Bánh Mì Thịt Nướng",
-        "description": "Bánh mì giòn rụm, nhân thịt nướng đậm đà, đồ chua, rau mùi, ớt tươi",
-        "category": "Món khô",
-        "price": 30000,
-        "keywords": ["banh mi", "thit", "nuong", "cay", "mon kho"]
-    },
-    {
-        "id": "4",
-        "name": "Cơm Tấm Sườn Bì Chả",
-        "description": "Cơm tấm Sài Gòn đặc biệt: sườn nướng, bì, chả trứng, mỡ hành, nước mắm",
-        "category": "Cơm",
-        "price": 60000,
-        "keywords": ["com", "tam", "suon", "bi", "cha", "sai gon"]
-    },
-    {
-        "id": "5",
-        "name": "Gỏi Cuốn Tôm Thịt",
-        "description": "Gỏi cuốn tươi mát với tôm, thịt luộc, bún, rau sống, chấm tương đậu phộng",
-        "category": "Khai vị",
-        "price": 35000,
-        "keywords": ["goi", "cuon", "tom", "thit", "khai vi", "healthy"]
-    },
-    {
-        "id": "6",
-        "name": "Bò Lúc Lắc",
-        "description": "Thịt bò Úc xào lúc lắc với tỏi, tiêu đen, ăn kèm cơm trắng nóng hổi",
-        "category": "Món mặn",
-        "price": 85000,
-        "keywords": ["bo", "luc lac", "uc", "xao", "mon man", "cao cap"]
-    },
-    {
-        "id": "7",
-        "name": "Chè Thái",
-        "description": "Chè thập cẩm kiểu Thái với nước cốt dừa, trái cây tươi, thạch lá dứa",
-        "category": "Tráng miệng",
-        "price": 25000,
-        "keywords": ["che", "thai", "trang mieng", "ngot", "chay"]
-    },
-    {
-        "id": "8",
-        "name": "Trà Sen Vàng",
-        "description": "Trà ướp sen tươi Tây Hồ, hương thơm nhẹ nhàng, thanh mát giải nhiệt",
-        "category": "Đồ uống",
-        "price": 20000,
-        "keywords": ["tra", "sen", "do uong", "healthy", "chay"]
-    }
-]
+# We will fetch items dynamically instead of static MOCK
 
 def remove_accents(text: str) -> str:
     """
@@ -116,8 +55,9 @@ def calculate_score(item: dict, query_normalized: str) -> float:
         score += 3.0
     
     # Tìm trong keywords
-    for keyword in item["keywords"]:
-        if query_normalized in keyword:
+    keywords = item.get("tags") or []
+    for keyword in keywords:
+        if query_normalized in remove_accents(keyword.lower()):
             score += 2.0
     
     # Tìm từng từ riêng lẻ
@@ -143,9 +83,30 @@ async def search(
     start_time = time.time()
     query_normalized = remove_accents(q.lower().strip())
     
+    # Lấy Món ăn thật từ backend NestJS
+    menu_items = []
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{API_URL}/products?limit=100")
+            if resp.status_code == 200:
+                data = resp.json()
+                # data.data is the list of products if paginated, or data might be list directly
+                # Checking structure
+                if "data" in data:
+                    menu_items = data["data"]
+                else:
+                    menu_items = data
+    except Exception as e:
+        print("Lỗi fetch Products:", e)
+        menu_items = []
+
     # Tính điểm cho từng món
     scored_items = []
-    for item in MENU_ITEMS:
+    for item in menu_items:
+        # Check defaults if missing
+        if "description" not in item or not item["description"]: item["description"] = ""
+        if "category" not in item: item["category"] = ""
+        
         score = calculate_score(item, query_normalized)
         if score > 0:
             scored_items.append({
@@ -163,7 +124,7 @@ async def search(
             name=si["item"]["name"],
             description=si["item"]["description"],
             category=si["item"]["category"],
-            price=si["item"]["price"],
+            price=float(si["item"]["price"]),
             score=si["score"]
         )
         for si in scored_items

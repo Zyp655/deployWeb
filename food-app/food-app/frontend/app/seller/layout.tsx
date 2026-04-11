@@ -16,6 +16,9 @@ export default function SellerLayout({ children }: { children: ReactNode }) {
             <Link href="/seller" className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors text-sm">
               📊 Tổng quan
             </Link>
+            <Link href="/seller/store" className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors text-sm">
+              🏪 Cửa hàng
+            </Link>
             <Link href="/seller/orders" className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors text-sm">
               🧾 Đơn hàng
             </Link>

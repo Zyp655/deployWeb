@@ -11,6 +11,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-700' },
   CONFIRMED: { label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-700' },
   PREPARING: { label: 'Đang chuẩn bị', color: 'bg-indigo-100 text-indigo-700' },
+  PREPARED: { label: 'Chuẩn bị xong (Chờ shipper)', color: 'bg-orange-100 text-orange-700' },
   DELIVERING: { label: 'Đang giao', color: 'bg-purple-100 text-purple-700' },
   DELIVERED: { label: 'Đã giao', color: 'bg-green-100 text-green-700' },
   CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-700' },
@@ -19,8 +20,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 const NEXT_STATUS: Record<string, string> = {
   PENDING: 'CONFIRMED',
   CONFIRMED: 'PREPARING',
-  PREPARING: 'DELIVERING',
-  DELIVERING: 'DELIVERED',
+  PREPARING: 'PREPARED',
 };
 
 export default function SellerOrdersPage() {
@@ -48,6 +48,20 @@ export default function SellerOrdersPage() {
     } catch (err) { console.error(err); }
   };
 
+  const handleReject = async (orderId: string) => {
+    if (!token) return;
+    const reason = window.prompt("Nhập lý do từ chối đơn hàng (ví dụ: Hết món, Đóng cửa...):");
+    if (!reason) return;
+    try {
+      // Need to import rejectSellerOrder from client API
+      const { rejectSellerOrder } = await import('@/lib/api/client');
+      await rejectSellerOrder(orderId, reason, token);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: 'CANCELLED' } : o)),
+      );
+    } catch (err) { console.error(err); alert('Có lỗi xảy ra'); }
+  };
+
   const filtered = filter === 'ALL' ? orders : orders.filter((o) => o.status === filter);
 
   if (loading) {
@@ -62,7 +76,7 @@ export default function SellerOrdersPage() {
       </header>
 
       <div className="flex gap-2 flex-wrap">
-        {['ALL', 'PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'DELIVERED', 'CANCELLED'].map((st) => (
+        {['ALL', 'PENDING', 'CONFIRMED', 'PREPARING', 'PREPARED', 'DELIVERING', 'DELIVERED', 'CANCELLED'].map((st) => (
           <button
             key={st}
             onClick={() => setFilter(st)}
@@ -122,7 +136,7 @@ export default function SellerOrdersPage() {
                     )}
                     {order.status === 'PENDING' && (
                       <button
-                        onClick={() => handleStatusChange(order.id, 'CANCELLED')}
+                        onClick={() => handleReject(order.id)}
                         className="rounded-xl bg-red-50 px-4 py-2 text-xs font-bold text-red-600 border border-red-200 transition-all hover:bg-red-100 active:scale-95"
                       >
                         ❌ Từ chối

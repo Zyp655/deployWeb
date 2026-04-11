@@ -24,14 +24,20 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3 sm:gap-5">
           <Link
-            href="/menu"
+            href="/stores"
             className="text-sm font-semibold text-gray-600 transition-colors hover:text-primary"
           >
-            Thực đơn
+            Quán ăn
           </Link>
 
           {user && (
             <>
+              <Link
+                href="/wishlist"
+                className="text-sm font-semibold text-gray-600 transition-colors hover:text-primary hidden sm:block"
+              >
+                Yêu thích
+              </Link>
               <Link
                 href="/profile"
                 className="text-sm font-semibold text-gray-600 transition-colors hover:text-primary hidden sm:block"

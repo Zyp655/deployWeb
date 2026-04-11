@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchProducts, fetchRecommendedProducts, Product, RecommendedProduct } from '@/lib/api/client';
+import { fetchProducts, fetchRecommendedProducts, Product, RecommendedProduct, searchSemanticProducts } from '@/lib/api/client';
 import ProductCard from '@/components/ProductCard';
 import { useAuthStore } from '@/store/auth';
 
@@ -13,6 +13,8 @@ export default function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
   const [showFilters, setShowFilters] = useState(false);
   
+  const [searchQuery, setSearchQuery] = useState('');
+  
   // Filter states
   const [filterVegetarian, setFilterVegetarian] = useState(false);
   const [filterNotSpicy, setFilterNotSpicy] = useState(false);
@@ -21,17 +23,33 @@ export default function MenuPage() {
   const { token } = useAuthStore();
 
   useEffect(() => {
-    const filters: any = {};
-    if (filterVegetarian) filters.vegetarian = true;
-    if (filterNotSpicy) filters.spicy = false;
-    if (filterLowCalories) filters.maxCalories = 500;
-
     setLoading(true);
-    fetchProducts(filters)
-      .then(setProducts)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [filterVegetarian, filterNotSpicy, filterLowCalories]);
+    // Debounce basic
+    const timer = setTimeout(async () => {
+      try {
+        if (searchQuery.trim()) {
+          // GỌI AI SEMANTIC SEARCH 🧠
+          const res = await searchSemanticProducts(searchQuery.trim(), token || undefined);
+          setProducts(res.results);
+        } else {
+          // Fetch thông thường
+          const filters: any = {};
+          if (filterVegetarian) filters.vegetarian = true;
+          if (filterNotSpicy) filters.spicy = false;
+          if (filterLowCalories) filters.maxCalories = 500;
+          
+          const normalProducts = await fetchProducts(filters);
+          setProducts(normalProducts);
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [filterVegetarian, filterNotSpicy, filterLowCalories, searchQuery, token]);
 
   useEffect(() => {
     fetchRecommendedProducts(token || undefined)
@@ -103,24 +121,39 @@ export default function MenuPage() {
           </section>
         )}
 
-        <div className="flex items-center justify-between mb-4 px-2">
+        <div className="flex items-center justify-between mb-4 px-2 flex-wrap gap-4">
           <h2 className="text-xl font-bold text-gray-900">🍔 Tất cả món ăn</h2>
           
-          {/* Filter toggle button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-              <path fillRule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 01.628.74v2.288a2.25 2.25 0 01-.659 1.59l-4.682 4.683a2.25 2.25 0 00-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 018 18.25v-5.757a2.25 2.25 0 00-.659-1.591L2.659 6.22A2.25 2.25 0 012 4.629V2.34a.75.75 0 01.628-.74z" clipRule="evenodd" />
-            </svg>
-            Bộ lọc
-            {activeFiltersCount > 0 && (
-              <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
+          {/* Search and Filters */}
+          <div className="flex flex-1 sm:flex-none items-center gap-2">
+            <div className="relative flex-1 sm:w-64">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400">
+                <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Tìm món ăn..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-full border border-gray-200 bg-white pl-9 pr-4 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-all font-medium text-gray-700"
+              />
+            </div>
+            {/* Filter toggle button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 whitespace-nowrap"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path fillRule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 01.628.74v2.288a2.25 2.25 0 01-.659 1.59l-4.682 4.683a2.25 2.25 0 00-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 018 18.25v-5.757a2.25 2.25 0 00-.659-1.591L2.659 6.22A2.25 2.25 0 012 4.629V2.34a.75.75 0 01.628-.74z" clipRule="evenodd" />
+              </svg>
+              Lọc
+              {activeFiltersCount > 0 && (
+                <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Filter panel */}

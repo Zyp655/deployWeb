@@ -25,11 +25,31 @@ export default function CheckoutPage() {
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [couponResult, setCouponResult] = useState<{
+    code: string;
+    description: string | null;
+    discount: number;
+    finalTotal: number;
+  } | null>(null);
 
   // If not logged in, open auth modal
   useEffect(() => {
     if (!user || !token) {
       openAuthModal('login');
+    }
+    
+    // Auto-fetch location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        (err) => console.warn('Could not fetch location', err),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
     }
   }, [user, token, openAuthModal]);
 
@@ -39,6 +59,22 @@ export default function CheckoutPage() {
       router.push('/menu');
     }
   }, [items.length, router]);
+
+  const handleApplyCoupon = async () => {
+    if (!token || !couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const { validateCoupon } = await import('@/lib/api/client');
+      const res = await validateCoupon(couponCode, totalPrice(), token);
+      setCouponResult(res);
+    } catch (err: unknown) {
+      setCouponError(err instanceof Error ? err.message : 'Lỗi mã giảm giá');
+      setCouponResult(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +101,9 @@ export default function CheckoutPage() {
           address: address.trim(),
           paymentMethod,
           note: note.trim() || undefined,
+          couponCode: couponResult?.code,
+          userLat: userLocation?.lat,
+          userLng: userLocation?.lng,
         },
         token,
       );
@@ -75,7 +114,7 @@ export default function CheckoutPage() {
       if (paymentMethod === 'MOMO') {
         const momoResult = await createMoMoPayment(
           order.id,
-          totalPrice(),
+          couponResult ? couponResult.finalTotal : totalPrice(),
           `Thanh toán đơn hàng ${order.id}`,
           token,
         );
@@ -86,7 +125,7 @@ export default function CheckoutPage() {
       } else if (paymentMethod === 'VNPAY') {
         const vnpayResult = await createVNPayPayment(
           order.id,
-          totalPrice(),
+          couponResult ? couponResult.finalTotal : totalPrice(),
           `Thanh toán đơn hàng ${order.id}`,
           token,
         );
@@ -142,10 +181,54 @@ export default function CheckoutPage() {
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
-              <span className="text-sm text-gray-500">Tổng ({totalItems()} món)</span>
-              <span className="text-xl font-extrabold text-primary">{formatPrice(totalPrice())}</span>
+            <div className="mt-4 border-t border-gray-100 pt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">Tạm tính ({totalItems()} món)</span>
+                <span className="text-sm font-semibold">{formatPrice(totalPrice())}</span>
+              </div>
+              
+              {couponResult && (
+                <div className="flex items-center justify-between text-green-600">
+                  <span className="text-sm font-semibold">Giảm giá ({couponResult.code})</span>
+                  <span className="text-sm font-bold">-{formatPrice(couponResult.discount)}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-base font-bold text-gray-900">Tổng thanh toán</span>
+                <span className="text-xl font-extrabold text-primary">
+                  {formatPrice(couponResult ? couponResult.finalTotal : totalPrice())}
+                </span>
+              </div>
             </div>
+          </section>
+
+          {/* Coupon Code */}
+          <section className="rounded-2xl bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">🏷️ Mã giảm giá</h2>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value);
+                  setCouponError('');
+                  if (couponResult) setCouponResult(null); // Reset when changing
+                }}
+                placeholder="Nhập mã giảm giá..."
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium uppercase"
+              />
+              <button
+                type="button"
+                onClick={handleApplyCoupon}
+                disabled={!couponCode.trim() || couponLoading || !!couponResult}
+                className="rounded-xl px-5 py-3 text-sm font-bold text-white bg-gray-900 shadow-sm transition-all hover:bg-gray-800 disabled:opacity-50"
+              >
+                {couponLoading ? '⏳' : couponResult ? 'Đã áp dụng' : 'Áp dụng'}
+              </button>
+            </div>
+            {couponError && <p className="mt-2 text-sm text-red-600 font-medium">{couponError}</p>}
+            {couponResult && <p className="mt-2 text-sm text-green-600 font-medium">✅ Áp dụng thành công! Giảm {formatPrice(couponResult.discount)}</p>}
           </section>
 
           {/* Delivery Address */}
@@ -216,7 +299,7 @@ export default function CheckoutPage() {
             disabled={loading || !user}
             className="w-full rounded-xl bg-gradient-to-r from-primary to-accent py-4 text-base font-bold text-white shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? '⏳ Đang đặt hàng...' : `🛵 Xác nhận đặt hàng • ${formatPrice(totalPrice())}`}
+            {loading ? '⏳ Đang đặt hàng...' : `🛵 Xác nhận đặt hàng • ${formatPrice(couponResult ? couponResult.finalTotal : totalPrice())}`}
           </button>
         </form>
       </div>

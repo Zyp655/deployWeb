@@ -8,6 +8,7 @@ import { fetchProductById, fetchProductReviews, fetchProductRating, createReview
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
 import StarRating from '@/components/StarRating';
+import WishlistButton from '@/components/WishlistButton';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -99,8 +100,21 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    for (let i = 0; i < quantity; i++) {
-      addItem(product);
+    try {
+      for (let i = 0; i < quantity; i++) {
+        addItem(product);
+      }
+    } catch (err: any) {
+      if (err.message === 'DIFFERENT_STORE') {
+        const confirmClear = window.confirm('Quán bạn chọn khác với quán của các món trong giỏ hàng. Xóa giỏ hàng hiện tại và thêm món này?');
+        if (confirmClear) {
+          useCartStore.getState().clearAndAddItem(product);
+          // Restore the rest of quantity
+          for (let i = 1; i < quantity; i++) {
+             useCartStore.getState().addItem(product);
+          }
+        }
+      }
     }
   };
 
@@ -254,6 +268,7 @@ export default function ProductDetailPage() {
                     </svg>
                     Thêm vào giỏ
                   </button>
+                  <WishlistButton productId={product.id} />
                 </div>
               </div>
             </div>

@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
+import RealtimeNotifications from '@/components/RealtimeNotifications';
 import AuthModal from '@/components/AuthModal';
+import AIChatWidget from '@/components/AIChatWidget';
 
 export const metadata: Metadata = {
   title: 'Food App — Đặt đồ ăn trực tuyến',
@@ -19,7 +21,9 @@ export default function RootLayout({
       <body>
         <Navbar />
         <CartDrawer />
+        <RealtimeNotifications />
         <AuthModal />
+        <AIChatWidget />
         {children}
       </body>
     </html>

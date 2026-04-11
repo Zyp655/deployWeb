@@ -14,6 +14,7 @@ interface CartStore {
   closeCart: () => void;
   toggleCart: () => void;
   addItem: (product: Product) => void;
+  clearAndAddItem: (product: Product) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   updateNote: (productId: string, note: string) => void;
@@ -32,6 +33,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   addItem: (product: Product) => {
     set((state) => {
+      // Logic for single-store cart rule
+      if (state.items.length > 0) {
+        const currentStoreId = state.items[0].product.storeId;
+        if (currentStoreId && product.storeId && currentStoreId !== product.storeId) {
+          throw new Error('DIFFERENT_STORE');
+        }
+      }
+
       const existing = state.items.find((item) => item.product.id === product.id);
       if (existing) {
         return {
@@ -44,6 +53,10 @@ export const useCartStore = create<CartStore>((set, get) => ({
       }
       return { items: [...state.items, { product, quantity: 1, note: '' }] };
     });
+  },
+
+  clearAndAddItem: (product: Product) => {
+    set({ items: [{ product, quantity: 1, note: '' }] });
   },
 
   removeItem: (productId: string) => {
