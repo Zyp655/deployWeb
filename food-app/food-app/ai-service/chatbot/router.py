@@ -4,10 +4,14 @@ import time
 import os
 import httpx
 from database import log_ai_interaction
+from openai import AsyncOpenAI
 
 router = APIRouter(prefix="/chat", tags=["Chatbot"])
 
 API_URL = os.environ.get("NEXT_PUBLIC_API_URL", "http://localhost:4000")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
+client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 class ChatRequest(BaseModel):
     userId: str = "anonymous"
@@ -20,59 +24,49 @@ class ChatResponse(BaseModel):
 @router.post("/", response_model=ChatResponse)
 async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
     """
-    Chatbot hỗ trợ khách hàng về menu món ăn
+    Chatbot hỗ trợ khách hàng về menu món ăn sử dụng OpenAI
     """
     start_time = time.time()
-    message = req.message.lower().strip()
+    message = req.message.strip()
     
     # Lấy dữ liệu sản phẩm để phản hồi động
     menu_items = []
     try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(f"{API_URL}/products?limit=100")
+        async with httpx.AsyncClient() as http_client:
+            resp = await http_client.get(f"{API_URL}/products?limit=100")
             if resp.status_code == 200:
                 data = resp.json()
                 menu_items = data.get("data", data) if isinstance(data, dict) else data
     except Exception as e:
         print("Lỗi fetch Products:", e)
 
-    def extract_names(items):
-        return ", ".join([p.get('name', '') for p in items[:8]]) if items else ""
+    # Context menu
+    menu_context = ""
+    if menu_items:
+        items_str = ", ".join([f"{p.get('name', '')} ({p.get('price', 0)} VND)" for p in menu_items[:25]])
+        menu_context = f"Menu hiện tại của nhà hàng gồm có: {items_str}."
 
-    # Simple keyword-based responses
-    if any(word in message for word in ["menu", "món", "mon", "có gì", "co gi"]):
-        if menu_items:
-            reply = f"Chúng tôi đang có sẵn các món: {extract_names(menu_items)}... Bạn thích món nào?"
-        else:
-            reply = "Chúng tôi có: Phở Bò, Bún Chả, Bánh Mì, Cơm Tấm... Bạn thích món nào?"
-    elif any(word in message for word in ["phở", "pho"]):
-        pho_items = [p for p in menu_items if "phở" in str(p.get("name", "")).lower() or "pho" in str(p.get("name", "")).lower()]
-        if pho_items:
-            reply = f"Chúng tôi có {pho_items[0].get('name')} giá {pho_items[0].get('price')} VND. Rất ngon! Bạn có muốn đặt không?"
-        else:
-            reply = "Xin lỗi, hiện tại quán vừa hết Phở mất rồi. Có thể gọi Bún thay thế không ạ?"
-    elif any(word in message for word in ["bún", "bun"]):
-        reply = "Bún Chả Hà Nội là món đặc sản của chúng tôi! Bún chả nướng than hoa thơm lừng, giá 50,000 VND."
-    elif any(word in message for word in ["cơm", "com"]):
-        reply = "Cơm Tấm Sườn Bì Chả là lựa chọn tuyệt vời! Đầy đủ dinh dưỡng, giá 60,000 VND."
-    elif any(word in message for word in ["chay", "vegetarian"]):
-        reply = "Chúng tôi có các thức ăn và đồ uống thanh mát cho người ăn chay. Hãy search thử nhé!"
-    elif any(word in message for word in ["cay", "spicy"]):
-        reply = "Bánh Mì Thịt Nướng có ớt tươi, rất cay và ngon! Giá chỉ 30,000 VND."
-    elif any(word in message for word in ["giá", "gia", "price", "bao nhiêu"]):
-        reply = "Giá món ăn của chúng tôi từ 20,000 - 85,000 VND. Món nào bạn quan tâm?"
-    elif any(word in message for word in ["giao", "delivery", "ship"]):
-        reply = "Chúng tôi giao hàng tận nơi trong vòng 30-45 phút dựa trên Khoảng Cách GPS thực tế! Phí ship cơ bản 5000đ/Km."
-    elif any(word in message for word in ["đặt", "dat", "order", "mua"]):
-        reply = "Tuyệt vời! Bạn có thể thêm món vào giỏ hàng và thanh toán. Chúng tôi hỗ trợ COD, MoMo và VNPay."
-    elif any(word in message for word in ["hello", "hi", "xin chào", "chao"]):
-        reply = "Xin chào! Tôi là trợ lý ảo của Food App. Tôi có thể giúp bạn tìm món ăn ngon. Bạn muốn ăn gì hôm nay?"
-    elif any(word in message for word in ["cảm ơn", "cam on", "thanks", "thank"]):
-        reply = "Rất vui được hỗ trợ bạn! Chúc bạn ngon miệng! 😊"
-    else:
-        reply = "Tôi có thể giúp bạn tìm món ăn ngon! Bạn muốn ăn phở, bún, cơm hay món gì khác?"
+    system_prompt = f"""Bạn là trợ lý ảo thân thiện của ứng dụng đặt món ăn (Food App). 
+Hãy tư vấn cho khách hàng bằng tiếng Việt một cách lịch sự, nhiệt tình và tự nhiên nhất.
+{menu_context}
+Hãy trả lời ngắn gọn (dưới 4 câu) và tập trung vào các câu hỏi liên quan tới thức ăn, đặt hàng, phí ship (phí cơ bản 5000đ/Km), và menu. Nếu khách hàng hỏi món không có, hãy gợi ý món khác trong menu."""
+
+    reply = "Xin lỗi, hiện tại tôi đang quá tải. Vui lòng thử lại sau chút nhé!"
+    try:
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=250,
+            temperature=0.7
+        )
+        reply = response.choices[0].message.content
+    except Exception as e:
+        print("Lỗi gọi OpenAI API:", e)
     
-    response = ChatResponse(reply=reply, status="ok")
+    response_data = ChatResponse(reply=reply.strip(), status="ok")
     latency_ms = int((time.time() - start_time) * 1000)
     
     background_tasks.add_task(
@@ -80,8 +74,8 @@ async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
         "chatbot",
         req.userId,
         req.model_dump(),
-        response.model_dump(),
+        response_data.model_dump(),
         latency_ms
     )
     
-    return response
+    return response_data
