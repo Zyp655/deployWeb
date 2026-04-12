@@ -224,9 +224,9 @@ export default function CartDrawer() {
   );
 }
 
-function CartItemImg({ category, image, name }: { category: string, image?: string, name: string }) {
+function CartItemImg({ category, image, name }: { category: string, image?: string | null, name: string }) {
   const [imgError, setImgError] = useState(false);
-  const resolveImageUrl = (url: string | null) => {
+  const resolveImageUrl = (url: string | null | undefined) => {
     if (!url || url === '/images/default.jpg') return null;
     if (url.startsWith('http')) return url;
     return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${url}`;
