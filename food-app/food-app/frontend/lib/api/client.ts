@@ -598,6 +598,38 @@ export async function deleteSellerProduct(productId: string, token: string) {
   });
 }
 
+// ─── Partner Requests ──────────────────────────────────
+export async function createPartnerRequest(payload: any, token: string): Promise<any> {
+  return apiClient('/partner-requests', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    token,
+  });
+}
+
+export async function fetchMyPartnerRequests(token: string): Promise<any[]> {
+  return apiClient<any[]>('/partner-requests/my-requests', { token });
+}
+
+export async function fetchAdminPartnerRequests(token: string): Promise<any[]> {
+  return apiClient<any[]>('/admin/partner-requests', { token });
+}
+
+export async function approvePartnerRequest(id: string, token: string): Promise<any> {
+  return apiClient(`/admin/partner-requests/${id}/approve`, {
+    method: 'PATCH',
+    token,
+  });
+}
+
+export async function rejectPartnerRequest(id: string, reason: string | null, token: string): Promise<any> {
+  return apiClient(`/admin/partner-requests/${id}/reject`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason }),
+    token,
+  });
+}
+
 export interface Store {
   id: string;
   name: string;

@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { api } from '@/lib/api/client';
+import { useAuthStore } from '@/store/auth';
+import { fetchAdminPartnerRequests, approvePartnerRequest, rejectPartnerRequest } from '@/lib/api/client';
 
 export default function PartnerRequestsPage() {
+  const token = useAuthStore(s => s.token);
   const [requests, setRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchRequests = async () => {
+    if (!token) return;
     try {
-      const res = await api.get('/admin/partner-requests');
-      setRequests(res.data);
+      const data = await fetchAdminPartnerRequests(token);
+      setRequests(data);
     } catch (err) {
       console.error(err);
       alert('Không thể tải danh sách đơn đăng ký');
@@ -21,12 +24,13 @@ export default function PartnerRequestsPage() {
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [token]);
 
   const handleApprove = async (id: string) => {
+    if (!token) return;
     if (!window.confirm('Bạn có chắc chắn muốn phê duyệt đơn này?')) return;
     try {
-      await api.patch(`/admin/partner-requests/${id}/approve`);
+      await approvePartnerRequest(id, token);
       alert('Phê duyệt thành công!');
       fetchRequests();
     } catch (err: any) {
@@ -35,10 +39,11 @@ export default function PartnerRequestsPage() {
   };
 
   const handleReject = async (id: string) => {
+    if (!token) return;
     const reason = window.prompt('Nhập lý do từ chối (bỏ trống nếu không có):');
     if (reason === null) return;
     try {
-      await api.patch(`/admin/partner-requests/${id}/reject`, { reason });
+      await rejectPartnerRequest(id, reason, token);
       alert('Đã từ chối đơn!');
       fetchRequests();
     } catch (err: any) {

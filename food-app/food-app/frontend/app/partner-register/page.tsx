@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { api } from '@/lib/api/client';
+import { fetchMyPartnerRequests, createPartnerRequest } from '@/lib/api/client';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 
 export default function PartnerRegisterPage() {
+  const token = useAuthStore(s => s.token);
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   
@@ -25,13 +26,15 @@ export default function PartnerRegisterPage() {
       router.push('/login');
       return;
     }
-    fetchMyRequests();
-  }, [user]);
+    if (token) {
+      fetchMyRequests();
+    }
+  }, [user, token]);
 
   const fetchMyRequests = async () => {
     try {
-      const res = await api.get('/partner-requests/my-requests');
-      const pending = res.data.find((req: any) => req.status === 'PENDING');
+      const data = await fetchMyPartnerRequests(token as string);
+      const pending = data.find((req: any) => req.status === 'PENDING');
       if (pending) {
         setPendingRequest(pending);
       }
@@ -56,7 +59,7 @@ export default function PartnerRegisterPage() {
         payload.idCardNumber = idCardNumber;
       }
 
-      await api.post('/partner-requests', payload);
+      await createPartnerRequest(payload, token as string);
       alert('Gửi đơn đăng ký thành công! Vui lòng chờ Admin phê duyệt.');
       fetchMyRequests();
     } catch (err: any) {
