@@ -23,6 +23,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { UploadModule } from './upload/upload.module';
 import { ChatModule } from './chat/chat.module';
+import { PartnerRequestsModule } from './partner-requests/partner-requests.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { ChatModule } from './chat/chat.module';
     AiModule,
     UploadModule,
     ChatModule,
+    PartnerRequestsModule,
   ],
   providers: [
     {

@@ -33,6 +33,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Link href="/admin/coupons" className="block px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors">
               🏷️ Mã giảm giá
             </Link>
+            <Link href="/admin/partner-requests" className="block px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors">
+              📝 Duyệt Đối tác
+            </Link>
           </nav>
           <div className="p-6 border-t border-gray-800">
             <LogoutButton className="block w-full px-4 py-3 text-center rounded-xl bg-gray-800 text-sm font-semibold text-gray-300 hover:text-white transition-colors" />

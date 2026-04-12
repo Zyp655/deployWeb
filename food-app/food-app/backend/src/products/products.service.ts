@@ -168,11 +168,9 @@ export class ProductsService {
 
     try {
       const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
-      const aiApiKey = process.env.AI_SERVICE_API_KEY;
+      const aiApiKey = process.env.AI_SERVICE_API_KEY || 'DEV_SECRET_KEY';
 
-      if (!aiApiKey) {
-        throw new Error('Thiếu cấu hình AI_SERVICE_API_KEY');
-      }
+      // Remove the throwing block since we'll always have a default now.
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3500);

@@ -53,6 +53,15 @@ export default function Navbar() {
                 Tài khoản
               </Link>
 
+              {user.role === 'CUSTOMER' && (
+                <Link
+                  href="/partner-register"
+                  className="text-sm font-bold text-orange-500 transition-colors hover:text-orange-600 hidden sm:block"
+                >
+                  Trở thành Đối tác 🤝
+                </Link>
+              )}
+
               {user.role === 'RESTAURANT' && (
                 <Link
                   href="/seller"

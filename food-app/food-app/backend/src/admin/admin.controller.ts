@@ -5,6 +5,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 import { UsersService } from '../users/users.service';
+import { PartnerRequestsService } from '../partner-requests/partner-requests.service';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -13,6 +14,7 @@ export class AdminController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
+    private readonly partnerRequestsService: PartnerRequestsService,
   ) {}
 
   @Get('stats')
@@ -93,5 +95,22 @@ export class AdminController {
   @Patch('users/:id/block')
   async toggleBlockUser(@Param('id') id: string, @Body() body: { isBlocked: boolean }) {
     return this.usersService.toggleBlock(id, body.isBlocked);
+  }
+
+  // --- Partner Requests ---
+
+  @Get('partner-requests')
+  async getPartnerRequests() {
+    return this.partnerRequestsService.getAllRequests();
+  }
+
+  @Patch('partner-requests/:id/approve')
+  async approvePartnerRequest(@Param('id') id: string) {
+    return this.partnerRequestsService.approveRequest(id);
+  }
+
+  @Patch('partner-requests/:id/reject')
+  async rejectPartnerRequest(@Param('id') id: string, @Body() body: { reason?: string }) {
+    return this.partnerRequestsService.rejectRequest(id, body.reason);
   }
 }

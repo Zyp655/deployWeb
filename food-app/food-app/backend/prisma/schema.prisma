@@ -28,6 +28,7 @@ model User {
   driverProfile    DriverProfile?
   sentMessages     ChatMessage[]  @relation("SentMessages")
   receivedMessages ChatMessage[]  @relation("ReceivedMessages")
+  partnerRequests  PartnerRequest[]
 
   @@map("users")
 }
@@ -287,4 +288,39 @@ model DriverEarning {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("driver_earnings")
+}
+
+model PartnerRequest {
+  id           String               @id @default(uuid())
+  userId       String               @map("user_id")
+  type         PartnerType
+  status       PartnerRequestStatus @default(PENDING)
+  
+  // Fields for Seller
+  storeName    String?              @map("store_name")
+  storeAddress String?              @map("store_address")
+  
+  // Fields for Driver
+  vehicleType  String?              @map("vehicle_type")
+  vehiclePlate String?              @map("vehicle_plate")
+  idCardNumber String?              @map("id_card_number")
+  
+  notes        String?
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("partner_requests")
+}
+
+enum PartnerType {
+  SELLER
+  DRIVER
+}
+
+enum PartnerRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

@@ -6,22 +6,15 @@ import { useAuthStore } from '@/store/auth';
 import { loginUser } from '@/lib/api/client';
 import Link from 'next/link';
 
-export default function AuthModal() {
+export default function LoginClient() {
   const router = useRouter();
-  const { isAuthModalOpen, closeAuthModal, setAuth } = useAuthStore();
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const resetForm = () => {
-    setEmail('');
-    setPassword('');
-    setError('');
-    setShowPassword(false);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,17 +23,15 @@ export default function AuthModal() {
 
     try {
       const res = await loginUser(email, password);
-
       setAuth({ id: res.user.id, name: res.user.name, email: res.user.email, role: res.user.role }, res.accessToken);
-      resetForm();
-      closeAuthModal();
       
       if (res.user.role === 'ADMIN') {
         router.push('/admin');
       } else if (res.user.role === 'RESTAURANT') {
         router.push('/seller');
+      } else {
+        router.push('/');
       }
-
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Đã có lỗi xảy ra';
       setError(message);
@@ -49,56 +40,32 @@ export default function AuthModal() {
     }
   };
 
-  if (!isAuthModalOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => {
-          closeAuthModal();
-          resetForm();
-        }}
-      />
-
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl animate-in">
-        <button
-          onClick={() => {
-            closeAuthModal();
-            resetForm();
-          }}
-          className="absolute right-4 top-4 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
-            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-          </svg>
-        </button>
-
-        <div className="mb-6 text-center">
-          <span className="text-4xl">👋</span>
-          <h2 className="mt-2 text-2xl font-extrabold text-gray-900">
+    <div className="min-h-[80vh] flex items-center justify-center p-4">
+      <div className="w-full max-w-md mx-4 rounded-2xl bg-white p-8 shadow-xl border border-gray-100">
+        <div className="mb-8 text-center">
+          <span className="text-4xl inline-block mb-3">👋</span>
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
             Đăng nhập
           </h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="text-gray-500">
             Chào mừng bạn quay lại!
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100">
+          <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="auth-email" className="block text-sm font-semibold text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
               Email
             </label>
             <input
-               id="auth-email"
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -109,12 +76,12 @@ export default function AuthModal() {
           </div>
 
           <div>
-            <label htmlFor="auth-password" className="block text-sm font-semibold text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5">
               Mật khẩu
             </label>
             <div className="relative">
               <input
-                id="auth-password"
+                id="password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -143,22 +110,18 @@ export default function AuthModal() {
           </div>
 
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-primary to-accent py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all duration-200 hover:shadow-xl hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+             type="submit"
+             disabled={loading}
+             className="w-full rounded-xl bg-gradient-to-r from-primary to-accent py-3.5 mt-2 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all duration-200 hover:shadow-xl hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? '⏳ Đang xử lý...' : 'Đăng nhập'}
           </button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-gray-500">
+        <p className="mt-8 text-center text-sm text-gray-500">
           Chưa có tài khoản?{' '}
           <Link
             href="/register"
-            onClick={() => {
-              closeAuthModal();
-              resetForm();
-            }}
             className="font-semibold text-primary hover:text-primary-600 transition-colors"
           >
             Đăng ký ngay
