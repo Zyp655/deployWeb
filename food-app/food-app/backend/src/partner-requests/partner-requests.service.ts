@@ -76,7 +76,7 @@ export class PartnerRequestsService {
       throw new BadRequestException('Chỉ có thể duyệt yêu cầu đang chờ (PENDING)');
     }
 
-    let newRole = Role.CUSTOMER;
+    let newRole: Role = Role.CUSTOMER;
 
     await this.prisma.$transaction(async (tx) => {
       // 1. Mark as APPROVED
