@@ -226,14 +226,19 @@ export default function SellerProductsPage() {
             <div key={product.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm border transition-all hover:shadow-md flex flex-col group ${product.isAvailable ? 'border-gray-100' : 'border-red-100 opacity-75'}`}>
               <div className="h-40 bg-gradient-to-br from-primary-50 to-accent-50 flex items-center justify-center relative">
                 {resolveImageUrl(product.image) ? (
-                  <img 
-                    src={resolveImageUrl(product.image) as string} 
-                    alt={product.name} 
-                    className="w-full h-full object-cover" 
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/E2E8F0/A0AEC0?text=HOANG+FOOD';
-                    }}
-                  />
+                  <>
+                    <img 
+                      src={resolveImageUrl(product.image) as string} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        const nextSib = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                        if (nextSib) nextSib.style.display = 'inline-block';
+                      }}
+                    />
+                    <span className="text-6xl hidden">{getCategoryEmoji(product.category)}</span>
+                  </>
                 ) : (
                   <span className="text-6xl">{getCategoryEmoji(product.category)}</span>
                 )}
@@ -429,13 +434,16 @@ export default function SellerProductsPage() {
                         <img 
                           src={formData.image.startsWith('http') ? formData.image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${formData.image}`} 
                           alt="Preview" 
-                          className="w-full h-full object-cover" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
                         />
                       </div>
                     )}
                     <div className="flex-1 space-y-2">
                       <input 
-                        type="url"
+                        type="text"
                         value={formData.image}
                         onChange={e => setFormData({...formData, image: e.target.value})}
                         placeholder="Dán link ảnh hoặc click nút tải lên..."

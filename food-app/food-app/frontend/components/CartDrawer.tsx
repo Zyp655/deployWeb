@@ -2,7 +2,7 @@
 
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 function getCategoryEmoji(category: string): string {
@@ -115,19 +115,7 @@ export default function CartDrawer() {
                 <li key={item.cartItemId} className="py-4">
                   <div className="flex gap-3">
                     {/* Image or Emoji avatar */}
-                    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 via-accent-50 to-highlight-50 overflow-hidden">
-                      {item.product.image && item.product.image !== '/images/default.jpg' ? (
-                        <img 
-                          src={item.product.image} 
-                          alt={item.product.name} 
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-2xl">
-                          {getCategoryEmoji(item.product.category)}
-                        </span>
-                      )}
-                    </div>
+                    <CartItemImg category={item.product.category} image={item.product.image} name={item.product.name} />
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
@@ -233,5 +221,42 @@ export default function CartDrawer() {
         )}
       </aside>
     </>
+  );
+}
+
+function CartItemImg({ category, image, name }: { category: string, image?: string, name: string }) {
+  const [imgError, setImgError] = useState(false);
+  const resolveImageUrl = (url: string | null) => {
+    if (!url || url === '/images/default.jpg') return null;
+    if (url.startsWith('http')) return url;
+    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${url}`;
+  };
+
+  return (
+    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 via-accent-50 to-highlight-50 overflow-hidden relative">
+      {resolveImageUrl(image) ? (
+        <>
+          <img 
+            src={resolveImageUrl(image)!} 
+            alt={name} 
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              const nextSib = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+              if (nextSib) nextSib.style.display = 'flex';
+            }}
+          />
+          <div className="absolute inset-0 items-center justify-center" style={{ display: 'none' }}>
+            <span className="text-2xl">
+              {getCategoryEmoji(category)}
+            </span>
+          </div>
+        </>
+      ) : (
+        <span className="text-2xl">
+          {getCategoryEmoji(category)}
+        </span>
+      )}
+    </div>
   );
 }
