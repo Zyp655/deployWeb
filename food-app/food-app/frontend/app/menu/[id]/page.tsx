@@ -223,10 +223,18 @@ export default function ProductDetailPage() {
 
           <div className="flex flex-col md:flex-row gap-8 items-center">
             {/* Image */}
-            <div className="w-64 h-64 md:w-80 md:h-80 rounded-3xl bg-white/60 backdrop-blur-sm shadow-xl flex items-center justify-center flex-shrink-0">
-              <span className="text-[120px] md:text-[150px] drop-shadow-lg">
-                {getCategoryEmoji(product.category)}
-              </span>
+            <div className="w-64 h-64 md:w-80 md:h-80 rounded-3xl bg-white/60 backdrop-blur-sm shadow-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {product.image && product.image !== '/images/default.jpg' ? (
+                <img 
+                  src={product.image} 
+                  alt={product.name} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-[120px] md:text-[150px] drop-shadow-lg">
+                  {getCategoryEmoji(product.category)}
+                </span>
+              )}
             </div>
 
             {/* Info */}

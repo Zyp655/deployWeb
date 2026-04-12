@@ -31,11 +31,19 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Image placeholder — clickable to detail */}
       <Link href={`/menu/${product.id}`}>
         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary-100 via-accent-50 to-highlight-100 cursor-pointer">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-6xl transition-transform duration-300 group-hover:scale-110">
-              {getCategoryEmoji(product.category)}
-            </span>
-          </div>
+          {product.image && product.image !== '/images/default.jpg' ? (
+            <img 
+              src={product.image} 
+              alt={product.name} 
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-6xl transition-transform duration-300 group-hover:scale-110">
+                {getCategoryEmoji(product.category)}
+              </span>
+            </div>
+          )}
           {/* Category badge */}
           <span className="absolute top-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary-700 shadow-sm backdrop-blur-sm">
             {product.category}

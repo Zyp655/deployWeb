@@ -114,11 +114,19 @@ export default function CartDrawer() {
                 return (
                 <li key={item.cartItemId} className="py-4">
                   <div className="flex gap-3">
-                    {/* Emoji avatar */}
-                    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 via-accent-50 to-highlight-50">
-                      <span className="text-2xl">
-                        {getCategoryEmoji(item.product.category)}
-                      </span>
+                    {/* Image or Emoji avatar */}
+                    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 via-accent-50 to-highlight-50 overflow-hidden">
+                      {item.product.image && item.product.image !== '/images/default.jpg' ? (
+                        <img 
+                          src={item.product.image} 
+                          alt={item.product.name} 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl">
+                          {getCategoryEmoji(item.product.category)}
+                        </span>
+                      )}
                     </div>
 
                     {/* Info */}

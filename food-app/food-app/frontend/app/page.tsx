@@ -240,8 +240,16 @@ export default function HomePage() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-primary-600/10 rounded-bl-full rounded-tr-3xl -z-10 group-hover:bg-primary-500/20 transition-colors"></div>
                   
                   <div>
-                    <div className="w-16 h-16 rounded-2xl bg-gray-700 flex items-center justify-center mb-6 shadow-inner">
-                      <span className="text-3xl group-hover:scale-110 transition-transform">{getCategoryEmoji(product.category)}</span>
+                    <div className="w-16 h-16 rounded-2xl bg-gray-700 flex items-center justify-center mb-6 shadow-inner overflow-hidden">
+                      {product.image && product.image !== '/images/default.jpg' ? (
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <span className="text-3xl group-hover:scale-110 transition-transform">{getCategoryEmoji(product.category)}</span>
+                      )}
                     </div>
                     <h3 className="text-xl font-bold text-white group-hover:text-primary-400 transition-colors line-clamp-1">{product.name}</h3>
                     <p className="mt-2 text-sm text-gray-400 line-clamp-2 leading-relaxed">{product.recommendReason || 'Một lựa chọn tuyệt vời cho bữa ăn hôm nay.'}</p>
