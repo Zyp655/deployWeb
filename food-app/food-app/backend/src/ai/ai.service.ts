@@ -20,9 +20,12 @@ export class AiService {
   async searchProducts(query: string, userId: string = 'anonymous') {
     try {
       const queryNorm = this.removeAccents(query).trim();
-      const products = await this.prisma.product.findMany({
+      let products = await this.prisma.product.findMany({
         where: { isAvailable: true },
       });
+      
+      const { isProductTimeValid } = require('../utils/time-utils');
+      products = products.filter(p => isProductTimeValid(p.saleStartTime, p.saleEndTime));
 
       const scored = products.map((product) => {
         let score = 0;
