@@ -69,17 +69,46 @@ export class AiService {
 
   async chat(message: string, userId: string = 'anonymous') {
     try {
-      const response = await firstValueFrom(
-        this.httpService.post(
-          `${this.aiUrl}/chat`,
-          { message, userId },
-          { headers: { 'x-api-key': this.aiApiKey } },
-        ),
-      );
-      return response.data;
-    } catch (error) {
-      console.error('AI Service Chat Error:', error);
-      throw new InternalServerErrorException('Lỗi kết nối đến dịch vụ AI Chatbot');
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error('OPENAI_API_KEY not configured in environment');
+      }
+
+      const { OpenAI } = require('openai');
+      const openai = new OpenAI({ apiKey });
+
+      const products = await this.prisma.product.findMany({
+        where: { isAvailable: true },
+        take: 25,
+      });
+
+      const itemsStr = products.map((p) => `${p.name} (${p.price} VND)`).join(', ');
+      const menuContext = products.length > 0 ? `Menu hiện tại của nhà hàng gồm có: ${itemsStr}.` : '';
+
+      const systemPrompt = `Bạn là trợ lý ảo thân thiện của ứng dụng đặt món ăn (Food App). 
+Hãy tư vấn cho khách hàng bằng tiếng Việt một cách lịch sự, nhiệt tình và tự nhiên nhất.
+${menuContext}
+Hãy trả lời ngắn gọn (dưới 4 câu) và tập trung vào các câu hỏi liên quan tới thức ăn, đặt hàng, phí ship (phí cơ bản 5000đ/Km), và menu. Nếu khách hàng hỏi món không có, hãy gợi ý món khác trong menu.`;
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ],
+        max_tokens: 250,
+        temperature: 0.7,
+      });
+
+      const reply = response.choices[0]?.message?.content?.trim() || "Xin lỗi, hiện tại tôi đang quá tải. Vui lòng thử lại sau chút nhé!";
+
+      return { reply, status: 'ok' };
+    } catch (error: any) {
+      console.error('AI Service Chat Error:', error?.message);
+      return { 
+        reply: "Xin lỗi, hiện tại tôi đang quá tải. Vui lòng thử lại sau chút nhé!",
+        status: 'error'
+      };
     }
   }
 }

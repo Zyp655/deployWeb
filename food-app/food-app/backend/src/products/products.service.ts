@@ -167,41 +167,65 @@ export class ProductsService {
     });
 
     try {
-      const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
-      const aiApiKey = process.env.AI_SERVICE_API_KEY || 'DEV_SECRET_KEY';
-
-      // Remove the throwing block since we'll always have a default now.
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-      const response = await fetch(`${aiServiceUrl}/recommend`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': aiApiKey
-        },
-        body: JSON.stringify({
-          userId,
-          orderHistory,
-          availableProducts,
-          limit: 4,
-        }),
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`AI Service returned ${response.status}`);
+      // Native Recommendation Logic
+      if (!userId || orderHistory.length === 0) {
+        // Fallback for guest or zero history
+        const fallbackProducts = availableProducts.slice(0, 4);
+        const productsMap = await this.prisma.product.findMany({
+          where: { id: { in: fallbackProducts.map(p => p.id) } }
+        });
+        const results = fallbackProducts.map((fp) => {
+          const product = productsMap.find((p) => p.id === fp.id);
+          if (!product) return null;
+          return {
+            ...product,
+            averageRating: 0,
+            totalReviews: 0,
+            recommendReason: 'Món phổ biến đang được yêu thích'
+          };
+        }).filter(Boolean).filter((p: any) => isProductTimeValid(p.saleStartTime, p.saleEndTime)) as unknown as RecommendedProductDto[];
+        return results.slice(0, 4);
       }
 
-      const aiData: { productId: string; score: number; reason: string }[] = await response.json();
+      // Content-based filtering
+      const catScores: Record<string, number> = {};
+      let totalQty = 0;
+      for (const item of orderHistory) {
+        catScores[item.category] = (catScores[item.category] || 0) + item.quantity;
+        totalQty += item.quantity;
+      }
+      totalQty = totalQty || 1;
 
-      const productsMap = await this.prisma.product.findMany({
-        where: { id: { in: aiData.map((d) => d.productId) } },
+      let topCat = '';
+      let maxCatScore = 0;
+      for (const [cat, qty] of Object.entries(catScores)) {
+        if (qty > maxCatScore) {
+          maxCatScore = qty;
+          topCat = cat;
+        }
+      }
+
+      const scoredProducts = availableProducts.map(p => {
+        let baseScore = ((catScores[p.category] || 0) / totalQty) * 10;
+        baseScore += Math.random() * 0.8 + 0.1; // tiny noise
+        
+        let reason = "Gợi ý mới cho bạn";
+        if (baseScore > 3 && topCat === p.category) {
+          reason = `Vì bạn thường thích món thuộc loại ${p.category}`;
+        } else if (baseScore > 1) {
+          reason = "Dựa trên lịch sử đặt hàng của bạn";
+        }
+        return { productId: p.id, score: baseScore, reason };
       });
 
-      const results = aiData.map((ai) => {
+      scoredProducts.sort((a, b) => b.score - a.score);
+      const top = scoredProducts.slice(0, 4);
+
+      const productsMap = await this.prisma.product.findMany({
+        where: { id: { in: top.map((d) => d.productId) } },
+      });
+
+      const results = top.map((ai) => {
         const product = productsMap.find((p) => p.id === ai.productId);
         if (!product) return null;
         return {
@@ -214,11 +238,11 @@ export class ProductsService {
           isAvailable: product.isAvailable,
           recommendReason: ai.reason,
         };
-      }).filter(Boolean).filter((p: any) => isProductTimeValid(p.saleStartTime, p.saleEndTime)) as RecommendedProductDto[];
+      }).filter(Boolean).filter((p: any) => isProductTimeValid(p.saleStartTime, p.saleEndTime)) as unknown as RecommendedProductDto[];
 
-      return results;
+      return results.slice(0, 4);
     } catch (e) {
-      console.error('AI Service Error:', e);
+      console.error('AI Recommendation Logic Error:', e);
       // Fallback
       const fallbackProducts = await this.prisma.product.findMany({
         where: { isAvailable: true },
@@ -227,18 +251,11 @@ export class ProductsService {
       });
       const validFallback = fallbackProducts.filter(p => isProductTimeValid(p.saleStartTime, p.saleEndTime));
       return validFallback.map((p) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        price: p.price,
-        image: p.image,
-        category: p.category,
-        isAvailable: p.isAvailable,
-        recommendReason: 'Món phổ biến đang được yêu thích',
+        ...p,
         averageRating: 0,
         totalReviews: 0,
-        storeId: p.storeId,
-      }));
+        recommendReason: 'Món phổ biến đang được yêu thích'
+      })) as unknown as RecommendedProductDto[];
     }
   }
 }
