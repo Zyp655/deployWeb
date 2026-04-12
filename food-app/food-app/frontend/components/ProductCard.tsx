@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/api/client';
@@ -15,12 +16,19 @@ export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
+  const [imgError, setImgError] = useState(false);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
     }).format(price);
+  };
+
+  const resolveImageUrl = (url: string | null) => {
+    if (!url || url === '/images/default.jpg') return null;
+    if (url.startsWith('http')) return url;
+    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${url}`;
   };
 
   return (
@@ -31,12 +39,24 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Image placeholder — clickable to detail */}
       <Link href={`/menu/${product.id}`}>
         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary-100 via-accent-50 to-highlight-100 cursor-pointer">
-          {product.image && product.image !== '/images/default.jpg' ? (
-            <img 
-              src={product.image} 
-              alt={product.name} 
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
-            />
+          {resolveImageUrl(product.image) ? (
+            <>
+              <img 
+                src={resolveImageUrl(product.image)!} 
+                alt={product.name} 
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  const nextSib = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                  if (nextSib) nextSib.style.display = 'flex';
+                }}
+              />
+              <div className="absolute inset-0 items-center justify-center" style={{ display: 'none' }}>
+                <span className="text-6xl transition-transform duration-300 group-hover:scale-110">
+                  {getCategoryEmoji(product.category)}
+                </span>
+              </div>
+            </>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-6xl transition-transform duration-300 group-hover:scale-110">
