@@ -39,6 +39,8 @@ export default function AuthModal() {
         router.push('/admin');
       } else if (res.user.role === 'RESTAURANT') {
         router.push('/seller');
+      } else if (res.user.role === 'DRIVER') {
+        router.push('/driver');
       }
 
     } catch (err: unknown) {

@@ -29,6 +29,8 @@ export default function LoginClient() {
         router.push('/admin');
       } else if (res.user.role === 'RESTAURANT') {
         router.push('/seller');
+      } else if (res.user.role === 'DRIVER') {
+        router.push('/driver');
       } else {
         router.push('/');
       }
