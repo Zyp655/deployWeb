@@ -11,7 +11,7 @@ export class AiService {
   constructor(
     private readonly httpService: HttpService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   private removeAccents(str: string): string {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -23,7 +23,7 @@ export class AiService {
       let products = await this.prisma.product.findMany({
         where: { isAvailable: true },
       });
-      
+
       const { isProductTimeValid } = require('../utils/time-utils');
       products = products.filter(p => isProductTimeValid(p.saleStartTime, p.saleEndTime));
 
@@ -105,7 +105,7 @@ Hãy trả lời ngắn gọn (dưới 4 câu) và tập trung vào các câu h�
       return { reply, status: 'ok' };
     } catch (error: any) {
       console.error('AI Service Chat Error:', error?.message);
-      return { 
+      return {
         reply: "Xin lỗi, hiện tại tôi đang quá tải. Vui lòng thử lại sau chút nhé!",
         status: 'error'
       };

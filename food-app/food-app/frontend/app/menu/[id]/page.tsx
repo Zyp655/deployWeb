@@ -38,6 +38,7 @@ export default function ProductDetailPage() {
   const productId = params.id as string;
   const { user, token, openAuthModal } = useAuthStore();
   const addItem = useCartStore((state) => state.addItem);
+  const openCart = useCartStore((state) => state.openCart);
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -128,6 +129,7 @@ export default function ProductDetailPage() {
       for (let i = 0; i < quantity; i++) {
         addItem(product, selectedOptions);
       }
+      openCart();
     } catch (err: any) {
       if (err.message === 'DIFFERENT_STORE') {
         const confirmClear = window.confirm('Quán bạn chọn khác với quán của các món trong giỏ hàng. Xóa giỏ hàng hiện tại và thêm món này?');
@@ -137,6 +139,7 @@ export default function ProductDetailPage() {
           for (let i = 1; i < quantity; i++) {
              useCartStore.getState().addItem(product, selectedOptions);
           }
+          openCart();
         }
       }
     }

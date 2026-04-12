@@ -73,29 +73,30 @@ async function main() {
 
   // ── Products ──
   const productsData1 = [
-    { name: 'Phở Bò Tái Nạm', price: 55000, category: 'Món nước', calories: 450, tags: ['Bán chạy','Truyền thống'], isSpicy: false },
-    { name: 'Phở Bò Gầu Giòn', price: 65000, category: 'Món nước', calories: 500, tags: ['Cao cấp'], isSpicy: false },
-    { name: 'Phở Gà Lá Chanh', price: 50000, category: 'Món nước', calories: 400, tags: ['Nhẹ nhàng'], isSpicy: false },
-    { name: 'Phở Bò Tái Sách', price: 60000, category: 'Món nước', calories: 480, tags: ['Đặc biệt'], isSpicy: false },
-    { name: 'Nước Chanh Đá', price: 15000, category: 'Đồ uống', calories: 80, tags: ['Giải khát'], isSpicy: false },
-    { name: 'Trà Đá', price: 5000, category: 'Đồ uống', calories: 0, tags: [], isSpicy: false },
+    { name: 'Phở Bò Tái Nạm', price: 55000, category: 'Món nước', calories: 450, tags: ['Bán chạy','Truyền thống'], isSpicy: false, image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?w=800&auto=format&fit=crop' },
+    { name: 'Phở Bò Gầu Giòn', price: 65000, category: 'Món nước', calories: 500, tags: ['Cao cấp'], isSpicy: false, image: 'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=800&auto=format&fit=crop' },
+    { name: 'Phở Gà Lá Chanh', price: 50000, category: 'Món nước', calories: 400, tags: ['Nhẹ nhàng'], isSpicy: false, image: 'https://images.unsplash.com/photo-1601000938259-9e92002320b2?w=800&auto=format&fit=crop' },
+    { name: 'Phở Bò Tái Sách', price: 60000, category: 'Món nước', calories: 480, tags: ['Đặc biệt'], isSpicy: false, image: 'https://images.unsplash.com/photo-1548810217-1070e176fa1c?w=800&auto=format&fit=crop' },
+    { name: 'Nước Chanh Đá', price: 15000, category: 'Đồ uống', calories: 80, tags: ['Giải khát'], isSpicy: false, image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=800&auto=format&fit=crop' },
+    { name: 'Trà Đá', price: 5000, category: 'Đồ uống', calories: 0, tags: [], isSpicy: false, image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&auto=format&fit=crop' },
   ];
   const productsData2 = [
-    { name: 'Bún Chả Hà Nội Đầy Đủ', price: 50000, category: 'Món nước', calories: 520, tags: ['Bán chạy','Đặc sản Hà Nội'], isSpicy: false },
-    { name: 'Nem Cua Bể Rán', price: 40000, category: 'Khai vị', calories: 300, tags: ['Ngon'], isSpicy: false },
-    { name: 'Bún Đậu Mắm Tôm', price: 55000, category: 'Món khô', calories: 600, tags: ['Đặc biệt'], isSpicy: true },
-    { name: 'Chả Cá Lã Vọng', price: 85000, category: 'Món đặc biệt', calories: 550, tags: ['Cao cấp','Hà Nội'], isSpicy: false },
-    { name: 'Trà Sen Vàng', price: 20000, category: 'Đồ uống', calories: 50, tags: ['Truyền thống'], isSpicy: false },
+    { name: 'Bún Chả Hà Nội Đầy Đủ', price: 50000, category: 'Món nước', calories: 520, tags: ['Bán chạy','Đặc sản Hà Nội'], isSpicy: false, image: 'https://images.unsplash.com/photo-1555126634-ae23555239e0?w=800&auto=format&fit=crop' },
+    { name: 'Nem Cua Bể Rán', price: 40000, category: 'Khai vị', calories: 300, tags: ['Ngon'], isSpicy: false, image: 'https://images.unsplash.com/photo-1606525437679-03e05f284e45?w=800&auto=format&fit=crop' },
+    { name: 'Bún Đậu Mắm Tôm', price: 55000, category: 'Món khô', calories: 600, tags: ['Đặc biệt'], isSpicy: true, image: 'https://images.unsplash.com/photo-1580476262798-b80c5ce32918?w=800&auto=format&fit=crop' },
+    { name: 'Chả Cá Lã Vọng', price: 85000, category: 'Món đặc biệt', calories: 550, tags: ['Cao cấp','Hà Nội'], isSpicy: false, image: 'https://images.unsplash.com/photo-1511556820780-d912e42b4980?w=800&auto=format&fit=crop' },
+    { name: 'Trà Sen Vàng', price: 20000, category: 'Đồ uống', calories: 50, tags: ['Truyền thống'], isSpicy: false, image: 'https://images.unsplash.com/photo-1576092762791-dd9e2220afa1?w=800&auto=format&fit=crop' },
   ];
 
   const products1: any[] = [];
   for (const p of productsData1) {
     const existing = await prisma.product.findFirst({ where: { name: p.name, storeId: store1.id } });
     if (existing) {
-      products1.push(existing);
+      const updated = await prisma.product.update({ where: { id: existing.id }, data: { image: p.image } });
+      products1.push(updated);
     } else {
       const created = await prisma.product.create({
-        data: { ...p, storeId: store1.id, isAvailable: true, isVegetarian: false, image: '/images/pho-bo.jpg' },
+        data: { ...p, storeId: store1.id, isAvailable: true, isVegetarian: false, image: p.image },
       });
       products1.push(created);
     }
@@ -104,10 +105,11 @@ async function main() {
   for (const p of productsData2) {
     const existing = await prisma.product.findFirst({ where: { name: p.name, storeId: store2.id } });
     if (existing) {
-      products2.push(existing);
+      const updated = await prisma.product.update({ where: { id: existing.id }, data: { image: p.image } });
+      products2.push(updated);
     } else {
       const created = await prisma.product.create({
-        data: { ...p, storeId: store2.id, isAvailable: true, isVegetarian: false, image: '/images/bun-cha.jpg' },
+        data: { ...p, storeId: store2.id, isAvailable: true, isVegetarian: false, image: p.image },
       });
       products2.push(created);
     }

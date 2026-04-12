@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api/client';
 import io, { Socket } from 'socket.io-client';
+import { useAuthStore } from '@/store/auth';
 
 interface ChatMessage {
   id: string;
@@ -27,6 +28,7 @@ interface LiveChatWidgetProps {
 }
 
 export default function LiveChatWidget({ orderId, receiverId, receiverName, receiverRole, currentUserId }: LiveChatWidgetProps) {
+  const { token } = useAuthStore();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -38,7 +40,6 @@ export default function LiveChatWidget({ orderId, receiverId, receiverName, rece
     // Fetch initial chat history
     const fetchHistory = async () => {
       try {
-        const token = localStorage.getItem('token');
         if (!token) return;
         const res = await fetch(`${api.baseUrl}/chat/orders/${orderId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -54,7 +55,6 @@ export default function LiveChatWidget({ orderId, receiverId, receiverName, rece
     fetchHistory();
 
     // Connect to WebSocket
-    const token = localStorage.getItem('token');
     if (token) {
       if (!socketRef.current) {
          socketRef.current = io(api.baseUrl, { auth: { token } });
@@ -87,7 +87,7 @@ export default function LiveChatWidget({ orderId, receiverId, receiverName, rece
         socketRef.current = null;
       }
     };
-  }, [orderId, isOpen, currentUserId]);
+  }, [orderId, isOpen, currentUserId, token]);
 
   useEffect(() => {
     if (isOpen) {

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api/client';
+import { useAuthStore } from '@/store/auth';
 
 export default function PromotionsPage() {
+  const { token } = useAuthStore();
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -19,7 +21,6 @@ export default function PromotionsPage() {
 
   const fetchCoupons = async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) return;
       
       const res = await fetch(`${api.baseUrl}/coupons/seller`, {
@@ -38,12 +39,12 @@ export default function PromotionsPage() {
 
   useEffect(() => {
     fetchCoupons();
-  }, []);
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      if (!token) return;
       const res = await fetch(`${api.baseUrl}/coupons/seller`, {
         method: 'POST',
         headers: {
@@ -78,7 +79,7 @@ export default function PromotionsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Bạn có chắc chắn muốn xóa mã giảm giá này?')) return;
     try {
-      const token = localStorage.getItem('token');
+      if (!token) return;
       const res = await fetch(`${api.baseUrl}/coupons/seller/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }

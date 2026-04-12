@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api/client';
+import { useAuthStore } from '@/store/auth';
 
 export default function AdminReviewsPage() {
+  const { token } = useAuthStore();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchReviews = async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) return;
       const res = await fetch(`${api.baseUrl}/reviews/admin`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -27,12 +28,12 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     fetchReviews();
-  }, []);
+  }, [token]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Xóa đánh giá này khỏi hệ thống? (Hành động này không thể hoàn tác)')) return;
     try {
-      const token = localStorage.getItem('token');
+      if (!token) return;
       const res = await fetch(`${api.baseUrl}/reviews/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }

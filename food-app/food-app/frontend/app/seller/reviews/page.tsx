@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api/client';
+import { useAuthStore } from '@/store/auth';
 
 export default function SellerReviewsPage() {
+  const { token } = useAuthStore();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [replyingId, setReplyingId] = useState<string | null>(null);
@@ -11,7 +13,6 @@ export default function SellerReviewsPage() {
 
   const fetchReviews = async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) return;
       const res = await fetch(`${api.baseUrl}/reviews/seller`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -29,12 +30,12 @@ export default function SellerReviewsPage() {
 
   useEffect(() => {
     fetchReviews();
-  }, []);
+  }, [token]);
 
   const handleReply = async (id: string) => {
     if (!replyText.trim()) return alert('Vui lòng nhập nội dung trả lời');
     try {
-      const token = localStorage.getItem('token');
+      if (!token) return;
       const res = await fetch(`${api.baseUrl}/reviews/${id}/reply`, {
         method: 'PATCH',
         headers: { 
