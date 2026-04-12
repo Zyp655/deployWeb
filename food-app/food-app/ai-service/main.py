@@ -9,6 +9,10 @@ FastAPI server cung cấp các chức năng AI:
 Chỉ nhận request từ backend (internal network).
 """
 
+from dotenv import load_dotenv
+from pathlib import Path
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
 from fastapi import FastAPI, Depends, Header, HTTPException
 import os
 from recommendation.router import router as recommendation_router
