@@ -18,6 +18,12 @@ function getCategoryEmoji(category: string): string {
 
 const CATEGORIES = ['Món nước', 'Món khô', 'Cơm', 'Khai vị', 'Món mặn', 'Tráng miệng', 'Đồ uống', 'Khác'];
 
+const resolveImageUrl = (url: string | null) => {
+  if (!url || url === '/images/default.jpg') return null;
+  if (url.startsWith('http')) return url;
+  return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${url}`;
+};
+
 export default function SellerProductsPage() {
   const { token } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
@@ -219,8 +225,15 @@ export default function SellerProductsPage() {
           {products.map((product) => (
             <div key={product.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm border transition-all hover:shadow-md flex flex-col group ${product.isAvailable ? 'border-gray-100' : 'border-red-100 opacity-75'}`}>
               <div className="h-40 bg-gradient-to-br from-primary-50 to-accent-50 flex items-center justify-center relative">
-                {product.image && product.image !== '/images/default.jpg' ? (
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                {resolveImageUrl(product.image) ? (
+                  <img 
+                    src={resolveImageUrl(product.image) as string} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/E2E8F0/A0AEC0?text=HOANG+FOOD';
+                    }}
+                  />
                 ) : (
                   <span className="text-6xl">{getCategoryEmoji(product.category)}</span>
                 )}

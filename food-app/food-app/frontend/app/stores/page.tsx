@@ -8,6 +8,13 @@ import StarRating from '@/components/StarRating';
 export default function StoresPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const resolveImageUrl = (url: string | null) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${url}`;
+  };
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -72,7 +79,13 @@ export default function StoresPage() {
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
-            <input type="text" placeholder="Tìm kiếm tên quán ăn, món thèm..." className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary-500 font-medium text-gray-900" />
+            <input 
+              type="text" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm kiếm tên quán ăn, món thèm..." 
+              className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary-500 font-medium text-gray-900" 
+            />
           </div>
           <div className="flex gap-2">
              <button className="px-5 py-3 rounded-xl bg-gray-50 font-bold text-gray-700 hover:bg-gray-100 transition-colors border border-gray-200 text-sm">Bộ lọc</button>
@@ -82,7 +95,7 @@ export default function StoresPage() {
 
         {/* Store Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {stores.map((store, idx) => (
+          {stores.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).map((store, idx) => (
             <Link key={store.id} href={`/stores/${store.id}`} className="w-full">
               <div 
                 className="group relative flex flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-xl hover:border-primary-200 hover:-translate-y-1 h-full"
@@ -90,8 +103,15 @@ export default function StoresPage() {
               >
                 {/* Cover Image */}
                 <div className="relative h-48 overflow-hidden bg-gray-100">
-                  {store.coverImage ? (
-                    <img src={store.coverImage} alt={store.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+                  {store.coverImage || store.image ? (
+                    <img 
+                      src={resolveImageUrl(store.coverImage || store.image) as string} 
+                      alt={store.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://placehold.co/600x400/E2E8F0/A0AEC0?text=HOANG+FOOD';
+                      }}
+                    />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary-100 to-accent-50 text-5xl group-hover:scale-110 transition-transform duration-500">🏪</div>
                   )}
