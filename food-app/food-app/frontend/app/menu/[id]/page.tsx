@@ -27,6 +27,12 @@ function getCategoryEmoji(category: string): string {
   return map[category] || '🍽️';
 }
 
+const resolveImageUrl = (url: string | null) => {
+  if (!url || url === '/images/default.jpg') return null;
+  if (url.startsWith('http')) return url;
+  return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${url}`;
+};
+
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.id as string;
@@ -43,6 +49,7 @@ export default function ProductDetailPage() {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
   const [hasOrderedProduct, setHasOrderedProduct] = useState(false);
   const [checkingOrders, setCheckingOrders] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   // Review form
   const [reviewRating, setReviewRating] = useState(0);
@@ -223,13 +230,25 @@ export default function ProductDetailPage() {
 
           <div className="flex flex-col md:flex-row gap-8 items-center">
             {/* Image */}
-            <div className="w-64 h-64 md:w-80 md:h-80 rounded-3xl bg-white/60 backdrop-blur-sm shadow-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {product.image && product.image !== '/images/default.jpg' ? (
-                <img 
-                  src={product.image} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover"
-                />
+            <div className="w-64 h-64 md:w-80 md:h-80 rounded-3xl bg-white/60 backdrop-blur-sm shadow-xl flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+              {resolveImageUrl(product.image) ? (
+                <>
+                  <img 
+                    src={resolveImageUrl(product.image)!} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      const nextSib = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                      if (nextSib) nextSib.style.display = 'flex';
+                    }}
+                  />
+                  <div className="absolute inset-0 items-center justify-center" style={{ display: 'none' }}>
+                    <span className="text-[120px] md:text-[150px] drop-shadow-lg">
+                      {getCategoryEmoji(product.category)}
+                    </span>
+                  </div>
+                </>
               ) : (
                 <span className="text-[120px] md:text-[150px] drop-shadow-lg">
                   {getCategoryEmoji(product.category)}
