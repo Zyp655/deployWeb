@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/store/auth';
 import { fetchAdminStats, AdminStats } from '@/lib/api/client';
 import { useEffect, useState } from 'react';
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 export default function AdminDashboardPage() {
   const { token } = useAuthStore();
@@ -72,26 +73,40 @@ export default function AdminDashboardPage() {
       {/* Chart Section */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mt-8">
         <h3 className="text-lg font-bold text-gray-900 mb-6">Doanh thu 7 ngày gần đây</h3>
-        <div className="flex items-end space-x-2 sm:space-x-4 h-64 mt-4 relative pt-6">
-          {/* Simple CSS Bar Chart without external dependencies */}
-          {stats.chartData.map((data, idx) => {
-            const height = (data.revenue / maxRevenue) * 100;
-            return (
-              <div key={idx} className="flex-1 flex flex-col items-center justify-end relative group">
-                {/* Tooltip */}
-                <div className="absolute -top-10 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
-                  {new Intl.NumberFormat('vi-VN').format(data.revenue)} đ
-                </div>
-                
-                <div 
-                  className="w-full max-w-[4rem] bg-gradient-to-t from-primary/80 to-accent/80 rounded-t-lg transition-all duration-500 hover:brightness-110"
-                  style={{ height: `${Math.max(height, 2)}%` }}
-                ></div>
-                <span className="text-[10px] sm:text-xs text-gray-500 mt-2 font-mono">{data.date}</span>
-                <span className="text-[10px] sm:text-xs font-bold text-gray-700 mt-1">{data.orders} đơn</span>
-              </div>
-            );
-          })}
+        <div className="h-72 w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={stats.chartData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+              <XAxis 
+                dataKey="date" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 12, fill: '#6B7280' }} 
+                dy={10}
+              />
+              <YAxis 
+                yAxisId="left"
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 12, fill: '#6B7280' }}
+                tickFormatter={(value) => `${value >= 1000 ? (value / 1000) + 'k' : value}`}
+              />
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 12, fill: '#6B7280' }}
+              />
+              <Tooltip 
+                cursor={{ fill: '#F3F4F6' }}
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              />
+              <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+              <Bar yAxisId="left" dataKey="revenue" name="Doanh thu (VNĐ)" fill="#f97316" radius={[4, 4, 0, 0]} barSize={32} />
+              <Line yAxisId="right" type="monotone" dataKey="orders" name="Số đơn hàng" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
