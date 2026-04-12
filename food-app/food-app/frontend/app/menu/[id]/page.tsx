@@ -51,6 +51,10 @@ export default function ProductDetailPage() {
   const [checkingOrders, setCheckingOrders] = useState(false);
   const [imgError, setImgError] = useState(false);
 
+  useEffect(() => {
+    setImgError(false);
+  }, [product?.image]);
+
   // Review form
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
@@ -231,24 +235,13 @@ export default function ProductDetailPage() {
           <div className="flex flex-col md:flex-row gap-8 items-center">
             {/* Image */}
             <div className="w-64 h-64 md:w-80 md:h-80 rounded-3xl bg-white/60 backdrop-blur-sm shadow-xl flex items-center justify-center flex-shrink-0 overflow-hidden relative">
-              {resolveImageUrl(product.image) ? (
-                <>
+              {resolveImageUrl(product.image) && !imgError ? (
                   <img 
                     src={resolveImageUrl(product.image)!} 
                     alt={product.name} 
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                      const nextSib = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
-                      if (nextSib) nextSib.style.display = 'flex';
-                    }}
+                    onError={() => setImgError(true)}
                   />
-                  <div className="absolute inset-0 items-center justify-center" style={{ display: 'none' }}>
-                    <span className="text-[120px] md:text-[150px] drop-shadow-lg">
-                      {getCategoryEmoji(product.category)}
-                    </span>
-                  </div>
-                </>
               ) : (
                 <span className="text-[120px] md:text-[150px] drop-shadow-lg">
                   {getCategoryEmoji(product.category)}
