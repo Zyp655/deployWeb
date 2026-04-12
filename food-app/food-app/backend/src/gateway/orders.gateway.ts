@@ -37,11 +37,9 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const secret = this.configService.get<string>('JWT_SECRET');
       const payload = this.jwtService.verify(token, { secret });
       
-      // Join a room specific to this user based on their ID
       client.join(`user_${payload.sub}`);
       console.log(`Client connected: ${client.id} joined user_${payload.sub}`);
 
-      // If user is a driver, join 'drivers' room
       if (payload.role === 'DRIVER') {
         client.join('drivers');
         console.log(`Client ${client.id} joined drivers room`);
@@ -64,6 +62,20 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  emitDriverAssigned(userId: string, orderId: string, driverInfo: {
+    name: string;
+    phone: string;
+    vehiclePlate: string;
+    vehicleType: string;
+    rating: number;
+  }) {
+    this.server.to(`user_${userId}`).emit('driver-assigned', {
+      orderId,
+      driver: driverInfo,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   broadcastToDrivers(event: string, payload: any) {
     this.server.to('drivers').emit(event, payload);
   }
@@ -81,6 +93,28 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  @SubscribeMessage('driver-toggle-online')
+  async handleDriverToggleOnline(client: Socket) {
+    try {
+      const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.split(' ')[1];
+      if (!token) return;
+      const secret = this.configService.get<string>('JWT_SECRET');
+      const payload = this.jwtService.verify(token, { secret });
+
+      const profile = await this.prisma.driverProfile.findUnique({ where: { userId: payload.sub } });
+      if (!profile) return;
+
+      const updated = await this.prisma.driverProfile.update({
+        where: { userId: payload.sub },
+        data: { isOnline: !profile.isOnline },
+      });
+
+      client.emit('online-status-changed', { isOnline: updated.isOnline });
+    } catch (e) {
+      console.error('Error toggling driver online:', e);
+    }
+  }
+
   @SubscribeMessage('send-chat-message')
   async handleChatMessage(
     client: Socket,
@@ -94,17 +128,12 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const payload = this.jwtService.verify(token, { secret });
       const senderId = payload.sub;
 
-      // Ensure the order exists
       const order = await this.prisma.order.findUnique({ where: { id: data.orderId } });
       if (!order) return;
 
-      // Verify sender is part of this order (either driver or user)
       if (order.userId !== senderId && order.driverId !== senderId) return;
-
-      // Verify receiver is part of this order
       if (order.userId !== data.receiverId && order.driverId !== data.receiverId) return;
 
-      // Save to database
       const message = await this.prisma.chatMessage.create({
         data: {
           orderId: data.orderId,
@@ -117,10 +146,7 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       });
 
-      // Emit to receiver's room
       this.server.to(`user_${data.receiverId}`).emit('chat-message-received', message);
-      
-      // Also emit back to sender's room to confirm it's sent
       this.server.to(`user_${senderId}`).emit('chat-message-received', message);
 
     } catch (e) {

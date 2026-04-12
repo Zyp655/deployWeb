@@ -2,243 +2,258 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { fetchAvailableOrders, acceptOrder, completeOrder, fetchDriverMyOrders, DriverOrder } from '@/lib/api/client';
+import { useRouter } from 'next/navigation';
+import {
+  fetchDriverProfile,
+  fetchTodayEarnings,
+  fetchActiveDelivery,
+  fetchAvailableOrders,
+  registerDriver,
+  DriverProfile,
+  DriverTodayEarnings,
+  DriverOrder,
+} from '@/lib/api/client';
 import { io, Socket } from 'socket.io-client';
 
 const WS_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export default function DriverDashboard() {
   const { user, token } = useAuthStore();
-  const [availableOrders, setAvailableOrders] = useState<DriverOrder[]>([]);
+  const router = useRouter();
+  const [profile, setProfile] = useState<DriverProfile | null>(null);
+  const [earnings, setEarnings] = useState<DriverTodayEarnings | null>(null);
   const [activeOrder, setActiveOrder] = useState<DriverOrder | null>(null);
+  const [availableCount, setAvailableCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [regForm, setRegForm] = useState({ vehicleType: 'MOTORBIKE', vehiclePlate: '', idCardNumber: '' });
   const socketRef = useRef<Socket | null>(null);
-  const watchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!token || user?.role !== 'DRIVER') return;
-    loadOrders();
+    loadData();
 
-    // Connect to WebSocket to receive 'order-prepared' event
-    const socket = io(WS_URL, {
-      auth: { token },
-      transports: ['websocket'],
-    });
+    const socket = io(WS_URL, { auth: { token }, transports: ['websocket'] });
     socketRef.current = socket;
 
-    socket.on('order-prepared', (data) => {
-      console.log('New Order Built:', data);
-      loadOrders(); // Refresh available orders list
+    socket.on('order-prepared', () => {
+      fetchAvailableOrders(token).then(orders => setAvailableCount(orders.length)).catch(() => {});
     });
 
-    return () => {
-      socket.disconnect();
-      stopBroadcastingLocation();
-    };
+    socket.on('order-auto-assigned', (data) => {
+      loadData();
+    });
+
+    return () => { socket.disconnect(); };
   }, [token, user]);
 
-  const loadOrders = async () => {
+  const loadData = async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const [available, myOrders] = await Promise.all([
+      const p = await fetchDriverProfile(token);
+      setProfile(p);
+      const [e, active, available] = await Promise.all([
+        fetchTodayEarnings(token),
+        fetchActiveDelivery(token),
         fetchAvailableOrders(token),
-        fetchDriverMyOrders(token)
       ]);
-      setAvailableOrders(available);
-      
-      const currentActive = myOrders.find(o => o.status === 'DELIVERING');
-      setActiveOrder(currentActive || null);
-      
-      if (currentActive) {
-         startBroadcastingLocation(currentActive);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      setEarnings(e);
+      setActiveOrder(active);
+      setAvailableCount(available.length);
+    } catch {
+      setShowRegister(true);
     }
+    setLoading(false);
   };
 
-  const handleAcceptOrder = async (orderId: string) => {
+  const handleRegister = async () => {
     if (!token) return;
     try {
-      const order = await acceptOrder(orderId, token);
-      setActiveOrder(order);
-      // Automatically start watching and broadcasting location map tracking updates
-      startBroadcastingLocation(order);
-      // Refetch available
-      setAvailableOrders(prev => prev.filter(o => o.id !== orderId));
-    } catch (e) {
-      alert('Lỗi nhận đơn: ' + e);
+      const p = await registerDriver(regForm, token);
+      setProfile(p);
+      setShowRegister(false);
+      loadData();
+    } catch (e: any) {
+      alert(e.message || 'Lỗi đăng ký');
     }
   };
 
-  const handleCompleteOrder = async (orderId: string) => {
-    if (!token) return;
-    try {
-      await completeOrder(orderId, token);
-      setActiveOrder(null);
-      stopBroadcastingLocation();
-      alert('Giao hàng thành công! Hoan hô!');
-    } catch (e) {
-      alert('Lỗi hoàn thành đơn: ' + e);
-    }
-  };
+  const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 
-  const startBroadcastingLocation = (order: DriverOrder) => {
-    if (!navigator.geolocation || watchIdRef.current) return;
-    
-    setIsBroadcasting(true);
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        console.log(`📡 Phát sóng GPS: ${latitude}, ${longitude}`);
-        if (socketRef.current) {
-          socketRef.current.emit('update-driver-location', {
-            orderId: order.id,
-            customerId: order.user?.id || order.userId, // We need customerId, wait, does DriverOrder have userId? Yes, let me double check payload.
-            lat: latitude,
-            lng: longitude
-          });
-        }
-      },
-      (error) => {
-        console.error('Lỗi lấy GPS:', error);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  };
+  if (!user || user.role !== 'DRIVER') return null;
 
-  const stopBroadcastingLocation = () => {
-    if (watchIdRef.current) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-    setIsBroadcasting(false);
-  };
-
-  if (!user || user.role !== 'DRIVER') {
+  if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-xl">Vui lòng đăng nhập bằng tài khoản Tài Xế</p>
-      </main>
+      <div className="flex items-center justify-center h-full">
+        <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
 
-  return (
-    <main className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* HEADER */}
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-6 text-white shadow-xl flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-extrabold flex items-center gap-2">
-              <span>🛵</span> Chào Shipper, {user.name}
-            </h1>
-            <p className="text-gray-300 text-sm mt-1">Đã sẵn sàng nhận cuốc xe hôm nay chưa?</p>
+  if (showRegister) {
+    return (
+      <div className="flex items-center justify-center h-full p-8">
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full space-y-6">
+          <div className="text-center">
+            <span className="text-5xl">🛵</span>
+            <h1 className="text-2xl font-bold mt-3">Đăng ký Tài Xế</h1>
+            <p className="text-gray-500 text-sm mt-1">Điền thông tin để bắt đầu nhận đơn</p>
           </div>
-          {isBroadcasting && (
-             <div className="flex items-center gap-2 bg-green-500/20 text-green-400 px-3 py-1.5 rounded-full border border-green-500/30">
-               <span className="relative flex h-3 w-3">
-                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                 <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-               </span>
-               <span className="text-xs font-bold">Đang phát GPS...</span>
-             </div>
-          )}
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Loại xe</label>
+              <select
+                value={regForm.vehicleType}
+                onChange={(e) => setRegForm({ ...regForm, vehicleType: e.target.value })}
+                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+              >
+                <option value="MOTORBIKE">Xe máy</option>
+                <option value="BICYCLE">Xe đạp</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Biển số xe</label>
+              <input
+                type="text"
+                placeholder="VD: 59H1-12345"
+                value={regForm.vehiclePlate}
+                onChange={(e) => setRegForm({ ...regForm, vehiclePlate: e.target.value })}
+                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Số CMND/CCCD</label>
+              <input
+                type="text"
+                placeholder="Nhập CMND/CCCD"
+                value={regForm.idCardNumber}
+                onChange={(e) => setRegForm({ ...regForm, idCardNumber: e.target.value })}
+                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+              />
+            </div>
+          </div>
+          <button
+            onClick={handleRegister}
+            className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all active:scale-[0.98]"
+          >
+            Đăng ký ngay
+          </button>
         </div>
+      </div>
+    );
+  }
 
-        {/* ACTIVE ORDER */}
-        {activeOrder && (
-          <section className="bg-white border-2 border-primary rounded-3xl p-6 shadow-xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-4 py-2 rounded-bl-2xl">
-                ĐƠN ĐANG GIAO
-             </div>
-             <h2 className="text-xl font-bold text-gray-900 mb-4">Đơn hàng hiện tại</h2>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-500">Người nhận</p>
-                  <p className="font-bold text-lg">{activeOrder.user?.name || 'Khách'}</p>
-                  <p className="text-gray-700">{activeOrder.deliveryPhone}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Giao đến</p>
-                  <p className="font-bold text-gray-900">{activeOrder.deliveryAddress}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Lấy từ Quán</p>
-                  <p className="font-bold text-gray-900">{activeOrder.store?.name}</p>
-                  <p className="text-gray-700">{activeOrder.store?.address}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Thu hộ (COD)</p>
-                  <p className="font-extrabold text-primary text-xl">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(activeOrder.total + activeOrder.shippingFee)}
-                  </p>
-                </div>
-             </div>
+  const stats = [
+    { label: 'Đơn hôm nay', value: earnings?.totalOrders || 0, icon: '📦', color: 'from-blue-500 to-cyan-500' },
+    { label: 'Thu nhập', value: `${fmt(earnings?.total || 0)}đ`, icon: '💰', color: 'from-green-500 to-emerald-500' },
+    { label: 'TB/Đơn', value: `${fmt(earnings?.avgPerOrder || 0)}đ`, icon: '📊', color: 'from-purple-500 to-violet-500' },
+    { label: 'Rating', value: profile?.averageRating?.toFixed(1) || '5.0', icon: '⭐', color: 'from-yellow-500 to-orange-500' },
+  ];
 
-             <div className="mt-6 flex justify-end">
-               <button 
-                 onClick={() => handleCompleteOrder(activeOrder.id)}
-                 className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform active:scale-95"
-               >
-                 Đã giao xong ✅
-               </button>
-             </div>
-          </section>
-        )}
-
-        {/* AVAILABLE ORDERS */}
-        {!activeOrder && (
-          <section>
-             <h2 className="text-xl font-bold text-gray-900 mb-4">Đơn mới quanh đây ({availableOrders.length})</h2>
-             
-             {loading ? (
-                <div className="text-center py-10 text-gray-500">Đang tải...</div>
-             ) : availableOrders.length === 0 ? (
-                <div className="bg-white rounded-3xl p-10 text-center shadow-sm border border-gray-100">
-                  <span className="text-5xl grayscale opacity-50 block mb-4">😴</span>
-                  <p className="font-bold text-gray-700">Chưa có đơn hàng nào chờ giao.</p>
-                </div>
-             ) : (
-                <div className="grid gap-4">
-                  {availableOrders.map(order => (
-                     <div key={order.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:shadow-md">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                             <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded">MỚI</span>
-                             <span className="text-gray-400 text-sm">#{order.id.split('-')[0]}</span>
-                          </div>
-                          <p className="font-bold text-gray-900 flex items-center gap-1">
-                            🏪 {order.store?.name}
-                          </p>
-                          <p className="text-gray-500 text-sm mt-1 flex items-center gap-1">
-                            📍 {order.deliveryAddress}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center justify-between md:flex-col md:items-end gap-2">
-                           <p className="text-lg font-extrabold text-primary">
-                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.shippingFee)}
-                             <span className="text-xs text-gray-500 font-normal ml-1">phí ship</span>
-                           </p>
-                           <button 
-                             onClick={() => handleAcceptOrder(order.id)}
-                             className="bg-gray-900 hover:bg-black text-white font-bold py-2 px-6 rounded-xl transition-transform active:scale-95"
-                           >
-                             Nhận đơn
-                           </button>
-                        </div>
-                     </div>
-                  ))}
-                </div>
-             )}
-          </section>
+  return (
+    <div className="p-6 lg:p-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        {earnings?.isPeakHour && (
+          <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500/10 to-red-500/10 text-orange-600 px-4 py-2 rounded-full border border-orange-500/20">
+            <span className="text-lg">🔥</span>
+            <span className="text-sm font-bold">Giờ cao điểm — Bonus +20%</span>
+          </div>
         )}
       </div>
-    </main>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s, i) => (
+          <div key={i} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center text-lg mb-3`}>
+              {s.icon}
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{s.value}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {activeOrder && (
+        <div
+          onClick={() => router.push(`/driver/delivery/${activeOrder.id}`)}
+          className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 text-white shadow-xl cursor-pointer hover:shadow-2xl transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                <span className="text-sm font-bold opacity-90">
+                  {activeOrder.status === 'PICKING_UP' ? 'Đang lấy hàng' : 'Đang giao'}
+                </span>
+              </div>
+              <h3 className="text-xl font-bold">{activeOrder.store?.name}</h3>
+              <p className="text-white/70 text-sm mt-1">{activeOrder.deliveryAddress}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold">{fmt(activeOrder.shippingFee)}đ</p>
+              <p className="text-white/60 text-xs">phí ship</p>
+              <span className="inline-block mt-2 text-sm font-semibold bg-white/20 px-3 py-1 rounded-full group-hover:bg-white/30 transition-colors">
+                Xem chi tiết →
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!activeOrder && profile?.isOnline && (
+        <div
+          onClick={() => router.push('/driver/orders')}
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-2xl">
+                🔔
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">{availableCount} đơn mới quanh bạn</h3>
+                <p className="text-gray-500 text-sm">Bấm để xem và nhận đơn</p>
+              </div>
+            </div>
+            <span className="text-orange-500 font-bold group-hover:translate-x-1 transition-transform">→</span>
+          </div>
+        </div>
+      )}
+
+      {!activeOrder && !profile?.isOnline && (
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
+          <span className="text-5xl block mb-3">😴</span>
+          <h3 className="text-lg font-bold text-gray-900">Bạn đang Offline</h3>
+          <p className="text-gray-500 text-sm mt-1">Bật trạng thái Online ở sidebar để bắt đầu nhận đơn</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <h3 className="font-bold text-gray-900 mb-2">Tỷ lệ hoàn thành</h3>
+          <div className="flex items-end gap-2">
+            <span className="text-3xl font-bold text-green-600">{profile?.acceptanceRate?.toFixed(0) || 100}%</span>
+          </div>
+          <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all"
+              style={{ width: `${profile?.acceptanceRate || 100}%` }}
+            />
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <h3 className="font-bold text-gray-900 mb-2">Tổng thu nhập</h3>
+          <p className="text-3xl font-bold text-gray-900">{fmt(profile?.totalEarnings || 0)}đ</p>
+          <p className="text-xs text-gray-500 mt-1">{profile?.totalDeliveries || 0} đơn hoàn thành</p>
+        </div>
+      </div>
+    </div>
   );
 }

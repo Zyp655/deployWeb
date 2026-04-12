@@ -244,7 +244,7 @@ export async function fetchRecommendedProducts(token?: string): Promise<Recommen
 
 export async function submitOrderReview(
   orderId: string,
-  payload: { storeRating?: number; driverRating?: number; reviewComment?: string },
+  payload: { storeRating?: number; driverRating?: number; reviewComment?: string; driverTip?: number },
   token: string,
 ): Promise<Order> {
   return apiClient<Order>(`/orders/${orderId}/review`, {
@@ -638,16 +638,37 @@ export async function toggleSellerStore(token: string): Promise<Store> {
 
 // ─── Driver ──────────────────────────────────────────
 
+export interface DriverProfile {
+  id: string;
+  userId: string;
+  vehicleType: string;
+  vehiclePlate: string | null;
+  idCardNumber: string | null;
+  isOnline: boolean;
+  isVerified: boolean;
+  currentLat: number | null;
+  currentLng: number | null;
+  totalDeliveries: number;
+  averageRating: number;
+  totalEarnings: number;
+  acceptanceRate: number;
+  user?: { id: string; name: string; email: string; phone: string | null; avatar: string | null };
+}
+
 export interface DriverOrder {
   id: string;
   total: number;
   shippingFee: number;
   deliveryAddress: string | null;
   deliveryPhone: string | null;
+  deliveryLat: number | null;
+  deliveryLng: number | null;
   paymentMethod: string;
   status: string;
+  note: string | null;
   createdAt: string;
   userId: string;
+  distanceToStore?: number | null;
   user?: {
     id: string;
     name: string;
@@ -657,7 +678,85 @@ export interface DriverOrder {
     name: string;
     address: string | null;
     phone: string | null;
+    lat?: number | null;
+    lng?: number | null;
   };
+  items?: {
+    id: string;
+    quantity: number;
+    price: number;
+    product: { name: string; image?: string | null };
+  }[];
+  earning?: DriverEarning | null;
+}
+
+export interface DriverEarning {
+  id: string;
+  baseFee: number;
+  tip: number;
+  bonus: number;
+  totalFee: number;
+  createdAt: string;
+}
+
+export interface DriverTodayEarnings {
+  totalOrders: number;
+  totalBaseFee: number;
+  totalTip: number;
+  totalBonus: number;
+  total: number;
+  avgPerOrder: number;
+  isPeakHour: boolean;
+}
+
+export interface DriverEarningsSummary {
+  chartData: { date: string; orders: number; total: number }[];
+  totalEarnings: number;
+  totalOrders: number;
+  averageRating: number;
+  totalDeliveries: number;
+  acceptanceRate: number;
+}
+
+export async function registerDriver(
+  data: { vehicleType?: string; vehiclePlate?: string; idCardNumber?: string },
+  token: string,
+): Promise<DriverProfile> {
+  return apiClient<DriverProfile>('/driver/register', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function fetchDriverProfile(token: string): Promise<DriverProfile> {
+  return apiClient<DriverProfile>('/driver/profile', { token });
+}
+
+export async function updateDriverProfile(
+  data: { vehicleType?: string; vehiclePlate?: string; idCardNumber?: string },
+  token: string,
+): Promise<DriverProfile> {
+  return apiClient<DriverProfile>('/driver/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function toggleDriverOnline(token: string): Promise<DriverProfile> {
+  return apiClient<DriverProfile>('/driver/toggle-online', {
+    method: 'POST',
+    token,
+  });
+}
+
+export async function updateDriverLocation(lat: number, lng: number, token: string) {
+  return apiClient('/driver/update-location', {
+    method: 'POST',
+    body: JSON.stringify({ lat, lng }),
+    token,
+  });
 }
 
 export async function fetchAvailableOrders(token: string): Promise<DriverOrder[]> {
@@ -671,6 +770,13 @@ export async function acceptOrder(orderId: string, token: string): Promise<Drive
   });
 }
 
+export async function pickedUpOrder(orderId: string, token: string): Promise<DriverOrder> {
+  return apiClient<DriverOrder>(`/driver/orders/${orderId}/picked`, {
+    method: 'POST',
+    token,
+  });
+}
+
 export async function completeOrder(orderId: string, token: string): Promise<DriverOrder> {
   return apiClient<DriverOrder>(`/driver/orders/${orderId}/complete`, {
     method: 'PATCH',
@@ -678,8 +784,32 @@ export async function completeOrder(orderId: string, token: string): Promise<Dri
   });
 }
 
-export async function fetchDriverMyOrders(token: string): Promise<DriverOrder[]> {
-  return apiClient<DriverOrder[]>('/driver/orders/my-orders', { token });
+export async function rejectDriverOrder(orderId: string, reason: string, token: string) {
+  return apiClient(`/driver/orders/${orderId}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+    token,
+  });
+}
+
+export async function fetchActiveDelivery(token: string): Promise<DriverOrder | null> {
+  return apiClient<DriverOrder | null>('/driver/orders/active', { token });
+}
+
+export async function fetchDriverMyOrders(
+  token: string,
+  page = 1,
+  limit = 20,
+): Promise<{ orders: DriverOrder[]; total: number; page: number; totalPages: number }> {
+  return apiClient(`/driver/orders/my-orders?page=${page}&limit=${limit}`, { token });
+}
+
+export async function fetchTodayEarnings(token: string): Promise<DriverTodayEarnings> {
+  return apiClient<DriverTodayEarnings>('/driver/earnings/today', { token });
+}
+
+export async function fetchEarningsSummary(token: string, days = 7): Promise<DriverEarningsSummary> {
+  return apiClient<DriverEarningsSummary>(`/driver/earnings/summary?days=${days}`, { token });
 }
 
 export const api = { baseUrl: API_BASE_URL };
@@ -702,3 +832,4 @@ export async function uploadImage(file: File, token: string): Promise<{ url: str
   }
   return res.json();
 }
+

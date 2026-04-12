@@ -299,17 +299,18 @@ export class OrdersService {
       throw new BadRequestException('Đơn hàng này đã được đánh giá');
     }
 
-    // Update order with ratings
+    const tipAmount = dto.driverTip ? Math.round(dto.driverTip) : 0;
+
     const updatedOrder = await this.prisma.order.update({
       where: { id: orderId },
       data: {
         storeRating: dto.storeRating,
         driverRating: dto.driverRating,
+        driverTip: tipAmount,
         reviewComment: dto.reviewComment,
       },
     });
 
-    // Recalculate Store Rating if provided
     if (dto.storeRating && order.storeId) {
       const storeOrders = await this.prisma.order.findMany({
         where: { storeId: order.storeId, storeRating: { not: null } },
@@ -324,9 +325,36 @@ export class OrdersService {
       });
     }
 
-    // If we had a driver, we could recalculate driver rating similarly.
-    // For now, driver is stored as 'driverId' if they accept the order. 
-    // Example logic omitted to match current schema if driverId is simply not fully tracked for average rating yet.
+    if (order.driverId) {
+      if (dto.driverRating) {
+        const driverOrders = await this.prisma.order.findMany({
+          where: { driverId: order.driverId, driverRating: { not: null } },
+          select: { driverRating: true },
+        });
+        const totalRatings = driverOrders.reduce((acc, curr) => acc + (curr.driverRating || 0), 0);
+        const avgRating = driverOrders.length > 0 ? totalRatings / driverOrders.length : 5.0;
+
+        await this.prisma.driverProfile.updateMany({
+          where: { userId: order.driverId },
+          data: { averageRating: parseFloat(avgRating.toFixed(1)) },
+        });
+      }
+
+      if (tipAmount > 0) {
+        await this.prisma.driverEarning.updateMany({
+          where: { orderId, driverId: order.driverId },
+          data: {
+            tip: tipAmount,
+            totalFee: { increment: tipAmount },
+          },
+        });
+
+        await this.prisma.driverProfile.updateMany({
+          where: { userId: order.driverId },
+          data: { totalEarnings: { increment: tipAmount } },
+        });
+      }
+    }
     
     return updatedOrder;
   }

@@ -16,7 +16,8 @@ const STEPS = [
   { id: 'PENDING', label: 'Chờ nhận', icon: '⏳' },
   { id: 'CONFIRMED', label: 'Đã nhận', icon: '✅' },
   { id: 'PREPARING', label: 'Đang nấu', icon: '👨‍🍳' },
-  { id: 'PREPARED', label: 'Lên kho', icon: '📦' },
+  { id: 'PREPARED', label: 'Chờ tài xế', icon: '📦' },
+  { id: 'PICKING_UP', label: 'Lấy hàng', icon: '🏃' },
   { id: 'DELIVERING', label: 'Đang giao', icon: '🛵' },
   { id: 'DELIVERED', label: 'Đã giao', icon: '🎉' },
 ];
@@ -33,7 +34,9 @@ export default function OrderDetailPage() {
   const [storeRating, setStoreRating] = useState(5);
   const [driverRating, setDriverRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [driverTip, setDriverTip] = useState(0);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [driverInfo, setDriverInfo] = useState<{ name: string; vehiclePlate: string; vehicleType: string; rating: number; phone: string } | null>(null);
 
   const handleSubmitReview = async () => {
     if (!token || !order) return;
@@ -41,7 +44,7 @@ export default function OrderDetailPage() {
     try {
       const updated = await submitOrderReview(
         order.id,
-        { storeRating, driverRating, reviewComment: reviewComment.trim() },
+        { storeRating, driverRating, reviewComment: reviewComment.trim(), driverTip: driverTip > 0 ? driverTip : undefined },
         token
       );
       setOrder(updated);
@@ -81,8 +84,15 @@ export default function OrderDetailPage() {
       }
     });
 
+    socket.on('driver-assigned', (data) => {
+      if (data.orderId === orderId && data.driver) {
+        setDriverInfo(data.driver);
+      }
+    });
+
     return () => {
       socket.off('order-status-updated');
+      socket.off('driver-assigned');
       disconnectSocket();
     };
   }, [orderId, token]);
@@ -165,7 +175,7 @@ export default function OrderDetailPage() {
                 const timeString = historyItem ? new Date(historyItem.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '---';
 
                 return (
-                  <div key={step.id} className={`flex flex-col items-center flex-1 ${step.id === 'PREPARED' ? 'hidden sm:flex' : ''}`}>
+                  <div key={step.id} className={`flex flex-col items-center flex-1 ${(step.id === 'PREPARED' || step.id === 'PICKING_UP') ? 'hidden sm:flex' : ''}`}>
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all duration-500 border-4 bg-white ${
                       isActive 
                         ? 'border-primary shadow-lg shadow-primary/20 scale-110' 
@@ -251,6 +261,36 @@ export default function OrderDetailPage() {
           </div>
         )}
 
+        {/* Driver Info */}
+        {(order.status === 'PICKING_UP' || order.status === 'DELIVERING') && (driverInfo || order.driver) && (
+          <div className="mt-4 rounded-2xl bg-gradient-to-r from-gray-900 to-gray-800 p-5 text-white shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-2xl font-bold">
+                  {(driverInfo?.name || order.driver?.name || '?').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-bold text-lg">{driverInfo?.name || order.driver?.name}</p>
+                  <div className="flex items-center gap-2 text-sm text-gray-300">
+                    {driverInfo?.vehiclePlate && <span>🏍️ {driverInfo.vehiclePlate}</span>}
+                    {driverInfo?.rating && <span>⭐ {driverInfo.rating.toFixed(1)}</span>}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {(driverInfo?.phone || order.driver?.phone) && (
+                  <a href={`tel:${driverInfo?.phone || order.driver?.phone}`} className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-lg hover:bg-green-600 transition-colors">
+                    📞
+                  </a>
+                )}
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-gray-400">
+              {order.status === 'PICKING_UP' ? '🏪 Tài xế đang đến quán lấy hàng cho bạn...' : '🛵 Tài xế đang trên đường giao hàng...'}
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="mt-6 flex gap-3">
           <Link
@@ -304,6 +344,28 @@ export default function OrderDetailPage() {
                     <StarRating value={driverRating} onChange={setDriverRating} size="md" />
                   </div>
 
+                  <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div>
+                      <p className="font-semibold text-gray-800">Tip Tài xế 💝</p>
+                      <p className="text-xs text-gray-500">Cảm ơn tài xế đã phục vụ</p>
+                    </div>
+                    <div className="flex gap-2">
+                      {[0, 5000, 10000, 20000].map((tip) => (
+                        <button
+                          key={tip}
+                          onClick={() => setDriverTip(tip)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                            driverTip === tip
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {tip === 0 ? 'Không' : `${new Intl.NumberFormat('vi-VN').format(tip)}đ`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <textarea
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
@@ -316,7 +378,7 @@ export default function OrderDetailPage() {
                     disabled={submittingReview}
                     className="w-full rounded-xl bg-gradient-to-r from-primary to-accent py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:brightness-110 disabled:opacity-50"
                   >
-                    {submittingReview ? 'Đang gửi...' : 'Gửi Đánh Giá'}
+                    {submittingReview ? 'Đang gửi...' : `Gửi Đánh Giá${driverTip > 0 ? ` + Tip ${new Intl.NumberFormat('vi-VN').format(driverTip)}đ` : ''}`}
                   </button>
                 </div>
               </div>

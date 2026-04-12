@@ -1,13 +1,16 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { OrdersGateway } from '../gateway/orders.gateway';
 import { OrderStatus } from '@prisma/client';
+import { DriverService } from '../driver/driver.service';
 
 @Injectable()
 export class SellerService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: OrdersGateway,
+    @Inject(forwardRef(() => DriverService))
+    private readonly driverService: DriverService,
   ) {}
 
   private async getStoreByOwner(userId: string) {
@@ -229,6 +232,7 @@ export class SellerService {
       OrderStatus.CONFIRMED,
       OrderStatus.PREPARING,
       OrderStatus.PREPARED,
+      OrderStatus.PICKING_UP,
       OrderStatus.DELIVERING,
       OrderStatus.DELIVERED
     ];
@@ -247,9 +251,8 @@ export class SellerService {
        if (newIndex <= currentIndex) {
            throw new BadRequestException('Không thể chuyển về trạng thái trước đó');
        }
-       // Seller should only be able to transition up to PREPARED.
-       if (newStatus === OrderStatus.DELIVERING || newStatus === OrderStatus.DELIVERED) {
-         throw new BadRequestException('Chuyển trạng thái giao hàng là quyền của thẻ Tài xế');
+       if (newStatus === OrderStatus.PICKING_UP || newStatus === OrderStatus.DELIVERING || newStatus === OrderStatus.DELIVERED) {
+         throw new BadRequestException('Chuyển trạng thái giao hàng là quyền của Tài xế');
        }
     }
   }
@@ -286,6 +289,12 @@ export class SellerService {
         shippingFee: order.shippingFee,
         timestamp: new Date().toISOString(),
       });
+
+      setTimeout(() => {
+        this.driverService.autoAssignDriver(order.id).catch(err =>
+          console.error('Auto-assign failed:', err),
+        );
+      }, 3000);
     }
 
     return updated;

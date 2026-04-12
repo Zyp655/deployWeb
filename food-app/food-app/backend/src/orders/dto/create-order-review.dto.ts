@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsNumber, Max, Min } from 'class-validator';
 
 export class CreateOrderReviewDto {
   @IsInt()
@@ -16,4 +16,9 @@ export class CreateOrderReviewDto {
   @IsString()
   @IsOptional()
   reviewComment?: string;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  driverTip?: number;
 }

@@ -1,157 +1,190 @@
 'use client';
-import { useAuthStore } from '@/store/auth';
-import { fetchDriverMyOrders, completeOrder, DriverOrder } from '@/lib/api/client';
+
 import { useEffect, useState } from 'react';
+import { useAuthStore } from '@/store/auth';
+import { fetchDriverMyOrders, DriverOrder } from '@/lib/api/client';
 import LiveChatWidget from '@/components/LiveChatWidget';
 
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  PICKING_UP: { label: 'Đang lấy hàng', color: 'bg-yellow-100 text-yellow-700' },
+  DELIVERING: { label: 'Đang giao', color: 'bg-orange-100 text-orange-700' },
+  DELIVERED: { label: 'Hoàn thành', color: 'bg-green-100 text-green-700' },
+  CANCELLED: { label: 'Đã huỷ', color: 'bg-red-100 text-red-700' },
+};
+
 export default function DriverMyOrders() {
-  const [orders, setOrders] = useState<DriverOrder[]>([]);
   const { token, user } = useAuthStore();
+  const [orders, setOrders] = useState<DriverOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [filter, setFilter] = useState<string>('all');
   const [activeChatOrder, setActiveChatOrder] = useState<DriverOrder | null>(null);
 
   useEffect(() => {
     if (!token) return;
-    fetchDriverMyOrders(token).then((data) => {
-      setOrders(data);
-      setLoading(false);
-    });
-  }, [token]);
+    loadOrders();
+  }, [token, page]);
 
-  const handleComplete = async (orderId: string) => {
+  const loadOrders = async () => {
     if (!token) return;
-    if (!confirm('Bạn xác nhận đã giao đơn hàng này thành công tới khách hàng?')) return;
+    setLoading(true);
     try {
-      await completeOrder(orderId, token);
-      alert('Tuyệt vời, chúc mừng bạn đã hoàn thành chuyến xe!');
-      // Refresh
-      const data = await fetchDriverMyOrders(token);
-      setOrders(data);
-    } catch (err: any) {
-      alert(err.message || 'Lỗi khi hoàn thành đơn');
-    }
+      const data = await fetchDriverMyOrders(token, page, 20);
+      setOrders(data.orders);
+      setTotalPages(data.totalPages);
+    } catch {}
+    setLoading(false);
   };
 
-  if (loading) return <div>Đang tải...</div>;
+  const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 
-  const deliveringOrders = orders.filter((o) => o.status === 'DELIVERING');
-  const completedOrders = orders.filter((o) => o.status === 'DELIVERED');
+  const filteredOrders = filter === 'all'
+    ? orders
+    : orders.filter(o => o.status === filter);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold font-inter text-gray-800">Quản Lý Đơn Hàng Của Mình</h1>
-      
-      <section>
-        <h2 className="text-lg font-bold font-inter text-primary mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-primary inline-block animate-pulse"></span>
-            Đơn Đang Giao ({deliveringOrders.length})
-        </h2>
-        
-        {deliveringOrders.length === 0 ? (
-          <div className="p-6 text-center bg-white rounded-xl border border-dashed border-gray-300">
-            <p className="text-gray-500">Tuyệt vời, bạn không có đơn đang chờ giao.</p>
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {deliveringOrders.map((order) => (
-              <div key={order.id} className="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden flex flex-col relative pb-4">
-                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-orange-400 to-primary"></div>
-                <div className="p-4 border-b bg-orange-50/30">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="inline-block px-3 py-1 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full">
-                      Đang Giao
-                    </span>
-                    <span className="text-sm text-gray-500 font-medium">#{order.id.slice(0,8).toUpperCase()}</span>
-                  </div>
-                  <h3 className="font-bold text-gray-900 line-clamp-1">{order.store?.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1 line-clamp-2 leading-relaxed">
-                    <span className="font-semibold text-gray-600">Lấy tại:</span> {order.store?.address}
-                  </p>
-                </div>
-                
-                <div className="p-4 flex-1">
-                  <p className="text-sm text-gray-600 mb-2 mt-1">
-                    <span className="font-semibold text-gray-800">Giao đến:</span> {order.deliveryAddress}
-                  </p>
-                  <p className="text-sm text-gray-600 mb-2">
-                    <span className="font-semibold text-gray-800">SĐT Khách:</span> <a href={`tel:${order.deliveryPhone}`} className="text-blue-600 font-medium hover:underline">{order.deliveryPhone || '---'}</a>
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold text-gray-800">Cửa hàng:</span> <a href={`tel:${order.store?.phone}`} className="text-blue-600 font-medium hover:underline">{order.store?.phone || '---'}</a>
-                  </p>
-                  <div className="my-4 border-t border-dashed border-gray-200"></div>
-                  <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border">
-                     <div>
-                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Thu Khách</p>
-                        <p className="text-gray-900 font-bold">{order.total.toLocaleString()}đ</p>
-                     </div>
-                     <div className="text-right">
-                        <p className="text-xs text-primary font-bold uppercase tracking-wider mb-1">Phí Ship</p>
-                        <p className="text-primary font-bold">+{order.shippingFee.toLocaleString()}đ</p>
-                     </div>
-                  </div>
-                </div>
+    <div className="p-6 lg:p-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Lịch sử đơn hàng</h1>
+        <span className="text-sm text-gray-500">Trang {page}/{totalPages || 1}</span>
+      </div>
 
-                <div className="px-4 pb-4 flex flex-col gap-2">
-                  <button
-                    onClick={() => handleComplete(order.id)}
-                    className="w-full py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 hover:shadow-lg transition-all focus:ring-4 focus:ring-green-200"
-                  >
-                    Hoàn Thành Đơn
-                  </button>
-                  <button
-                    onClick={() => setActiveChatOrder(order)}
-                    className="w-full py-3 border-2 border-primary text-primary rounded-lg font-bold hover:bg-primary-50 transition-colors"
-                  >
-                    Chat với Khách
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { key: 'all', label: 'Tất cả' },
+          { key: 'DELIVERING', label: 'Đang giao' },
+          { key: 'DELIVERED', label: 'Hoàn thành' },
+          { key: 'CANCELLED', label: 'Đã huỷ' },
+        ].map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              filter === f.key
+                ? 'bg-orange-500 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
-      <section>
-        <h2 className="text-lg font-bold font-inter text-gray-700 mb-4">Lịch Sử Giao Hàng</h2>
-        
-        {completedOrders.length === 0 ? (
-          <p className="text-gray-500 text-sm">Chưa có lịch sử.</p>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-gray-50 border-b text-gray-600 uppercase tracking-wider text-xs font-semibold">
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+          <span className="text-5xl block mb-3">📋</span>
+          <p className="text-gray-500">Chưa có đơn hàng nào</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50 border-b text-gray-500 uppercase tracking-wider text-xs font-semibold">
                 <tr>
-                  <th className="p-4">Mã Đơn</th>
-                  <th className="p-4">Thời Gian</th>
-                  <th className="p-4">Cửa Hàng</th>
-                  <th className="p-4">Phí Giao</th>
-                  <th className="p-4 text-right">Trạng Thái</th>
+                  <th className="p-4">Mã đơn</th>
+                  <th className="p-4">Thời gian</th>
+                  <th className="p-4">Cửa hàng</th>
+                  <th className="p-4">Phí ship</th>
+                  <th className="p-4">Thu nhập</th>
+                  <th className="p-4">Trạng thái</th>
+                  <th className="p-4"></th>
                 </tr>
               </thead>
               <tbody className="divide-y text-gray-700">
-                {completedOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4 font-mono font-medium text-gray-500">#{order.id.slice(0, 8).toUpperCase()}</td>
-                    <td className="p-4 text-gray-500">{new Date(order.createdAt).toLocaleString('vi-VN')}</td>
-                    <td className="p-4 font-medium min-w-[200px] max-w-[300px] truncate">{order.store?.name}</td>
-                    <td className="p-4 text-green-600 font-bold">+{order.shippingFee.toLocaleString()}đ</td>
-                    <td className="p-4 text-right">
-                       <span className="inline-block px-2.5 py-1 text-[11px] font-bold bg-green-100 text-green-700 rounded-md">
-                         HOÀN THÀNH
-                       </span>
-                    </td>
-                  </tr>
-                ))}
+                {filteredOrders.map((order) => {
+                  const status = STATUS_LABELS[order.status] || { label: order.status, color: 'bg-gray-100 text-gray-600' };
+                  return (
+                    <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4 font-mono font-medium text-gray-500">
+                        #{order.id.slice(0, 8).toUpperCase()}
+                      </td>
+                      <td className="p-4 text-gray-500">
+                        {new Date(order.createdAt).toLocaleString('vi-VN')}
+                      </td>
+                      <td className="p-4 font-medium max-w-[200px] truncate">
+                        {order.store?.name}
+                      </td>
+                      <td className="p-4 font-semibold text-gray-900">
+                        {fmt(order.shippingFee)}đ
+                      </td>
+                      <td className="p-4">
+                        {order.earning ? (
+                          <div className="space-y-0.5">
+                            <p className="font-bold text-green-600">{fmt(order.earning.totalFee)}đ</p>
+                            {order.earning.tip > 0 && (
+                              <p className="text-xs text-orange-500">+{fmt(order.earning.tip)}đ tip</p>
+                            )}
+                            {order.earning.bonus > 0 && (
+                              <p className="text-xs text-purple-500">+{fmt(order.earning.bonus)}đ bonus</p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-lg ${status.color}`}>
+                          {status.label}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        {order.status === 'DELIVERING' && order.user && (
+                          <button
+                            onClick={() => setActiveChatOrder(order)}
+                            className="text-orange-500 hover:text-orange-600 text-xs font-bold"
+                          >
+                            💬 Chat
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        )}
-      </section>
+        </div>
+      )}
 
-      {/* Live Chat with Customer */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => setPage(Math.max(1, page - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 transition-colors"
+          >
+            ← Trước
+          </button>
+          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPage(p)}
+              className={`w-10 h-10 rounded-xl text-sm font-bold transition-colors ${
+                page === p
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+          <button
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
+            disabled={page === totalPages}
+            className="px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 transition-colors"
+          >
+            Sau →
+          </button>
+        </div>
+      )}
+
       {activeChatOrder && activeChatOrder.user && user && (
-        <LiveChatWidget 
+        <LiveChatWidget
           orderId={activeChatOrder.id}
           receiverId={activeChatOrder.user.id}
           receiverName={activeChatOrder.user.name}
