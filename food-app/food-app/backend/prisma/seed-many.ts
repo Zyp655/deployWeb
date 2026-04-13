@@ -23,8 +23,12 @@ async function main() {
   const middleNames = ['Văn', 'Thị', 'Hữu', 'Ngọc', 'Thanh', 'Minh', 'Thu', 'Đức'];
   const lastNames = ['An', 'Bình', 'Danh', 'Đạt', 'Hoa', 'Hùng', 'Khoa', 'Linh', 'Mai', 'Nam'];
   
-  const storeNames = ['Quán Phở', 'Bún Bò', 'Cơm Tấm', 'Trà Sữa', 'Cà Phê', 'Bánh Mì', 'Chè', 'Ốc', 'Lẩu', 'Nướng'];
-  const storeSuffix = ['Hà Nội', 'Sài Gòn', 'Đà Nẵng', 'Hương Quê', 'Gia Truyền', 'Ngon', 'Bổ Rẻ'];
+  const storeNames = [
+    'Phở Bò Gia Truyền', 'Bún Chả Hương Quê', 'Cơm Tấm Sài Gòn', 
+    'Trà Sữa Boba House', 'Tiệm Bánh Mì Dân Tổ', 'Lẩu Thái Chua Cay',
+    'Gà Rán Xốt Hàn Quốc', 'Sushi Cá Hồi 88', 'Chè Ngon Cô Ba',
+    'Bún Trộn Nam Bộ', 'Pizza Nhất Nướng'
+  ];
   const districts = ['Quận 1', 'Quận 3', 'Quận 5', 'Quận 10', 'Cầu Giấy', 'Hà Đông', 'Hoàn Kiếm'];
 
   function getRandomName() {
@@ -53,30 +57,52 @@ async function main() {
       where: { ownerId: seller.id },
       update: {},
       create: {
-        name: `${storeNames[Math.floor(Math.random() * storeNames.length)]} ${storeSuffix[Math.floor(Math.random() * storeSuffix.length)]}`,
+        name: `${storeNames[Math.floor(Math.random() * storeNames.length)]} - ${districts[Math.floor(Math.random() * districts.length)]}`,
         ownerId: seller.id,
-        address: `${Math.floor(Math.random() * 200)} Đường nhánh, ${districts[Math.floor(Math.random() * districts.length)]}`,
+        address: `${Math.floor(Math.random() * 200) + 1} Đường nhánh, ${districts[Math.floor(Math.random() * districts.length)]}`,
         phone,
-        description: `Quán ăn ngon rẻ chất lượng phục vụ 24/7. Được nhiều khách hàng yêu thích.`,
+        description: `Quán ăn phục vụ nhiệt tình chu đáo. Thực phẩm tươi ngon đảm bảo vệ sinh. Mang đến trải nghiệm tốt nhất!`,
         lat, lng, rating: 4.0 + Math.random(), totalOrders: 0
       },
     });
     createdStores.push(store);
 
-    // Tạo Products cho Store này
-    const productsCount = Math.floor(Math.random() * 5) + 3; // 3-7 món
+    // Tạo Products cho Store này (Lấy mẫu dữ liệu thật trực quan)
+    const REAL_PRODUCTS = [
+      { name: 'Phở Bò Đặc Biệt', category: 'Món nước', price: 65000, image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?w=800&auto=format&fit=crop' },
+      { name: 'Bún Chả Hà Nội', category: 'Món nước', price: 50000, image: 'https://images.unsplash.com/photo-1555126634-ae23555239e0?w=800&auto=format&fit=crop' },
+      { name: 'Cơm Tấm Sườn Bì', category: 'Món khô', price: 55000, image: 'https://images.unsplash.com/photo-1615679507981-d10aab6d2a41?w=800&auto=format&fit=crop' },
+      { name: 'Gà Rán Xốt Cay', category: 'Món khô', price: 75000, image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=800&auto=format&fit=crop' },
+      { name: 'Bánh Mì Thịt Nướng', category: 'Món khô', price: 25000, image: 'https://images.unsplash.com/photo-1619604107557-b532ed3bf028?w=800&auto=format&fit=crop' },
+      { name: 'Sushi Cá Hồi', category: 'Khai vị', price: 120000, image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&auto=format&fit=crop' },
+      { name: 'Trà Sữa Trân Châu', category: 'Đồ uống', price: 45000, image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&auto=format&fit=crop' },
+      { name: 'Cà Phê Sữa Đá', category: 'Đồ uống', price: 25000, image: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=800&auto=format&fit=crop' },
+      { name: 'Sinh Tố Bơ', category: 'Đồ uống', price: 40000, image: 'https://images.unsplash.com/photo-1624021961609-b14194098fb4?w=800&auto=format&fit=crop' },
+      { name: 'Mì Cay Hải Sản', category: 'Món nước', price: 65000, image: 'https://images.unsplash.com/photo-1585032226651-469b61fb2380?w=800&auto=format&fit=crop' },
+      { name: 'Salad Rong Biển', category: 'Khai vị', price: 45000, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop' },
+      { name: 'Bò Bít Tết', category: 'Món khô', price: 150000, image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=800&auto=format&fit=crop' },
+      { name: 'Pizza Hải Sản', category: 'Món khô', price: 180000, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&auto=format&fit=crop' },
+      { name: 'Gỏi Cuốn Tôm Thịt', category: 'Khai vị', price: 35000, image: 'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=800&auto=format&fit=crop' },
+      { name: 'Bún Trộn Nam Bộ', category: 'Món khô', price: 50000, image: 'https://images.unsplash.com/photo-1579893962621-08ec39634e2c?w=800&auto=format&fit=crop' }
+    ];
+
+    const productsCount = Math.floor(Math.random() * 4) + 4; // 4-7 món
     const tempProducts = [];
-    for (let p = 1; p <= productsCount; p++) {
+    const shuffledProducts = [...REAL_PRODUCTS].sort(() => 0.5 - Math.random());
+    const selectedProducts = shuffledProducts.slice(0, productsCount);
+
+    for (const p of selectedProducts) {
       const prod = await prisma.product.create({
         data: {
           storeId: store.id,
-          name: `Món ngon đặc biệt ${p}`,
-          price: Math.floor(Math.random() * 50 + 20) * 1000,
-          category: ['Món nước', 'Món khô', 'Đồ uống', 'Khai vị'][Math.floor(Math.random() * 4)],
-          calories: Math.floor(Math.random() * 500) + 100,
+          name: p.name,
+          price: p.price,
+          category: p.category,
+          image: p.image,
+          calories: Math.floor(Math.random() * 300) + 200,
           isAvailable: true,
-          isVegetarian: Math.random() > 0.8,
-          isSpicy: Math.random() > 0.7,
+          isVegetarian: p.category === 'Đồ uống' || p.name.includes('Salad'),
+          isSpicy: p.name.includes('Cay') || p.name.includes('Bún Chả') || p.name.includes('Gà')
         }
       });
       tempProducts.push(prod);
