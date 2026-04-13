@@ -40,7 +40,7 @@ export default function DriverDashboard() {
       fetchAvailableOrders(token).then(orders => setAvailableCount(orders.length)).catch(() => {});
     });
 
-    socket.on('order-auto-assigned', (data) => {
+    socket.on('order-auto-assigned', () => {
       loadData();
     });
 
@@ -86,7 +86,7 @@ export default function DriverDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -94,49 +94,30 @@ export default function DriverDashboard() {
   if (showRegister) {
     return (
       <div className="flex items-center justify-center h-full p-8">
-        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full space-y-6">
+        <div className="ds-card p-8 max-w-md w-full space-y-6">
           <div className="text-center">
             <span className="text-5xl">🛵</span>
-            <h1 className="text-2xl font-bold mt-3">Đăng ký Tài Xế</h1>
-            <p className="text-gray-500 text-sm mt-1">Điền thông tin để bắt đầu nhận đơn</p>
+            <h1 className="ds-heading text-2xl font-bold mt-3 text-[#1a1a2e]">Đăng ký Tài Xế</h1>
+            <p className="text-[#906f6c] text-sm mt-1">Điền thông tin để bắt đầu nhận đơn</p>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-semibold text-gray-700">Loại xe</label>
-              <select
-                value={regForm.vehicleType}
-                onChange={(e) => setRegForm({ ...regForm, vehicleType: e.target.value })}
-                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
-              >
+              <label className="ds-label mb-1 block">Loại xe</label>
+              <select value={regForm.vehicleType} onChange={(e) => setRegForm({ ...regForm, vehicleType: e.target.value })} className="ds-input">
                 <option value="MOTORBIKE">Xe máy</option>
                 <option value="BICYCLE">Xe đạp</option>
               </select>
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700">Biển số xe</label>
-              <input
-                type="text"
-                placeholder="VD: 59H1-12345"
-                value={regForm.vehiclePlate}
-                onChange={(e) => setRegForm({ ...regForm, vehiclePlate: e.target.value })}
-                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
-              />
+              <label className="ds-label mb-1 block">Biển số xe</label>
+              <input type="text" placeholder="VD: 59H1-12345" value={regForm.vehiclePlate} onChange={(e) => setRegForm({ ...regForm, vehiclePlate: e.target.value })} className="ds-input" />
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700">Số CMND/CCCD</label>
-              <input
-                type="text"
-                placeholder="Nhập CMND/CCCD"
-                value={regForm.idCardNumber}
-                onChange={(e) => setRegForm({ ...regForm, idCardNumber: e.target.value })}
-                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
-              />
+              <label className="ds-label mb-1 block">Số CMND/CCCD</label>
+              <input type="text" placeholder="Nhập CMND/CCCD" value={regForm.idCardNumber} onChange={(e) => setRegForm({ ...regForm, idCardNumber: e.target.value })} className="ds-input" />
             </div>
           </div>
-          <button
-            onClick={handleRegister}
-            className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all active:scale-[0.98]"
-          >
+          <button onClick={handleRegister} className="w-full ds-gradient-cta py-3.5 text-sm">
             Đăng ký ngay
           </button>
         </div>
@@ -145,23 +126,23 @@ export default function DriverDashboard() {
   }
 
   const stats = [
-    { label: 'Đơn hôm nay', value: earnings?.totalOrders || 0, icon: '📦', color: 'from-blue-500 to-cyan-500' },
-    { label: 'Thu nhập', value: `${fmt(earnings?.total || 0)}đ`, icon: '💰', color: 'from-green-500 to-emerald-500' },
-    { label: 'TB/Đơn', value: `${fmt(earnings?.avgPerOrder || 0)}đ`, icon: '📊', color: 'from-purple-500 to-violet-500' },
-    { label: 'Rating', value: profile?.averageRating?.toFixed(1) || '5.0', icon: '⭐', color: 'from-yellow-500 to-orange-500' },
+    { label: 'Đơn hôm nay', value: earnings?.totalOrders || 0, icon: '📦', gradient: 'from-blue-500 to-indigo-600' },
+    { label: 'Thu nhập', value: `${fmt(earnings?.total || 0)}đ`, icon: '💰', gradient: 'from-emerald-500 to-teal-600' },
+    { label: 'TB/Đơn', value: `${fmt(earnings?.avgPerOrder || 0)}đ`, icon: '📊', gradient: 'from-violet-500 to-purple-600' },
+    { label: 'Rating', value: profile?.averageRating?.toFixed(1) || '5.0', icon: '⭐', gradient: 'from-amber-500 to-orange-600' },
   ];
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <h1 className="ds-heading text-2xl font-bold text-[#1a1a2e]">Dashboard</h1>
+          <p className="text-[#5b403d] text-sm mt-0.5">
             {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
         {earnings?.isPeakHour && (
-          <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500/10 to-red-500/10 text-orange-600 px-4 py-2 rounded-full border border-orange-500/20">
+          <div className="flex items-center gap-2 bg-gradient-to-r from-accent/10 to-primary/10 text-accent px-4 py-2 rounded-full border border-accent/20">
             <span className="text-lg">🔥</span>
             <span className="text-sm font-bold">Giờ cao điểm — Bonus +20%</span>
           </div>
@@ -170,12 +151,12 @@ export default function DriverDashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s, i) => (
-          <div key={i} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center text-lg mb-3`}>
+          <div key={i} className="ds-stat-card flex-col items-start">
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.gradient} flex items-center justify-center text-lg shadow-lg mb-3`}>
               {s.icon}
             </div>
-            <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+            <p className="text-2xl font-bold text-[#1a1a2e]">{s.value}</p>
+            <p className="ds-label mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
@@ -183,7 +164,7 @@ export default function DriverDashboard() {
       {activeOrder && (
         <div
           onClick={() => router.push(`/driver/delivery/${activeOrder.id}`)}
-          className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 text-white shadow-xl cursor-pointer hover:shadow-2xl transition-all group"
+          className="bg-gradient-to-r from-primary to-primary-600 rounded-2xl p-6 text-white shadow-xl cursor-pointer hover:shadow-2xl transition-all group hover:-translate-y-0.5"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -210,48 +191,48 @@ export default function DriverDashboard() {
       {!activeOrder && profile?.isOnline && (
         <div
           onClick={() => router.push('/driver/orders')}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all group"
+          className="ds-card p-6 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_50px_rgba(26,26,46,0.1)] transition-all group"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-2xl">
+              <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-2xl">
                 🔔
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">{availableCount} đơn mới quanh bạn</h3>
-                <p className="text-gray-500 text-sm">Bấm để xem và nhận đơn</p>
+                <h3 className="text-lg font-bold text-[#1a1a2e]">{availableCount} đơn mới quanh bạn</h3>
+                <p className="text-[#906f6c] text-sm">Bấm để xem và nhận đơn</p>
               </div>
             </div>
-            <span className="text-orange-500 font-bold group-hover:translate-x-1 transition-transform">→</span>
+            <span className="text-accent font-bold group-hover:translate-x-1 transition-transform">→</span>
           </div>
         </div>
       )}
 
       {!activeOrder && !profile?.isOnline && (
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
+        <div className="ds-card p-8 text-center">
           <span className="text-5xl block mb-3">😴</span>
-          <h3 className="text-lg font-bold text-gray-900">Bạn đang Offline</h3>
-          <p className="text-gray-500 text-sm mt-1">Bật trạng thái Online ở sidebar để bắt đầu nhận đơn</p>
+          <h3 className="ds-heading text-lg font-bold text-[#1a1a2e]">Bạn đang Offline</h3>
+          <p className="text-[#906f6c] text-sm mt-1">Bật trạng thái Online ở sidebar để bắt đầu nhận đơn</p>
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-900 mb-2">Tỷ lệ hoàn thành</h3>
+        <div className="ds-card p-5">
+          <h3 className="font-bold text-[#1a1a2e] mb-2">Tỷ lệ hoàn thành</h3>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-green-600">{profile?.acceptanceRate?.toFixed(0) || 100}%</span>
+            <span className="text-3xl font-bold text-emerald-600">{profile?.acceptanceRate?.toFixed(0) || 100}%</span>
           </div>
-          <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="mt-3 h-2 bg-[#efecff] rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all"
               style={{ width: `${profile?.acceptanceRate || 100}%` }}
             />
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-900 mb-2">Tổng thu nhập</h3>
-          <p className="text-3xl font-bold text-gray-900">{fmt(profile?.totalEarnings || 0)}đ</p>
-          <p className="text-xs text-gray-500 mt-1">{profile?.totalDeliveries || 0} đơn hoàn thành</p>
+        <div className="ds-card p-5">
+          <h3 className="font-bold text-[#1a1a2e] mb-2">Tổng thu nhập</h3>
+          <p className="text-3xl font-bold text-[#1a1a2e]">{fmt(profile?.totalEarnings || 0)}đ</p>
+          <p className="ds-label mt-1">{profile?.totalDeliveries || 0} đơn hoàn thành</p>
         </div>
       </div>
     </div>

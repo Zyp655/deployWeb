@@ -3,12 +3,23 @@
 import SellerProtectedRoute from '@/components/SellerProtectedRoute';
 import Link from 'next/link';
 import { ReactNode, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import LogoutButton from '@/components/LogoutButton';
 import { useAuthStore } from '@/store/auth';
 import { uploadImage, updateProfile } from '@/lib/api/client';
 
+const NAV_ITEMS = [
+  { href: '/seller', label: 'Tổng quan', icon: '📊' },
+  { href: '/seller/store', label: 'Cửa hàng', icon: '🏪' },
+  { href: '/seller/orders', label: 'Đơn hàng', icon: '🧾' },
+  { href: '/seller/products', label: 'Sản phẩm', icon: '🍔' },
+  { href: '/seller/promotions', label: 'Khuyến mãi', icon: '🏷️' },
+  { href: '/seller/reviews', label: 'Đánh giá', icon: '⭐' },
+];
+
 export default function SellerLayout({ children }: { children: ReactNode }) {
   const { user, token, setAuth } = useAuthStore();
+  const pathname = usePathname();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -35,15 +46,13 @@ export default function SellerLayout({ children }: { children: ReactNode }) {
 
   return (
     <SellerProtectedRoute>
-      <div className="flex h-screen bg-gray-50">
-        <aside className="w-64 bg-[#1A1A2E] text-white flex flex-col shadow-xl z-20">
+      <div className="flex h-screen">
+        <aside className="w-64 ds-sidebar flex flex-col shadow-xl z-20">
           <div className="p-6 border-b border-white/10">
-            <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-              🍜 HOANG FOOD
-            </h1>
+            <h1 className="ds-sidebar-brand">🍜 HOANG FOOD</h1>
+            <p className="text-[10px] uppercase tracking-[0.15em] text-gray-500 mt-1 font-semibold">Seller Dashboard</p>
           </div>
 
-          {/* Avatar Section */}
           <div className="px-6 py-5 border-b border-white/10 flex flex-col items-center gap-3">
             <div className="relative group cursor-pointer" onClick={() => fileRef.current?.click()}>
               {avatarUrl ? (
@@ -70,13 +79,7 @@ export default function SellerLayout({ children }: { children: ReactNode }) {
                   </svg>
                 )}
               </div>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
             </div>
             <div className="text-center">
               <p className="font-bold text-sm text-white truncate max-w-40">{user?.name || 'Seller'}</p>
@@ -84,32 +87,28 @@ export default function SellerLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          <nav className="flex-1 px-4 py-6 space-y-1">
-            <Link href="/seller" className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors text-sm">
-              📊 Tổng quan
-            </Link>
-            <Link href="/seller/store" className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors text-sm">
-              🏪 Cửa hàng
-            </Link>
-            <Link href="/seller/orders" className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors text-sm">
-              🧾 Đơn hàng
-            </Link>
-            <Link href="/seller/products" className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors text-sm">
-              🍔 Sản phẩm
-            </Link>
-            <Link href="/seller/promotions" className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors text-sm">
-              🏷️ Khuyến mãi
-            </Link>
-            <Link href="/seller/reviews" className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors text-sm">
-              ⭐ Đánh giá
-            </Link>
+          <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
+            {NAV_ITEMS.map((item) => {
+              const isActive = pathname === item.href || (item.href !== '/seller' && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`ds-nav-item ${isActive ? 'ds-nav-active' : ''}`}
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
           <div className="p-4 border-t border-white/10">
-            <LogoutButton className="block w-full px-4 py-3 text-center rounded-xl bg-white/5 text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/10 transition-colors" />
+            <LogoutButton className="block w-full px-4 py-2.5 text-center rounded-xl bg-white/5 text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/10 transition-colors" />
           </div>
         </aside>
-        <main className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-7xl mx-auto">{children}</div>
+
+        <main className="flex-1 overflow-y-auto ds-page-bg">
+          <div className="max-w-7xl mx-auto p-8">{children}</div>
         </main>
       </div>
     </SellerProtectedRoute>

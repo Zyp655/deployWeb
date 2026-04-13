@@ -25,63 +25,60 @@ export default function SellerDashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />
-        ))}
+        {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />)}
       </div>
     );
   }
 
-  if (!stats) return <p className="text-red-500">Không thể tải dữ liệu</p>;
+  if (!stats) return <p className="text-primary font-bold">Không thể tải dữ liệu</p>;
 
-  const maxRevenue = Math.max(...stats.chartData.map((d) => d.revenue), 1);
   const maxSold = Math.max(...stats.topProducts.map((p) => p.totalSold), 1);
+
+  const STAT_CARDS = [
+    { icon: '📦', label: 'Đơn hôm nay', value: stats.ordersToday, gradient: 'from-blue-500 to-indigo-600' },
+    { icon: '💰', label: 'Doanh thu hôm nay', value: formatPrice(stats.revenueToday), gradient: 'from-emerald-500 to-teal-600' },
+    { icon: '🍔', label: 'Sản phẩm đang bán', value: stats.totalProducts, gradient: 'from-violet-500 to-purple-600' },
+    { icon: '⭐', label: 'Đánh giá TB', value: `${stats.averageRating.toFixed(1)}/5`, gradient: 'from-amber-500 to-orange-600' },
+  ];
 
   return (
     <div className="space-y-8">
       <header>
-        <h2 className="text-3xl font-extrabold text-gray-900">
+        <h2 className="ds-heading text-3xl font-extrabold text-[#1a1a2e]">
           Xin chào, {user?.name} 👋
         </h2>
-        <p className="text-gray-500 mt-1">
+        <p className="text-[#5b403d] mt-1 text-sm">
           {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </header>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { icon: '📦', label: 'Đơn hàng hôm nay', value: stats.ordersToday, color: 'blue' },
-          { icon: '💰', label: 'Doanh thu hôm nay', value: formatPrice(stats.revenueToday), color: 'green' },
-          { icon: '🍔', label: 'Sản phẩm đang bán', value: stats.totalProducts, color: 'purple' },
-          { icon: '⭐', label: 'Đánh giá trung bình', value: `${stats.averageRating.toFixed(1)}/5`, color: 'amber' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center gap-4 transition-all hover:shadow-md">
-            <div className={`h-12 w-12 rounded-full bg-${stat.color}-100 text-${stat.color}-600 flex items-center justify-center text-xl`}>
+        {STAT_CARDS.map((stat) => (
+          <div key={stat.label} className="ds-stat-card">
+            <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-xl shadow-lg`}>
               {stat.icon}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-500">{stat.label}</p>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+              <p className="ds-label">{stat.label}</p>
+              <p className="text-2xl font-bold text-[#1a1a2e] mt-0.5">{stat.value}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Products */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">🏆 Sản phẩm bán chạy</h3>
-          <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-2 ds-card p-6">
+          <h3 className="ds-heading text-lg font-bold text-[#1a1a2e] mb-4">🏆 Sản phẩm bán chạy</h3>
+          <div className="space-y-4">
             {stats.topProducts.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-4">Chưa có dữ liệu</p>
+              <p className="text-[#906f6c] text-sm text-center py-4">Chưa có dữ liệu</p>
             ) : (
               stats.topProducts.map((product, idx) => (
                 <div key={idx} className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-gray-400 w-6">#{idx + 1}</span>
+                  <span className="text-sm font-black text-[#e4beb9] w-6">#{idx + 1}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
-                    <div className="mt-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <p className="text-sm font-semibold text-[#1a1a2e] truncate">{product.name}</p>
+                    <div className="mt-1.5 h-2 bg-[#efecff] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-700"
                         style={{ width: `${(product.totalSold / maxSold) * 100}%` }}
@@ -95,41 +92,25 @@ export default function SellerDashboardPage() {
           </div>
         </div>
 
-        {/* Revenue Chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">📈 Doanh thu 7 ngày</h3>
+        <div className="lg:col-span-3 ds-card p-6">
+          <h3 className="ds-heading text-lg font-bold text-[#1a1a2e] mb-4">📈 Doanh thu 7 ngày</h3>
           <div className="h-64 w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={stats.chartData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                <XAxis 
-                  dataKey="date" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#6B7280' }} 
-                  dy={10}
-                />
-                <YAxis 
-                  yAxisId="left"
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                  tickFormatter={(value) => `${value >= 1000 ? (value / 1000) + 'k' : value}`}
-                />
-                <YAxis 
-                  yAxisId="right"
-                  orientation="right"
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                />
-                <Tooltip 
-                  cursor={{ fill: '#F3F4F6' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                <Bar yAxisId="left" dataKey="revenue" name="Doanh thu (VNĐ)" fill="#f97316" radius={[4, 4, 0, 0]} barSize={24} />
-                <Line yAxisId="right" type="monotone" dataKey="orders" name="Số đơn hàng" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <defs>
+                  <linearGradient id="sellerBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#b7131a" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#db322f" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4beb9" strokeOpacity={0.4} />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#5b403d' }} dy={10} />
+                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#5b403d' }} tickFormatter={(v) => `${v >= 1000 ? (v / 1000) + 'k' : v}`} />
+                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#5b403d' }} />
+                <Tooltip cursor={{ fill: '#f5f2ff' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 30px rgba(26,26,46,0.12)', fontFamily: 'Inter' }} />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontFamily: 'Inter', fontSize: '13px' }} />
+                <Bar yAxisId="left" dataKey="revenue" name="Doanh thu (VNĐ)" fill="url(#sellerBarGrad)" radius={[6, 6, 0, 0]} barSize={24} />
+                <Line yAxisId="right" type="monotone" dataKey="orders" name="Số đơn" stroke="#ab3500" strokeWidth={3} dot={{ r: 4, fill: '#ab3500' }} activeDot={{ r: 6 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

@@ -50,6 +50,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
+        heading: ['Be Vietnam Pro', 'Inter', 'system-ui', 'sans-serif'],
       },
       animation: {
         'blob': 'blob 7s infinite',

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -17,15 +17,79 @@
   }
 }
 
+@layer components {
+  .ds-sidebar {
+    @apply bg-[#2F2E43] text-white;
+  }
+
+  .ds-sidebar-brand {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    @apply text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  .ds-nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-gray-400 hover:bg-white/[0.07] hover:text-white;
+  }
+
+  .ds-nav-active {
+    @apply bg-primary/15 text-primary-300 border border-primary/20;
+  }
+
+  .ds-page-bg {
+    @apply bg-[#fcf8ff];
+  }
+
+  .ds-heading {
+    font-family: 'Be Vietnam Pro', sans-serif;
+  }
+
+  .ds-card {
+    @apply bg-white rounded-2xl shadow-[0_2px_40px_rgba(26,26,46,0.06)];
+  }
+
+  .ds-card-tonal {
+    @apply bg-[#f5f2ff] rounded-2xl;
+  }
+
+  .ds-stat-card {
+    @apply bg-white rounded-2xl p-6 shadow-[0_2px_40px_rgba(26,26,46,0.06)] flex items-center gap-4 transition-all hover:shadow-[0_4px_50px_rgba(26,26,46,0.1)] hover:-translate-y-0.5;
+  }
+
+  .ds-badge {
+    @apply rounded-full px-3 py-1 text-xs font-bold;
+  }
+
+  .ds-gradient-cta {
+    @apply bg-gradient-to-br from-primary to-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:brightness-110 transition-all active:scale-[0.97];
+  }
+
+  .ds-input {
+    @apply w-full rounded-xl bg-[#efecff] border-0 px-4 py-3 text-sm font-medium text-[#1a1a2e] placeholder:text-[#906f6c] focus:bg-white focus:ring-2 focus:ring-primary/20 outline-none transition-all;
+  }
+
+  .ds-table-head {
+    @apply bg-[#f5f2ff] text-[#5b403d] text-xs font-bold uppercase tracking-wider;
+  }
+
+  .ds-table-row {
+    @apply transition-colors hover:bg-[#f5f2ff]/60;
+  }
+
+  .ds-label {
+    font-family: 'Inter', sans-serif;
+    @apply text-xs font-bold uppercase tracking-[0.05em] text-[#5b403d];
+  }
+}
+
 @layer utilities {
   .glass-panel {
     @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
   }
-  
+
   .glass-nav {
     @apply bg-white/80 backdrop-blur-md border border-white/50 shadow-sm supports-[backdrop-filter]:bg-white/60;
   }
-  
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500;
   }

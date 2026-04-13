@@ -49,55 +49,53 @@ export default function AdminReviewsPage() {
   };
 
   if (loading) {
-    return <div className="text-gray-500 py-10">Đang tải danh sách đánh giá...</div>;
+    return <div className="text-[#906f6c] py-10">Đang tải danh sách đánh giá...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-gray-900">Quản lý Đánh giá (Admin)</h2>
-        <p className="text-gray-500 mt-1">Giám sát toàn bộ đánh giá sản phẩm trên hệ thống</p>
+        <h2 className="ds-heading text-3xl font-extrabold text-[#1a1a2e]">⭐ Quản lý Đánh giá (Admin)</h2>
+        <p className="text-[#5b403d] mt-1 text-sm">Giám sát toàn bộ đánh giá sản phẩm trên hệ thống</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="ds-card overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600">
-              <th className="px-6 py-4">Sản phẩm / Khách hàng</th>
-              <th className="px-6 py-4">Đánh giá</th>
-              <th className="px-6 py-4">Ngày đăng</th>
-              <th className="px-6 py-4 text-center">Thao tác</th>
+            <tr>
+              <th className="ds-table-head px-6 py-4">Sản phẩm / Khách hàng</th>
+              <th className="ds-table-head px-6 py-4">Đánh giá</th>
+              <th className="ds-table-head px-6 py-4">Ngày đăng</th>
+              <th className="ds-table-head px-6 py-4 text-center">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {reviews.map(review => (
-              <tr key={review.id} className="hover:bg-gray-50/50 transition-colors">
+              <tr key={review.id} className="ds-table-row border-b border-[#efecff]">
                 <td className="px-6 py-4">
-                  <div className="font-bold text-gray-900">{review.product?.name || 'Sản phẩm đã bị xóa'}</div>
-                  <div className="text-sm text-gray-500">Khách: {review.user?.name || 'Người dùng ẩn danh'}</div>
+                  <div className="font-bold text-[#1a1a2e]">{review.product?.name || 'Sản phẩm đã bị xóa'}</div>
+                  <div className="text-sm text-[#906f6c]">Khách: {review.user?.name || 'Ẩn danh'}</div>
                 </td>
                 <td className="px-6 py-4 max-w-xs">
                   <div className="flex gap-1 mb-1">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i} className={`text-lg ${i < review.rating ? 'text-yellow-400' : 'text-gray-200'}`}>
-                        ★
-                      </span>
+                      <span key={i} className={`text-lg ${i < review.rating ? 'text-amber-400' : 'text-[#e4beb9]'}`}>★</span>
                     ))}
                   </div>
-                  <p className="text-gray-700 text-sm line-clamp-2">{review.comment}</p>
+                  <p className="text-[#5b403d] text-sm line-clamp-2">{review.comment}</p>
                   {review.sellerReply && (
-                     <div className="mt-2 bg-blue-50 border-l-2 border-blue-400 p-2 text-xs rounded text-blue-800">
+                     <div className="mt-2 bg-primary/5 border-l-2 border-primary p-2 text-xs rounded text-[#5b403d]">
                         <span className="font-bold">Chủ quán trả lời:</span> {review.sellerReply}
                      </div>
                   )}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-6 py-4 text-sm text-[#906f6c]">
                   {new Date(review.createdAt).toLocaleDateString('vi-VN')}
                 </td>
                 <td className="px-6 py-4 text-center">
-                  <button 
+                  <button
                     onClick={() => handleDelete(review.id)}
-                    className="text-red-500 bg-red-50 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors"
+                    className="text-primary bg-primary/5 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-primary/10 transition-colors"
                   >
                     Xóa
                   </button>
@@ -106,7 +104,7 @@ export default function AdminReviewsPage() {
             ))}
             {reviews.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
+                <td colSpan={4} className="px-6 py-10 text-center text-[#906f6c]">
                   Chưa có đánh giá nào trên hệ thống.
                 </td>
               </tr>

@@ -37,10 +37,10 @@ function ProductImageRender({ product }: { product: Product }) {
   }
 
   return (
-    <img 
-      src={url} 
-      alt={product.name} 
-      className="w-full h-full object-cover" 
+    <img
+      src={url}
+      alt={product.name}
+      className="w-full h-full object-cover"
       onError={() => setError(true)}
     />
   );
@@ -50,13 +50,11 @@ export default function SellerProductsPage() {
   const { token } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Thời gian Modal
+
   const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
   const [editStartTime, setEditStartTime] = useState('');
   const [editEndTime, setEditEndTime] = useState('');
 
-  // CRUD Modal
   const [isProductModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<{
@@ -83,7 +81,6 @@ export default function SellerProductsPage() {
   const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !token) return;
-    
     try {
       setIsUploading(true);
       const res = await uploadImage(file, token);
@@ -113,7 +110,7 @@ export default function SellerProductsPage() {
     if (!token) return;
     try {
       await toggleSellerProduct(productId, token);
-      setProducts(prev => prev.map(p => 
+      setProducts(prev => prev.map(p =>
         p.id === productId ? { ...p, isAvailable: !p.isAvailable } : p
       ));
     } catch (e) {
@@ -129,8 +126,7 @@ export default function SellerProductsPage() {
         saleEndTime: editEndTime || null,
       };
       await updateSellerProduct(editingTimeId, payload, token);
-      
-      setProducts(prev => prev.map(p => 
+      setProducts(prev => prev.map(p =>
         p.id === editingTimeId ? { ...p, ...payload } : p
       ));
       setEditingTimeId(null);
@@ -161,14 +157,8 @@ export default function SellerProductsPage() {
     } else {
       setEditingProduct(null);
       setFormData({
-        name: '',
-        description: '',
-        price: '',
-        category: CATEGORIES[0],
-        image: '',
-        isSpicy: false,
-        isVegetarian: false,
-        options: [],
+        name: '', description: '', price: '', category: CATEGORIES[0],
+        image: '', isSpicy: false, isVegetarian: false, options: [],
       });
     }
     setProductModalOpen(true);
@@ -177,7 +167,6 @@ export default function SellerProductsPage() {
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
-
     try {
       const payload = {
         name: formData.name,
@@ -189,7 +178,6 @@ export default function SellerProductsPage() {
         isVegetarian: formData.isVegetarian,
         options: formData.options,
       };
-
       if (editingProduct) {
         const updated = await updateSellerProduct(editingProduct.id, payload, token);
         setProducts(prev => prev.map(p => p.id === updated.id ? updated : p));
@@ -206,7 +194,6 @@ export default function SellerProductsPage() {
   const handleDeleteProduct = async (id: string, name: string) => {
     if (!token) return;
     if (!window.confirm(`Bạn có chắc muốn xóa món "${name}" không?`)) return;
-
     try {
       await deleteSellerProduct(id, token);
       loadProducts();
@@ -223,21 +210,21 @@ export default function SellerProductsPage() {
     <div className="space-y-6">
       <header className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-extrabold text-gray-900">🍔 Sản phẩm</h2>
-          <p className="text-gray-500 mt-1">Quản lý các món ăn của cửa hàng</p>
+          <h2 className="ds-heading text-3xl font-extrabold text-[#1a1a2e]">🍔 Sản phẩm</h2>
+          <p className="text-[#5b403d] mt-1 text-sm">Quản lý các món ăn của cửa hàng</p>
         </div>
-        <button 
+        <button
           onClick={() => openProductModal()}
-          className="bg-primary hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center gap-2"
+          className="ds-gradient-cta px-5 py-2.5 flex items-center gap-2 text-sm"
         >
           <span>➕</span> Thêm món mới
         </button>
       </header>
 
       {products.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
+        <div className="text-center py-16 ds-card border-2 border-dashed border-[#e4beb9]">
           <span className="text-5xl">🍽️</span>
-          <p className="mt-3 text-gray-500 font-medium">Chưa có sản phẩm nào</p>
+          <p className="mt-3 text-[#906f6c] font-medium">Chưa có sản phẩm nào</p>
           <button onClick={() => openProductModal()} className="mt-4 text-primary font-bold hover:underline">
             Tạo món ăn đầu tiên của bạn
           </button>
@@ -245,13 +232,12 @@ export default function SellerProductsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {products.map((product) => (
-            <div key={product.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm border transition-all hover:shadow-md flex flex-col group ${product.isAvailable ? 'border-gray-100' : 'border-red-100 opacity-75'}`}>
-              <div className="h-40 bg-gradient-to-br from-primary-50 to-accent-50 flex items-center justify-center relative">
+            <div key={product.id} className={`ds-card overflow-hidden flex flex-col group transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_50px_rgba(26,26,46,0.1)] ${!product.isAvailable ? 'opacity-70' : ''}`}>
+              <div className="h-40 bg-gradient-to-br from-[#f5f2ff] to-[#efecff] flex items-center justify-center relative">
                 <ProductImageRender product={product} />
-                
                 {!product.isAvailable && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <span className="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                  <div className="absolute inset-0 bg-[#1a1a2e]/40 flex items-center justify-center">
+                    <span className="bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                       🔴 Đã ẩn
                     </span>
                   </div>
@@ -260,40 +246,35 @@ export default function SellerProductsPage() {
 
               <div className="p-4 flex-1 flex flex-col">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-primary bg-primary-50 px-2 py-0.5 rounded-full">{product.category}</span>
-                  {product.isSpicy && <span className="text-[10px] uppercase tracking-wider font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">🌶 Cay</span>}
-                  {product.isVegetarian && <span className="text-[10px] uppercase tracking-wider font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">🌿 Chay</span>}
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full">{product.category}</span>
+                  {product.isSpicy && <span className="text-[10px] uppercase tracking-wider font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full">🌶 Cay</span>}
+                  {product.isVegetarian && <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">🌿 Chay</span>}
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{product.name}</h3>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2 flex-1">{product.description || 'Chưa có mô tả'}</p>
-                
-                <div className="mt-4 flex items-center justify-between bg-gray-50/50 p-2 rounded-lg border border-gray-100">
-                  <span className="text-xs font-medium text-gray-600 flex items-center gap-1">
-                    ⏱️ {product.saleStartTime || product.saleEndTime ? 
+                <h3 className="text-lg font-bold text-[#1a1a2e] line-clamp-1">{product.name}</h3>
+                <p className="text-sm text-[#906f6c] mt-1 line-clamp-2 flex-1">{product.description || 'Chưa có mô tả'}</p>
+
+                <div className="mt-4 flex items-center justify-between bg-[#f5f2ff] p-2 rounded-lg">
+                  <span className="text-xs font-medium text-[#5b403d] flex items-center gap-1">
+                    ⏱️ {product.saleStartTime || product.saleEndTime ?
                       <span className="font-bold text-primary">{product.saleStartTime || '00:00'} - {product.saleEndTime || '23:59'}</span>
                       : 'Bán cả ngày'
                     }
                   </span>
-                  <button 
-                    onClick={() => openTimeEditor(product)}
-                    className="text-xs text-blue-600 font-bold hover:underline"
-                  >
+                  <button onClick={() => openTimeEditor(product)} className="text-xs text-primary font-bold hover:underline">
                     Đổi giờ
                   </button>
                 </div>
 
-                <div className="mt-3 flex flex-none items-center justify-between pt-3 border-t border-gray-50">
+                <div className="mt-3 flex flex-none items-center justify-between pt-3 border-t border-[#efecff]">
                   <span className="text-lg font-black text-primary">{formatPrice(product.price)}</span>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between bg-gray-50/80 rounded-xl px-3 py-2.5 border border-gray-100">
+                <div className="mt-3 flex items-center justify-between bg-[#f5f2ff] rounded-xl px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggle(product.id)}
-                      className={`relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
-                        product.isAvailable 
-                          ? 'bg-green-500 focus:ring-green-300' 
-                          : 'bg-gray-300 focus:ring-gray-200'
+                      className={`relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none ${
+                        product.isAvailable ? 'bg-emerald-500' : 'bg-[#e4beb9]'
                       }`}
                       title={product.isAvailable ? 'Ẩn sản phẩm' : 'Hiện sản phẩm'}
                     >
@@ -301,21 +282,21 @@ export default function SellerProductsPage() {
                         product.isAvailable ? 'translate-x-6' : 'translate-x-0'
                       }`} />
                     </button>
-                    <span className={`text-xs font-bold ${product.isAvailable ? 'text-green-700' : 'text-gray-500'}`}>
+                    <span className={`text-xs font-bold ${product.isAvailable ? 'text-emerald-600' : 'text-[#906f6c]'}`}>
                       {product.isAvailable ? 'Đang bán' : 'Đã ẩn'}
                     </span>
                   </div>
                   <div className="flex gap-1.5">
                     <button
                       onClick={() => openProductModal(product)}
-                      className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-all active:scale-90"
+                      className="w-8 h-8 rounded-lg bg-[#efecff] text-[#5b403d] flex items-center justify-center hover:bg-[#e8e5ff] transition-all active:scale-90"
                       title="Chỉnh sửa"
                     >
                       ✏️
                     </button>
                     <button
                       onClick={() => handleDeleteProduct(product.id, product.name)}
-                      className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-all active:scale-90"
+                      className="w-8 h-8 rounded-lg bg-primary/5 text-primary flex items-center justify-center hover:bg-primary/10 transition-all active:scale-90"
                       title="Xóa"
                     >
                       🗑️
@@ -328,48 +309,29 @@ export default function SellerProductsPage() {
         </div>
       )}
 
-      {/* Modal chỉnh sửa Khung Giờ */}
       {editingTimeId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
-            <h3 className="text-xl font-extrabold text-gray-900 mb-2">⏱️ Khung giờ bán</h3>
-            <p className="text-sm text-gray-500 mb-6">Thiết lập thời gian bán để tự động ẩn hiện món ăn.</p>
-            
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1a1a2e]/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-3xl ds-card p-6 shadow-2xl">
+            <h3 className="ds-heading text-xl font-extrabold text-[#1a1a2e] mb-2">⏱️ Khung giờ bán</h3>
+            <p className="text-sm text-[#5b403d] mb-6">Thiết lập thời gian bán để tự động ẩn hiện món ăn.</p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Giờ bắt đầu</label>
-                <input 
-                  type="time" 
-                  value={editStartTime}
-                  onChange={e => setEditStartTime(e.target.value)}
-                  className="w-full rounded-xl border-gray-200 bg-gray-50 px-4 py-2 focus:border-primary focus:ring-primary font-medium transition-all"
-                />
+                <label className="ds-label mb-1 block">Giờ bắt đầu</label>
+                <input type="time" value={editStartTime} onChange={e => setEditStartTime(e.target.value)} className="ds-input" />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Giờ kết thúc</label>
-                <input 
-                  type="time" 
-                  value={editEndTime}
-                  onChange={e => setEditEndTime(e.target.value)}
-                  className="w-full rounded-xl border-gray-200 bg-gray-50 px-4 py-2 focus:border-primary focus:ring-primary font-medium transition-all"
-                />
+                <label className="ds-label mb-1 block">Giờ kết thúc</label>
+                <input type="time" value={editEndTime} onChange={e => setEditEndTime(e.target.value)} className="ds-input" />
               </div>
-              <p className="text-xs text-blue-600 bg-blue-50 p-2.5 rounded-lg flex gap-2">
-                <span>💡</span> <span>Xóa trống cả 2 ô để áp dụng bán tự do không giới hạn giờ.</span>
+              <p className="text-xs text-primary bg-primary/5 p-2.5 rounded-lg flex gap-2">
+                <span>💡</span> <span>Xóa trống cả 2 ô để bán tự do không giới hạn giờ.</span>
               </p>
             </div>
-
             <div className="mt-8 flex gap-3">
-              <button 
-                onClick={() => setEditingTimeId(null)}
-                className="flex-1 rounded-xl bg-gray-100 py-3 font-bold text-gray-700 transition-all hover:bg-gray-200 active:scale-95"
-              >
+              <button onClick={() => setEditingTimeId(null)} className="flex-1 rounded-xl bg-[#efecff] py-3 font-bold text-[#5b403d] transition-all hover:bg-[#e8e5ff] active:scale-95">
                 Hủy
               </button>
-              <button 
-                onClick={handleSaveTime}
-                className="flex-[2] rounded-xl bg-primary py-3 font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95"
-              >
+              <button onClick={handleSaveTime} className="flex-[2] ds-gradient-cta py-3 text-sm">
                 Lưu Khung Giờ
               </button>
             </div>
@@ -377,156 +339,82 @@ export default function SellerProductsPage() {
         </div>
       )}
 
-      {/* Modal CRUD Sản phẩm */}
       {isProductModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-20">
-          <div className="w-full max-w-xl rounded-3xl bg-white p-6 md:p-8 shadow-2xl relative my-auto">
-            <button 
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1a1a2e]/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-20">
+          <div className="w-full max-w-xl rounded-3xl ds-card p-6 md:p-8 shadow-2xl relative my-auto">
+            <button
               onClick={() => setProductModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-all"
+              className="absolute top-4 right-4 text-[#906f6c] hover:text-[#1a1a2e] hover:bg-[#efecff] p-2 rounded-full transition-all"
             >
               ✕
             </button>
-            
-            <h3 className="text-2xl font-extrabold text-gray-900 mb-6">
+            <h3 className="ds-heading text-2xl font-extrabold text-[#1a1a2e] mb-6">
               {editingProduct ? '✏️ Cập nhật món ăn' : '🍔 Thêm món mới'}
             </h3>
-            
             <form onSubmit={handleSaveProduct} className="space-y-5">
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Tên món ăn <span className="text-red-500">*</span></label>
-                  <input 
-                    required
-                    maxLength={100}
-                    value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    placeholder="VD: Cơm tấm sườn bì chả"
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-primary focus:bg-white transition-all font-medium"
-                  />
+                  <label className="ds-label mb-1 block">Tên món ăn <span className="text-primary">*</span></label>
+                  <input required maxLength={100} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="VD: Cơm tấm sườn bì chả" className="ds-input" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Giá bán (VNĐ) <span className="text-red-500">*</span></label>
-                  <input 
-                    required
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={formData.price}
-                    onChange={e => setFormData({...formData, price: e.target.value})}
-                    placeholder="VD: 35000"
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-primary focus:bg-white transition-all font-medium"
-                  />
+                  <label className="ds-label mb-1 block">Giá bán (VNĐ) <span className="text-primary">*</span></label>
+                  <input required type="number" min="0" step="1000" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="VD: 35000" className="ds-input" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Danh mục <span className="text-red-500">*</span></label>
-                  <select 
-                    value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value})}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-primary focus:bg-white transition-all font-medium"
-                  >
+                  <label className="ds-label mb-1 block">Danh mục <span className="text-primary">*</span></label>
+                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="ds-input">
                     {CATEGORIES.map(c => <option key={c} value={c}>{getCategoryEmoji(c)} {c}</option>)}
                   </select>
                 </div>
-
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Hình ảnh món ăn</label>
+                  <label className="ds-label mb-2 block">Hình ảnh món ăn</label>
                   <div className="flex gap-4 items-center">
                     {formData.image && (
-                      <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0 bg-gray-100">
-                        <img 
-                          src={formData.image.startsWith('http') ? formData.image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${formData.image}`} 
-                          alt="Preview" 
+                      <div className="w-16 h-16 rounded-xl overflow-hidden border border-[#efecff] flex-shrink-0 bg-[#f5f2ff]">
+                        <img
+                          src={formData.image.startsWith('http') ? formData.image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${formData.image}`}
+                          alt="Preview"
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       </div>
                     )}
                     <div className="flex-1 space-y-2">
-                      <input 
-                        type="text"
-                        value={formData.image}
-                        onChange={e => setFormData({...formData, image: e.target.value})}
-                        placeholder="Dán link ảnh hoặc click nút tải lên..."
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 focus:border-primary focus:ring-primary focus:bg-white transition-all font-medium text-sm"
-                      />
-                      <label className={`flex items-center gap-2 cursor-pointer w-max px-4 py-2 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700 transition shadow-sm ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <input type="text" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} placeholder="Dán link ảnh hoặc click nút tải lên..." className="ds-input text-sm" />
+                      <label className={`flex items-center gap-2 cursor-pointer w-max px-4 py-2 bg-[#efecff] rounded-xl hover:bg-[#e8e5ff] text-sm font-bold text-[#5b403d] transition shadow-sm ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
                         <span>{isUploading ? '⏳ Đang tải lên...' : '📤 Chọn ảnh từ máy'}</span>
-                        <input 
-                          type="file" 
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleUploadFile}
-                          disabled={isUploading}
-                        />
+                        <input type="file" accept="image/*" className="hidden" onChange={handleUploadFile} disabled={isUploading} />
                       </label>
                     </div>
                   </div>
                 </div>
-
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Mô tả chi tiết</label>
-                  <textarea 
-                    rows={3}
-                    value={formData.description}
-                    onChange={e => setFormData({...formData, description: e.target.value})}
-                    placeholder="Nguyên liệu, cách chế biến, lưu ý cho khách hàng..."
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-primary focus:bg-white transition-all font-medium resize-none"
-                  />
+                  <label className="ds-label mb-1 block">Mô tả chi tiết</label>
+                  <textarea rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Nguyên liệu, cách chế biến, lưu ý cho khách hàng..." className="ds-input resize-none" />
                 </div>
               </div>
-
-              <div className="flex gap-6 p-4 rounded-xl bg-gray-50 border border-gray-100">
+              <div className="flex gap-6 p-4 rounded-xl bg-[#f5f2ff]">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={formData.isSpicy}
-                    onChange={e => setFormData({...formData, isSpicy: e.target.checked})}
-                    className="w-5 h-5 rounded border-gray-300 text-red-500 focus:ring-red-500"
-                  />
-                  <span className="font-bold text-gray-700 flex items-center gap-1">🌶 Món cay</span>
+                  <input type="checkbox" checked={formData.isSpicy} onChange={e => setFormData({...formData, isSpicy: e.target.checked})} className="w-5 h-5 rounded border-[#e4beb9] text-primary focus:ring-primary" />
+                  <span className="font-bold text-[#5b403d] flex items-center gap-1">🌶 Món cay</span>
                 </label>
-                
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={formData.isVegetarian}
-                    onChange={e => setFormData({...formData, isVegetarian: e.target.checked})}
-                    className="w-5 h-5 rounded border-gray-300 text-green-500 focus:ring-green-500"
-                  />
-                  <span className="font-bold text-gray-700 flex items-center gap-1">🌿 Món chay</span>
+                  <input type="checkbox" checked={formData.isVegetarian} onChange={e => setFormData({...formData, isVegetarian: e.target.checked})} className="w-5 h-5 rounded border-[#e4beb9] text-emerald-500 focus:ring-emerald-500" />
+                  <span className="font-bold text-[#5b403d] flex items-center gap-1">🌿 Món chay</span>
                 </label>
               </div>
-
-              {/* Tùy chọn Component */}
-              <div className="mt-6 border-t border-gray-100 pt-6">
-                <OptionBuilder 
-                  options={formData.options} 
-                  onChange={(opts) => setFormData({ ...formData, options: opts })} 
-                />
+              <div className="mt-6 border-t border-[#efecff] pt-6">
+                <OptionBuilder options={formData.options} onChange={(opts) => setFormData({ ...formData, options: opts })} />
               </div>
-
-              <div className="pt-4 border-t border-gray-100 flex justify-end gap-3 mt-6">
-                <button 
-                  type="button"
-                  onClick={() => setProductModalOpen(false)}
-                  className="px-6 py-3 font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all"
-                >
+              <div className="pt-4 border-t border-[#efecff] flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setProductModalOpen(false)} className="px-6 py-3 font-bold text-[#5b403d] bg-[#efecff] hover:bg-[#e8e5ff] rounded-xl transition-all">
                   Hủy bỏ
                 </button>
-                <button 
-                  type="submit"
-                  className="px-6 py-3 font-bold text-white bg-primary hover:bg-primary-600 hover:shadow-lg shadow-sm active:scale-95 rounded-xl transition-all"
-                >
+                <button type="submit" className="ds-gradient-cta px-6 py-3 text-sm">
                   {editingProduct ? 'Lưu thay đổi' : 'Tạo món ăn'}
                 </button>
               </div>
-              
             </form>
           </div>
         </div>

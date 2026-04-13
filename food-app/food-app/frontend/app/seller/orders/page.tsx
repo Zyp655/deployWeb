@@ -7,14 +7,14 @@ import { useEffect, useState } from 'react';
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
-const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  PENDING: { label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-700' },
-  CONFIRMED: { label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-700' },
-  PREPARING: { label: 'Đang chuẩn bị', color: 'bg-indigo-100 text-indigo-700' },
-  PREPARED: { label: 'Chuẩn bị xong (Chờ shipper)', color: 'bg-orange-100 text-orange-700' },
-  DELIVERING: { label: 'Đang giao', color: 'bg-purple-100 text-purple-700' },
-  DELIVERED: { label: 'Đã giao', color: 'bg-green-100 text-green-700' },
-  CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-700' },
+const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = {
+  PENDING: { label: 'Chờ xác nhận', bg: 'bg-amber-500/10', text: 'text-amber-600' },
+  CONFIRMED: { label: 'Đã xác nhận', bg: 'bg-blue-500/10', text: 'text-blue-600' },
+  PREPARING: { label: 'Đang chuẩn bị', bg: 'bg-indigo-500/10', text: 'text-indigo-600' },
+  PREPARED: { label: 'Chờ shipper', bg: 'bg-amber-600/10', text: 'text-amber-700' },
+  DELIVERING: { label: 'Đang giao', bg: 'bg-violet-500/10', text: 'text-violet-600' },
+  DELIVERED: { label: 'Đã giao', bg: 'bg-emerald-500/10', text: 'text-emerald-600' },
+  CANCELLED: { label: 'Đã hủy', bg: 'bg-primary/10', text: 'text-primary' },
 };
 
 const NEXT_STATUS: Record<string, string> = {
@@ -42,9 +42,7 @@ export default function SellerOrdersPage() {
     if (!token) return;
     try {
       await updateSellerOrderStatus(orderId, newStatus, token);
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
-      );
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
     } catch (err) { console.error(err); }
   };
 
@@ -53,12 +51,9 @@ export default function SellerOrdersPage() {
     const reason = window.prompt("Nhập lý do từ chối đơn hàng (ví dụ: Hết món, Đóng cửa...):");
     if (!reason) return;
     try {
-      // Need to import rejectSellerOrder from client API
       const { rejectSellerOrder } = await import('@/lib/api/client');
       await rejectSellerOrder(orderId, reason, token);
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: 'CANCELLED' } : o)),
-      );
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'CANCELLED' } : o)));
     } catch (err) { console.error(err); alert('Có lỗi xảy ra'); }
   };
 
@@ -71,17 +66,17 @@ export default function SellerOrdersPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-3xl font-extrabold text-gray-900">🧾 Đơn hàng</h2>
-        <p className="text-gray-500 mt-1">Quản lý và xử lý đơn hàng từ khách hàng</p>
+        <h2 className="ds-heading text-3xl font-extrabold text-[#1a1a2e]">🧾 Đơn hàng</h2>
+        <p className="text-[#5b403d] mt-1 text-sm">Quản lý và xử lý đơn hàng từ khách hàng</p>
       </header>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-1.5 bg-[#efecff] p-1 rounded-xl flex-wrap w-fit">
         {['ALL', 'PENDING', 'CONFIRMED', 'PREPARING', 'PREPARED', 'DELIVERING', 'DELIVERED', 'CANCELLED'].map((st) => (
           <button
             key={st}
             onClick={() => setFilter(st)}
-            className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
-              filter === st ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-primary/50'
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              filter === st ? 'bg-white text-[#1a1a2e] shadow-sm' : 'text-[#5b403d] hover:text-[#1a1a2e]'
             }`}
           >
             {st === 'ALL' ? 'Tất cả' : STATUS_MAP[st]?.label || st}
@@ -91,25 +86,28 @@ export default function SellerOrdersPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl"><span className="text-5xl">📭</span><p className="mt-3 text-gray-500">Không có đơn hàng nào</p></div>
+        <div className="text-center py-16 ds-card">
+          <span className="text-5xl">📭</span>
+          <p className="mt-3 text-[#906f6c]">Không có đơn hàng nào</p>
+        </div>
       ) : (
         <div className="space-y-4">
           {filtered.map((order) => {
-            const st = STATUS_MAP[order.status] || { label: order.status, color: 'bg-gray-100 text-gray-700' };
+            const st = STATUS_MAP[order.status] || { label: order.status, bg: 'bg-gray-100', text: 'text-gray-700' };
             const nextSt = NEXT_STATUS[order.status];
             return (
-              <div key={order.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-all hover:shadow-md">
+              <div key={order.id} className="ds-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_50px_rgba(26,26,46,0.1)]">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-3">
-                      <p className="text-sm font-bold text-gray-900">#{order.id.slice(0, 8)}</p>
-                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${st.color}`}>{st.label}</span>
+                      <p className="text-sm font-bold text-[#1a1a2e]">#{order.id.slice(0, 8)}</p>
+                      <span className={`ds-badge ${st.bg} ${st.text}`}>{st.label}</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-[#906f6c] mt-1">
                       👤 {order.user.name} • {order.user.email}
                       {order.user.phone && ` • 📞 ${order.user.phone}`}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-[#e4beb9] mt-1">
                       {new Date(order.createdAt).toLocaleString('vi-VN')}
                     </p>
                   </div>
@@ -118,12 +116,12 @@ export default function SellerOrdersPage() {
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {order.items.map((item, idx) => (
-                    <div key={idx} className="inline-flex flex-col rounded-lg bg-gray-50 px-3 py-1.5 border border-gray-100">
-                      <span className="text-xs font-medium text-gray-700">
+                    <div key={idx} className="inline-flex flex-col rounded-lg bg-[#f5f2ff] px-3 py-1.5">
+                      <span className="text-xs font-medium text-[#1a1a2e]">
                         {item.productName || 'Món ăn'} × {item.quantity}
                       </span>
                       {item.selectedOptions && item.selectedOptions.length > 0 && (
-                        <span className="text-[10px] text-gray-500 mt-0.5">
+                        <span className="text-[10px] text-[#906f6c] mt-0.5">
                           {item.selectedOptions.map(o => o.choice).join(', ')}
                         </span>
                       )}
@@ -136,7 +134,7 @@ export default function SellerOrdersPage() {
                     {nextSt && (
                       <button
                         onClick={() => handleStatusChange(order.id, nextSt)}
-                        className="rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-md hover:brightness-110 active:scale-95"
+                        className="ds-gradient-cta px-4 py-2 text-xs"
                       >
                         ✅ {STATUS_MAP[nextSt]?.label || nextSt}
                       </button>
@@ -144,7 +142,7 @@ export default function SellerOrdersPage() {
                     {order.status === 'PENDING' && (
                       <button
                         onClick={() => handleReject(order.id)}
-                        className="rounded-xl bg-red-50 px-4 py-2 text-xs font-bold text-red-600 border border-red-200 transition-all hover:bg-red-100 active:scale-95"
+                        className="rounded-xl bg-primary/5 px-4 py-2 text-xs font-bold text-primary border border-primary/10 transition-all hover:bg-primary/10 active:scale-95"
                       >
                         ❌ Từ chối
                       </button>
