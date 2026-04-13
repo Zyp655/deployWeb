@@ -12,6 +12,7 @@ import {
 } from '@/lib/api/client';
 import { io, Socket } from 'socket.io-client';
 import LiveChatWidget from '@/components/LiveChatWidget';
+import DriverRouteMap from '@/components/DriverRouteMap';
 
 const WS_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -32,6 +33,7 @@ export default function ActiveDeliveryPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [driverPos, setDriverPos] = useState<{lat: number, lng: number} | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const watchIdRef = useRef<number | null>(null);
 
@@ -76,6 +78,7 @@ export default function ActiveDeliveryPage() {
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
+        setDriverPos({ lat: latitude, lng: longitude });
         if (socketRef.current && order) {
           socketRef.current.emit('update-driver-location', {
             orderId: order.id,
@@ -148,6 +151,11 @@ export default function ActiveDeliveryPage() {
 
   const currentStep = STATUS_STEPS.findIndex((s) => s.key === order.status);
 
+  // Compute Target Logic for Routing Map
+  const isPickingUp = order.status === 'PICKING_UP';
+  const targetLat = isPickingUp ? order.store?.lat : order.deliveryLat;
+  const targetLng = isPickingUp ? order.store?.lng : order.deliveryLng;
+
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
@@ -190,6 +198,17 @@ export default function ActiveDeliveryPage() {
           })}
         </div>
       </div>
+
+      {/* Driver Map Route */}
+      {driverPos && targetLat && targetLng && (
+        <DriverRouteMap 
+          driverLat={driverPos.lat} 
+          driverLng={driverPos.lng} 
+          targetLat={targetLat} 
+          targetLng={targetLng} 
+          targetType={isPickingUp ? 'STORE' : 'CUSTOMER'}
+        />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
