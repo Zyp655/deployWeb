@@ -118,6 +118,126 @@ export class SellerService {
     };
   }
 
+  async getAdvancedStats(userId: string) {
+    const store = await this.getStoreByOwner(userId);
+    const storeId = store.id;
+
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+    // 1. Top customers
+    const topCustomerGroup = await this.prisma.order.groupBy({
+      by: ['userId'],
+      where: { storeId },
+      _sum: { total: true },
+      _count: { id: true },
+      orderBy: { _sum: { total: 'desc' } },
+      take: 5,
+    });
+
+    const topCustomers = await Promise.all(
+      topCustomerGroup.map(async (tc) => {
+        const user = await this.prisma.user.findUnique({
+          where: { id: tc.userId },
+          select: { name: true, email: true },
+        });
+        return {
+          name: user?.name,
+          email: user?.email,
+          totalOrders: tc._count.id,
+          totalSpent: tc._sum.total || 0,
+        };
+      }),
+    );
+
+    // 2. Conversion rate (delivered vs total vs cancelled)
+    const allStatuses = await this.prisma.order.groupBy({
+      by: ['status'],
+      where: { storeId },
+      _count: { id: true },
+    });
+
+    let total = 0;
+    let delivered = 0;
+    let cancelled = 0;
+    allStatuses.forEach((s) => {
+      total += s._count.id;
+      if (s.status === OrderStatus.DELIVERED) delivered += s._count.id;
+      if (s.status === OrderStatus.CANCELLED) cancelled += s._count.id;
+    });
+    const pending = total - delivered - cancelled;
+
+    const conversionRate = total > 0 ? (delivered / total) * 100 : 0;
+
+    // 3. Comparisons
+    const thisWeekOrders = await this.prisma.order.aggregate({
+      where: { storeId, createdAt: { gte: sevenDaysAgo } },
+      _count: { id: true },
+      _sum: { total: true },
+    });
+    const lastWeekOrders = await this.prisma.order.aggregate({
+      where: { storeId, createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } },
+      _count: { id: true },
+      _sum: { total: true },
+    });
+
+    const thisMonthOrders = await this.prisma.order.aggregate({
+      where: { storeId, createdAt: { gte: thirtyDaysAgo } },
+      _count: { id: true },
+      _sum: { total: true },
+    });
+    const lastMonthOrders = await this.prisma.order.aggregate({
+      where: { storeId, createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } },
+      _count: { id: true },
+      _sum: { total: true },
+    });
+
+    const changeWeekly = {
+      orders: lastWeekOrders._count.id > 0 ? ((thisWeekOrders._count.id - lastWeekOrders._count.id) / lastWeekOrders._count.id) * 100 : 0,
+      revenue: (lastWeekOrders._sum.total || 0) > 0 ? (((thisWeekOrders._sum.total || 0) - (lastWeekOrders._sum.total || 0)) / (lastWeekOrders._sum.total || 1)) * 100 : 0,
+    };
+
+    const changeMonthly = {
+      orders: lastMonthOrders._count.id > 0 ? ((thisMonthOrders._count.id - lastMonthOrders._count.id) / lastMonthOrders._count.id) * 100 : 0,
+      revenue: (lastMonthOrders._sum.total || 0) > 0 ? (((thisMonthOrders._sum.total || 0) - (lastMonthOrders._sum.total || 0)) / (lastMonthOrders._sum.total || 1)) * 100 : 0,
+    };
+
+    // 4. Hourly heatmap
+    const recentOrders = await this.prisma.order.findMany({
+      where: { storeId, createdAt: { gte: sevenDaysAgo } },
+      select: { createdAt: true },
+    });
+
+    const heatmapArray = Array(24).fill(0);
+    recentOrders.forEach((o) => {
+      const hour = new Date(o.createdAt).getHours();
+      heatmapArray[hour]++;
+    });
+
+    const heatmap = heatmapArray.map((count, hour) => ({ hour, count }));
+
+    return {
+      topCustomers,
+      conversion: { delivered, cancelled, pending, rate: conversionRate },
+      comparison: {
+        weekly: {
+          thisWeek: { orders: thisWeekOrders._count.id, revenue: thisWeekOrders._sum.total || 0 },
+          lastWeek: { orders: lastWeekOrders._count.id, revenue: lastWeekOrders._sum.total || 0 },
+          change: changeWeekly,
+        },
+        monthly: {
+          thisMonth: { orders: thisMonthOrders._count.id, revenue: thisMonthOrders._sum.total || 0 },
+          lastMonth: { orders: lastMonthOrders._count.id, revenue: lastMonthOrders._sum.total || 0 },
+          change: changeMonthly,
+        },
+      },
+      heatmap,
+    };
+  }
+
   // --- Products ---
 
   async getProducts(userId: string) {
@@ -144,6 +264,9 @@ export class SellerService {
         tags: data.tags || [],
         saleStartTime: data.saleStartTime || null,
         saleEndTime: data.saleEndTime || null,
+        salePrice: data.salePrice !== undefined ? Number(data.salePrice) : null,
+        flashSaleStart: data.flashSaleStart ? new Date(data.flashSaleStart) : null,
+        flashSaleEnd: data.flashSaleEnd ? new Date(data.flashSaleEnd) : null,
         options: data.options || null,
         storeId: store.id,
       },
@@ -161,11 +284,27 @@ export class SellerService {
     }
 
     if (data.price !== undefined) data.price = Number(data.price);
+    if (data.salePrice !== undefined) data.salePrice = data.salePrice ? Number(data.salePrice) : null;
+    if (data.flashSaleStart !== undefined) data.flashSaleStart = data.flashSaleStart ? new Date(data.flashSaleStart) : null;
+    if (data.flashSaleEnd !== undefined) data.flashSaleEnd = data.flashSaleEnd ? new Date(data.flashSaleEnd) : null;
     if (data.calories !== undefined) data.calories = data.calories ? Number(data.calories) : null;
     if (data.saleStartTime === '') data.saleStartTime = null;
     if (data.saleEndTime === '') data.saleEndTime = null;
     
     return this.prisma.product.update({ where: { id: productId }, data });
+  }
+
+  async getFlashSales(userId: string) {
+    const store = await this.getStoreByOwner(userId);
+    return this.prisma.product.findMany({
+      where: { 
+        storeId: store.id,
+        salePrice: { not: null },
+        flashSaleStart: { not: null },
+        flashSaleEnd: { not: null }
+      },
+      orderBy: { flashSaleStart: 'desc' }
+    });
   }
 
   async toggleProduct(userId: string, productId: string) {

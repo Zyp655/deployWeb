@@ -12,10 +12,47 @@ const STATUS_MAP: Record<string, { label: string; icon: string }> = {
   CONFIRMED: { label: 'Đã xác nhận', icon: '✅' },
   PREPARING: { label: 'Đang chuẩn bị', icon: '🍳' },
   PREPARED: { label: 'Sẵn sàng giao', icon: '📦' },
+  PICKING_UP: { label: 'Tài xế đang lấy hàng', icon: '🏃' },
   DELIVERING: { label: 'Đang giao hàng', icon: '🛵' },
   DELIVERED: { label: 'Đã giao thành công', icon: '🎉' },
   CANCELLED: { label: 'Đã hủy', icon: '❌' },
 };
+
+function sendBrowserNotification(title: string, body: string, url?: string) {
+  if (typeof window === 'undefined') return;
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  if (document.hasFocus()) return;
+
+  try {
+    const notification = new Notification(title, {
+      body,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: `hoangfood-${Date.now()}`,
+      requireInteraction: false,
+      silent: false,
+    });
+
+    if (url) {
+      notification.onclick = () => {
+        window.focus();
+        window.location.href = url;
+        notification.close();
+      };
+    }
+
+    setTimeout(() => notification.close(), 6000);
+  } catch {}
+}
+
+function requestNotificationPermission() {
+  if (typeof window === 'undefined') return;
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
 
 export default function RealtimeNotifications() {
   const { user, token } = useAuthStore();
@@ -27,6 +64,12 @@ export default function RealtimeNotifications() {
     icon: string;
     orderId?: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (user && token) {
+      requestNotificationPermission();
+    }
+  }, [user, token]);
 
   useEffect(() => {
     if (!user || !token) return;
@@ -56,6 +99,42 @@ export default function RealtimeNotifications() {
         icon: info.icon,
         orderId: data.orderId,
       });
+
+      sendBrowserNotification(
+        `${info.icon} Đơn #${orderCode}`,
+        info.label + (data.note ? ` — ${data.note}` : ''),
+        `/orders/${data.orderId}`,
+      );
+    });
+
+    socket.on('driver-assigned', (data) => {
+      if (data.orderId && data.driver) {
+        const orderCode = data.orderId.slice(0, 8).toUpperCase();
+        const driverName = data.driver.name || 'Tài xế';
+
+        addNotification({
+          type: 'order',
+          title: `🛵 Tài xế đã nhận đơn`,
+          message: `${driverName} đang trên đường đến lấy đơn #${orderCode}`,
+          icon: '🛵',
+          orderId: data.orderId,
+          href: `/orders/${data.orderId}`,
+        });
+
+        setToast({
+          id: `${Date.now()}`,
+          title: `🛵 Tài xế đã nhận đơn`,
+          message: `${driverName} đang trên đường`,
+          icon: '🛵',
+          orderId: data.orderId,
+        });
+
+        sendBrowserNotification(
+          `🛵 Tài xế ${driverName} đã nhận đơn`,
+          `Đơn #${orderCode} — Tài xế đang trên đường đến quán lấy hàng`,
+          `/orders/${data.orderId}`,
+        );
+      }
     });
 
     socket.on('chat-message-received', (data) => {
@@ -77,6 +156,12 @@ export default function RealtimeNotifications() {
         icon: '💬',
         orderId: data.orderId,
       });
+
+      sendBrowserNotification(
+        `💬 Tin nhắn từ ${senderName}`,
+        data.content?.slice(0, 100) || 'Tin nhắn mới',
+        `/orders/${data.orderId}`,
+      );
     });
 
     return () => {

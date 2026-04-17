@@ -65,6 +65,9 @@ export default function SellerProductsPage() {
     image: string;
     isSpicy: boolean;
     isVegetarian: boolean;
+    salePrice: string;
+    flashSaleStart: string;
+    flashSaleEnd: string;
     options: OptionGroup[];
   }>({
     name: '',
@@ -74,6 +77,9 @@ export default function SellerProductsPage() {
     image: '',
     isSpicy: false,
     isVegetarian: false,
+    salePrice: '',
+    flashSaleStart: '',
+    flashSaleEnd: '',
     options: [],
   });
   const [isUploading, setIsUploading] = useState(false);
@@ -152,13 +158,16 @@ export default function SellerProductsPage() {
         image: p.image || '',
         isSpicy: p.isSpicy || false,
         isVegetarian: p.isVegetarian || false,
+        salePrice: p.salePrice ? p.salePrice.toString() : '',
+        flashSaleStart: p.flashSaleStart ? new Date(p.flashSaleStart).toISOString().slice(0, 16) : '',
+        flashSaleEnd: p.flashSaleEnd ? new Date(p.flashSaleEnd).toISOString().slice(0, 16) : '',
         options: p.options || [],
       });
     } else {
       setEditingProduct(null);
       setFormData({
         name: '', description: '', price: '', category: CATEGORIES[0],
-        image: '', isSpicy: false, isVegetarian: false, options: [],
+        image: '', isSpicy: false, isVegetarian: false, salePrice: '', flashSaleStart: '', flashSaleEnd: '', options: [],
       });
     }
     setProductModalOpen(true);
@@ -176,6 +185,9 @@ export default function SellerProductsPage() {
         image: formData.image || undefined,
         isSpicy: formData.isSpicy,
         isVegetarian: formData.isVegetarian,
+        salePrice: formData.salePrice ? Number(formData.salePrice) : null,
+        flashSaleStart: formData.flashSaleStart ? new Date(formData.flashSaleStart).toISOString() : null,
+        flashSaleEnd: formData.flashSaleEnd ? new Date(formData.flashSaleEnd).toISOString() : null,
         options: formData.options,
       };
       if (editingProduct) {
@@ -249,6 +261,7 @@ export default function SellerProductsPage() {
                   <span className="text-[10px] uppercase tracking-wider font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full">{product.category}</span>
                   {product.isSpicy && <span className="text-[10px] uppercase tracking-wider font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full">🌶 Cay</span>}
                   {product.isVegetarian && <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">🌿 Chay</span>}
+                  {product.salePrice && <span className="text-[10px] uppercase tracking-wider font-bold text-white bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 rounded-full shadow-sm">🔥 Flash Sale</span>}
                 </div>
                 <h3 className="text-lg font-bold text-[#1a1a2e] line-clamp-1">{product.name}</h3>
                 <p className="text-sm text-[#906f6c] mt-1 line-clamp-2 flex-1">{product.description || 'Chưa có mô tả'}</p>
@@ -266,7 +279,16 @@ export default function SellerProductsPage() {
                 </div>
 
                 <div className="mt-3 flex flex-none items-center justify-between pt-3 border-t border-[#efecff]">
-                  <span className="text-lg font-black text-primary">{formatPrice(product.price)}</span>
+                  <div className="flex flex-col">
+                     {product.salePrice && (
+                       <span className="text-xs text-gray-400 line-through mb-0.5">
+                         {formatPrice(product.price)}
+                       </span>
+                     )}
+                     <span className={`text-lg font-black ${product.salePrice ? 'text-red-600' : 'text-primary'}`}>
+                       {formatPrice(product.salePrice || product.price)}
+                     </span>
+                  </div>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between bg-[#f5f2ff] rounded-xl px-3 py-2.5">
@@ -403,6 +425,23 @@ export default function SellerProductsPage() {
                   <input type="checkbox" checked={formData.isVegetarian} onChange={e => setFormData({...formData, isVegetarian: e.target.checked})} className="w-5 h-5 rounded border-[#e4beb9] text-emerald-500 focus:ring-emerald-500" />
                   <span className="font-bold text-[#5b403d] flex items-center gap-1">🌿 Món chay</span>
                 </label>
+              </div>
+              <div className="mt-6 border-t border-[#efecff] pt-6 bg-red-50/30 rounded-xl p-4 border border-red-100">
+                 <h4 className="font-bold text-red-600 mb-4 flex items-center gap-2">🔥 Thiết lập Flash Sale (Tùy chọn)</h4>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                       <label className="ds-label mb-1 block">Giá Flash Sale (VNĐ)</label>
+                       <input type="number" min="0" step="1000" value={formData.salePrice} onChange={e => setFormData({...formData, salePrice: e.target.value})} placeholder="VD: 25000" className="ds-input" />
+                    </div>
+                    <div>
+                       <label className="ds-label mb-1 block">Bắt đầu lúc</label>
+                       <input type="datetime-local" value={formData.flashSaleStart} onChange={e => setFormData({...formData, flashSaleStart: e.target.value})} className="ds-input" />
+                    </div>
+                    <div>
+                       <label className="ds-label mb-1 block">Kết thúc lúc</label>
+                       <input type="datetime-local" value={formData.flashSaleEnd} onChange={e => setFormData({...formData, flashSaleEnd: e.target.value})} className="ds-input" />
+                    </div>
+                 </div>
               </div>
               <div className="mt-6 border-t border-[#efecff] pt-6">
                 <OptionBuilder options={formData.options} onChange={(opts) => setFormData({ ...formData, options: opts })} />

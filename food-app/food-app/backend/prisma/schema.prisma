@@ -29,8 +29,24 @@ model User {
   sentMessages     ChatMessage[]  @relation("SentMessages")
   receivedMessages ChatMessage[]  @relation("ReceivedMessages")
   partnerRequests  PartnerRequest[]
+  addresses        UserAddress[]
 
   @@map("users")
+}
+
+model UserAddress {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  label     String   @default("Nhà")
+  address   String
+  lat       Float?
+  lng       Float?
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("user_addresses")
 }
 
 enum Role {
@@ -55,6 +71,7 @@ model Store {
   closeTime   String?  @default("22:00") @map("close_time")
   rating      Float    @default(0)
   totalOrders Int      @default(0) @map("total_orders")
+  tags        String[] @default([])
   ownerId     String   @unique @map("owner_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -80,9 +97,12 @@ model Product {
   calories     Int?
   tags         String[] @default([])
   storeId      String?  @map("store_id")
-  saleStartTime String? @map("sale_start_time")
-  saleEndTime   String? @map("sale_end_time")
-  options      Json?
+  saleStartTime  String?   @map("sale_start_time")
+  saleEndTime    String?   @map("sale_end_time")
+  salePrice      Float?    @map("sale_price")
+  flashSaleStart DateTime? @map("flash_sale_start")
+  flashSaleEnd   DateTime? @map("flash_sale_end")
+  options        Json?
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -114,7 +134,10 @@ model Order {
   driverRating    Int?        @map("driver_rating")
   driverTip       Float       @default(0) @map("driver_tip")
   reviewComment   String?     @map("review_comment")
+  reviewImage     String?     @map("review_image")
   paymentMethod   String?     @default("COD") @map("payment_method")
+  scheduledAt     DateTime?   @map("scheduled_at")
+  isScheduled     Boolean     @default(false) @map("is_scheduled")
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
 
@@ -323,4 +346,15 @@ enum PartnerRequestStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("password_resets")
 }

@@ -45,4 +45,8 @@ export class CreateOrderDto {
 
   @IsOptional()
   userLng?: number;
+
+  @IsOptional()
+  @IsString()
+  scheduledAt?: string;
 }

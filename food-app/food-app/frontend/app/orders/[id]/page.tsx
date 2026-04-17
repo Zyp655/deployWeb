@@ -1,13 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
-import { fetchOrderById, Order, submitOrderReview } from '@/lib/api/client';
+import { fetchOrderById, Order, submitOrderReview, cancelOrder } from '@/lib/api/client';
 import { initSocket, disconnectSocket } from '@/lib/api/socket';
+import { useCartStore, generateCartItemId, CartItem } from '@/store/cart';
+import { useRouter } from 'next/navigation';
 import StarRating from '@/components/StarRating';
 import LiveChatWidget from '@/components/LiveChatWidget';
+import dynamic from 'next/dynamic';
+
+const CustomerTrackingMap = dynamic(() => import('@/components/CustomerTrackingMap'), { ssr: false });
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -25,11 +30,14 @@ const STEPS = [
 export default function OrderDetailPage() {
   const params = useParams();
   const orderId = params.id as string;
-  const { token, user } = useAuthStore();
+  const { user, token } = useAuthStore();
+  const router = useRouter();
+  const reorder = useCartStore(s => s.reorder);
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showChat, setShowChat] = useState(false);
 
   const [storeRating, setStoreRating] = useState(5);
   const [driverRating, setDriverRating] = useState(5);
@@ -37,6 +45,12 @@ export default function OrderDetailPage() {
   const [driverTip, setDriverTip] = useState(0);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [driverInfo, setDriverInfo] = useState<{ name: string; vehiclePlate: string; vehicleType: string; rating: number; phone: string } | null>(null);
+
+  const [driverLocation, setDriverLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   const handleSubmitReview = async () => {
     if (!token || !order) return;
@@ -90,12 +104,34 @@ export default function OrderDetailPage() {
       }
     });
 
+    socket.on('driver-location-updated', (data) => {
+      if (data.orderId === orderId && data.lat && data.lng) {
+        setDriverLocation({ lat: data.lat, lng: data.lng });
+      }
+    });
+
     return () => {
       socket.off('order-status-updated');
       socket.off('driver-assigned');
+      socket.off('driver-location-updated');
       disconnectSocket();
     };
   }, [orderId, token]);
+
+  const handleCallDriver = useCallback(() => {
+    const phone = driverInfo?.phone || order?.driver?.phone;
+    if (phone) window.open(`tel:${phone}`);
+  }, [driverInfo, order]);
+
+  const handleChatDriver = useCallback(() => {
+    setShowChat(true);
+  }, []);
+
+  const isTracking = order && (order.status === 'PICKING_UP' || order.status === 'DELIVERING');
+  const hasDriverLocation = driverLocation && driverLocation.lat && driverLocation.lng;
+  const customerLat = order?.deliveryLat;
+  const customerLng = order?.deliveryLng;
+  const showTrackingMap = isTracking && hasDriverLocation && customerLat && customerLng;
 
   if (loading) {
     return (
@@ -138,6 +174,11 @@ export default function OrderDetailPage() {
           <p className="mt-1 text-sm text-white/80">
             Mã đơn: <span className="font-mono font-bold">{order.id.slice(0, 8).toUpperCase()}</span>
           </p>
+          {order.isScheduled && order.scheduledAt && (
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-sm font-bold text-white shadow-sm ring-1 ring-white/30 backdrop-blur-sm">
+              🕒 Giao hẹn lúc: {new Date(order.scheduledAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -157,10 +198,7 @@ export default function OrderDetailPage() {
           <h2 className="text-lg font-bold text-gray-900 mb-6">Tiến trình đơn hàng</h2>
           
           <div className="relative">
-            {/* Background line */}
             <div className="absolute top-5 left-[5%] right-[5%] h-1 bg-gray-100 rounded-full"></div>
-            
-            {/* Active filled line */}
             <div 
               className="absolute top-5 left-[5%] h-1 bg-primary rounded-full transition-all duration-700 ease-in-out"
               style={{ width: `${activePercent * 0.9}%` }}
@@ -170,9 +208,6 @@ export default function OrderDetailPage() {
               {STEPS.map((step, index) => {
                 const isCompleted = index <= currentIndex;
                 const isActive = index === currentIndex;
-                
-                const historyItem = order.history?.slice().reverse().find(h => h.status === step.id);
-                const timeString = historyItem ? new Date(historyItem.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '---';
 
                 return (
                   <div key={step.id} className={`flex flex-col items-center flex-1 ${(step.id === 'PREPARED' || step.id === 'PICKING_UP') ? 'hidden sm:flex' : ''}`}>
@@ -194,6 +229,34 @@ export default function OrderDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Real-time Tracking Map */}
+        {showTrackingMap && (
+          <div className="mt-4">
+            <CustomerTrackingMap
+              driverLat={driverLocation!.lat}
+              driverLng={driverLocation!.lng}
+              customerLat={customerLat!}
+              customerLng={customerLng!}
+              orderStatus={order.status as 'PICKING_UP' | 'DELIVERING'}
+              driverInfo={driverInfo ? {
+                name: driverInfo.name,
+                phone: driverInfo.phone,
+                vehiclePlate: driverInfo.vehiclePlate,
+                vehicleType: driverInfo.vehicleType,
+                rating: driverInfo.rating,
+              } : order.driver ? {
+                name: order.driver.name,
+                phone: order.driver.phone,
+              } : null}
+              orderId={order.id}
+              orderTotal={order.total}
+              paymentMethod={order.paymentMethod}
+              onCallDriver={handleCallDriver}
+              onChatDriver={handleChatDriver}
+            />
+          </div>
+        )}
 
         {/* Items */}
         <div className="mt-4 rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
@@ -261,8 +324,8 @@ export default function OrderDetailPage() {
           </div>
         )}
 
-        {/* Driver Info */}
-        {(order.status === 'PICKING_UP' || order.status === 'DELIVERING') && (driverInfo || order.driver) && (
+        {/* Driver Info (when no tracking map) */}
+        {(order.status === 'PICKING_UP' || order.status === 'DELIVERING') && !showTrackingMap && (driverInfo || order.driver) && (
           <div className="mt-4 rounded-2xl bg-gradient-to-r from-gray-900 to-gray-800 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -292,14 +355,120 @@ export default function OrderDetailPage() {
         )}
 
         {/* Actions */}
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
+            <button
+              onClick={() => setShowCancelModal(true)}
+              className="flex-1 rounded-xl border-2 border-red-200 bg-red-50 py-3 text-center text-sm font-bold text-red-600 transition-colors hover:bg-red-100 hover:border-red-300"
+            >
+              🚫 Huỷ đơn hàng
+            </button>
+          )}
+
+          {(order.status === 'DELIVERED' || order.status === 'CANCELLED') && (
+            <button
+              onClick={() => {
+                if (!order || !order.items) return;
+                const cartItems: CartItem[] = order.items
+                  .filter(item => item.product) // Only add if product details exist
+                  .map(item => ({
+                    cartItemId: generateCartItemId(item.productId || item.product!.id, item.selectedOptions),
+                    product: item.product!,
+                    quantity: item.quantity,
+                    note: '',
+                    selectedOptions: item.selectedOptions,
+                  }));
+                
+                if (cartItems.length > 0) {
+                  reorder(cartItems);
+                  router.push('/checkout');
+                } else {
+                  alert('Không thể đặt lại đơn hàng này do sản phẩm không còn tồn tại.');
+                }
+              }}
+              className="flex-1 rounded-xl bg-gradient-to-r from-primary to-accent py-3 text-center text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:brightness-110 active:scale-95"
+            >
+              🔄 Mua lại đơn này
+            </button>
+          )}
+
           <Link
             href="/menu"
             className="flex-1 rounded-xl border-2 border-gray-200 py-3 text-center text-sm font-semibold text-gray-700 transition-colors hover:border-primary hover:text-primary"
           >
             Tiếp tục đặt món
           </Link>
+          <Link
+            href="/orders"
+            className="flex-1 rounded-xl border-2 border-gray-200 py-3 text-center text-sm font-semibold text-gray-700 transition-colors hover:border-primary hover:text-primary"
+          >
+            📦 Lịch sử đơn
+          </Link>
         </div>
+
+        {/* Cancel Order Modal */}
+        {showCancelModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-fade-up">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">🚫 Huỷ đơn hàng</h3>
+              <p className="text-sm text-gray-500 mb-4">Chọn lý do huỷ đơn hàng của bạn</p>
+
+              <div className="space-y-2 mb-4">
+                {['Đổi ý, không muốn đặt nữa', 'Đặt nhầm món / sai địa chỉ', 'Thời gian chờ quá lâu', 'Tìm được quán khác rẻ hơn', 'Lý do khác'].map((reason) => (
+                  <button
+                    key={reason}
+                    onClick={() => setCancelReason(reason)}
+                    className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                      cancelReason === reason
+                        ? 'border-red-400 bg-red-50 text-red-700'
+                        : 'border-gray-100 text-gray-700 hover:border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+
+              {cancelReason === 'Lý do khác' && (
+                <textarea
+                  value={cancelReason === 'Lý do khác' ? '' : cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value || 'Lý do khác')}
+                  placeholder="Nhập lý do cụ thể..."
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm mb-4 focus:outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100 min-h-[80px]"
+                />
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowCancelModal(false); setCancelReason(''); }}
+                  className="flex-1 rounded-xl border-2 border-gray-200 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Quay lại
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!cancelReason || !token) return;
+                    setCancelling(true);
+                    try {
+                      await cancelOrder(order.id, cancelReason, token);
+                      setOrder(prev => prev ? { ...prev, status: 'CANCELLED' } : prev);
+                      setShowCancelModal(false);
+                      setCancelReason('');
+                    } catch (err: any) {
+                      alert(err.message || 'Lỗi huỷ đơn');
+                    } finally {
+                      setCancelling(false);
+                    }
+                  }}
+                  disabled={!cancelReason || cancelling}
+                  className="flex-1 rounded-xl bg-red-500 py-3 text-sm font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {cancelling ? '⏳ Đang huỷ...' : 'Xác nhận huỷ'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Review Section */}
         {order.status === 'DELIVERED' && (
@@ -388,7 +557,16 @@ export default function OrderDetailPage() {
       </div>
 
       {/* Live Chat with Driver */}
-      {order.driver && user && (
+      {showChat && order.driver && user && (
+        <LiveChatWidget 
+          orderId={order.id}
+          receiverId={order.driver.id}
+          receiverName={order.driver.name}
+          receiverRole="DRIVER"
+          currentUserId={user.id}
+        />
+      )}
+      {!showChat && order.driver && user && (
         <LiveChatWidget 
           orderId={order.id}
           receiverId={order.driver.id}

@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
-import { createOrder, createMoMoPayment, createVNPayPayment, fetchActiveCoupons, CouponPublic } from '@/lib/api/client';
+import { createOrder, createMoMoPayment, createVNPayPayment, fetchActiveCoupons, CouponPublic, fetchStoreById } from '@/lib/api/client';
+
+const GOONG_API_KEY = process.env.NEXT_PUBLIC_GOONG_API_KEY || '';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -23,9 +25,13 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [note, setNote] = useState('');
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [eta, setEta] = useState<{ distance: string; duration: string; text: string } | null>(null);
+  const [etaLoading, setEtaLoading] = useState(false);
 
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
@@ -70,6 +76,37 @@ export default function CheckoutPage() {
       .finally(() => setCouponsLoading(false));
   }, [token, items]);
 
+  useEffect(() => {
+    let active = true;
+    const fetchEta = async () => {
+      const storeId = items[0]?.product?.storeId;
+      if (!userLocation || !storeId || !GOONG_API_KEY) return;
+      
+      setEtaLoading(true);
+      try {
+        const store = await fetchStoreById(storeId);
+        if (store.lat && store.lng) {
+          const res = await fetch(`https://rsapi.goong.io/Direction?origin=${store.lat},${store.lng}&destination=${userLocation.lat},${userLocation.lng}&vehicle=bike&api_key=${GOONG_API_KEY}`);
+          const data = await res.json();
+          if (data.routes && data.routes.length > 0 && active) {
+            const leg = data.routes[0].legs[0];
+            const distance = leg.distance.text;
+            // Add ~5 mins for prep
+            const rawMins = Math.ceil(leg.duration.value / 60);
+            const totalMins = rawMins + 5;
+            setEta({ distance, duration: `${totalMins} phút`, text: leg.duration.text });
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi tải ETA:', err);
+      } finally {
+        if (active) setEtaLoading(false);
+      }
+    };
+    fetchEta();
+    return () => { active = false; };
+  }, [userLocation, items]);
+
   const handleApplyCoupon = async (codeOverride?: string) => {
     const code = codeOverride || couponCode;
     if (!token || !code.trim()) return;
@@ -107,6 +144,19 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (isScheduled && !scheduledAt) {
+      setError('Vui lòng chọn thời gian giao hàng');
+      return;
+    }
+
+    if (isScheduled && scheduledAt) {
+      const scheduledDate = new Date(scheduledAt);
+      if (scheduledDate.getTime() < Date.now() + 30 * 60000) {
+        setError('Thời gian giao hàng hẹn trước phải cách hiện tại ít nhất 30 phút');
+        return;
+      }
+    }
+
     setError('');
     setLoading(true);
 
@@ -125,6 +175,7 @@ export default function CheckoutPage() {
           couponCode: couponResult?.code,
           userLat: userLocation?.lat,
           userLng: userLocation?.lng,
+          scheduledAt: isScheduled && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
         },
         token,
       );
@@ -351,8 +402,89 @@ export default function CheckoutPage() {
               placeholder="Số nhà, tên đường, phường/xã, quận/huyện, thành phố..."
               required
               rows={3}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-all resize-none"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-all resize-none mb-4"
             />
+            {/* ETA Widget */}
+            {(eta || etaLoading) && (
+              <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl shadow-sm">
+                    ⏱️
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-blue-800 uppercase tracking-wide">Dự kiến nhận hàng</p>
+                    {etaLoading ? (
+                      <div className="h-5 w-24 bg-blue-200/50 rounded mt-1 animate-pulse" />
+                    ) : (
+                      <p className="text-sm font-semibold text-blue-900 mt-0.5">
+                        <span className="font-black text-lg text-blue-600">{eta?.duration}</span> (khoảng {eta?.distance})
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {!etaLoading && (
+                  <div className="hidden sm:block text-xs text-blue-700/70 font-medium bg-blue-100/50 px-2 py-1 rounded-md">
+                    Bao gồm 5p chuẩn bị
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* Delivery Time */}
+          <section className="rounded-2xl bg-white p-5 shadow-sm">
+             <h2 className="text-lg font-bold text-gray-900 mb-3">🕒 Thời gian giao hàng</h2>
+             <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
+                <button
+                   type="button"
+                   onClick={() => setIsScheduled(false)}
+                   className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${!isScheduled ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                   Giao ngay
+                </button>
+                <button
+                   type="button"
+                   onClick={() => setIsScheduled(true)}
+                   className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${isScheduled ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                   Hẹn giờ
+                </button>
+             </div>
+             
+             {isScheduled && (
+                <div className="animate-fade-in">
+                   <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Chọn thời gian nhận (Cách ít nhất 30 phút)
+                   </label>
+                   <input
+                      type="datetime-local"
+                      value={scheduledAt}
+                      onChange={(e) => {
+                         setScheduledAt(e.target.value);
+                         setError('');
+                      }}
+                      min={new Date(Date.now() + 30 * 60000).toISOString().slice(0, 16)}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                   />
+                </div>
+             )}
+          </section>
+
+          {/* Schedule Delivery */}
+          <section className="rounded-2xl bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">🕒 Hẹn giờ giao hàng (Tùy chọn)</h2>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                min={new Date(Date.now() + 30 * 60000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                className="w-full sm:w-auto rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+              />
+              <p className="text-xs text-gray-500">
+                Lưu ý: Thời gian nhận hàng phải cách hiện tại tối thiểu 30 phút. Nếu không chọn, chúng tôi sẽ giao sớm nhất có thể.
+              </p>
+            </div>
           </section>
 
           {/* Payment Method */}

@@ -258,4 +258,90 @@ export class ProductsService {
       })) as unknown as RecommendedProductDto[];
     }
   }
+
+  async searchSuggest(q: string) {
+    const products = await this.prisma.product.findMany({
+      where: {
+        isAvailable: true,
+        name: { contains: q, mode: 'insensitive' },
+      },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        category: true,
+        image: true,
+        saleStartTime: true,
+        saleEndTime: true,
+      },
+      take: 5,
+    });
+
+    const stores = await this.prisma.store.findMany({
+      where: {
+        isOpen: true,
+        name: { contains: q, mode: 'insensitive' }
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+      },
+      take: 3,
+    });
+
+    const validProducts = products.filter(p => isProductTimeValid(p.saleStartTime, p.saleEndTime));
+
+    return {
+      products: validProducts,
+      stores,
+    };
+  }
+
+  async getFlashSaleProducts(): Promise<ProductResponseDto[]> {
+    const now = new Date();
+    const products = await this.prisma.product.findMany({
+      where: {
+        isAvailable: true,
+        flashSaleStart: { lte: now },
+        flashSaleEnd: { gt: now },
+        salePrice: { not: null }
+      },
+      include: {
+        reviews: {
+          select: { rating: true },
+        },
+      },
+      orderBy: { flashSaleEnd: 'asc' },
+    });
+
+    const validProducts = products.filter(p => isProductTimeValid(p.saleStartTime, p.saleEndTime));
+
+    return validProducts.map((p) => {
+      const ratings = p.reviews.map((r) => r.rating);
+      const avgRating =
+        ratings.length > 0
+          ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
+          : 0;
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        salePrice: p.salePrice,
+        flashSaleStart: p.flashSaleStart,
+        flashSaleEnd: p.flashSaleEnd,
+        image: p.image,
+        category: p.category,
+        isAvailable: p.isAvailable,
+        isSpicy: p.isSpicy,
+        isVegetarian: p.isVegetarian,
+        calories: p.calories,
+        tags: p.tags,
+        storeId: p.storeId,
+        averageRating: avgRating,
+        totalReviews: ratings.length,
+      };
+    }) as any;
+  }
 }

@@ -10,11 +10,13 @@ export class StoresController {
     @Query('lat') lat?: string,
     @Query('lng') lng?: string,
     @Query('radius') radius?: string,
+    @Query('tag') tag?: string,
   ) {
     return this.storesService.findAll(
       lat ? parseFloat(lat) : undefined,
       lng ? parseFloat(lng) : undefined,
       radius ? parseFloat(radius) : undefined,
+      tag,
     );
   }
 

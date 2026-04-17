@@ -23,9 +23,10 @@ interface CartStore {
   clearCart: () => void;
   totalItems: () => number;
   totalPrice: () => number;
+  reorder: (items: CartItem[]) => void;
 }
 
-const generateCartItemId = (productId: string, options?: SelectedOption[]) => {
+export const generateCartItemId = (productId: string, options?: SelectedOption[]) => {
   if (!options || options.length === 0) return productId;
   const sortedOptions = [...options].sort(
     (a, b) => a.group.localeCompare(b.group) || a.choice.localeCompare(b.choice)
@@ -108,4 +109,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
       }
       return sum + (item.product.price + optionsPrice) * item.quantity;
     }, 0),
+
+  reorder: (items: CartItem[]) => {
+    set({ items, isOpen: true });
+  },
 }));

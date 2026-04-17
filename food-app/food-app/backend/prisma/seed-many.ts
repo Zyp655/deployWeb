@@ -53,6 +53,9 @@ async function main() {
     const lat = 20.90 + Math.random() * 0.15;
     const lng = 105.70 + Math.random() * 0.15;
 
+    const STORE_TAGS = ['Cơm', 'Bún/Phở', 'Cafe', 'Trà Sữa', 'Ăn Vặt', 'Đồ Âu', 'Sushi'];
+    const randomTags = [STORE_TAGS[Math.floor(Math.random() * STORE_TAGS.length)], STORE_TAGS[Math.floor(Math.random() * STORE_TAGS.length)]];
+
     const store = await prisma.store.upsert({
       where: { ownerId: seller.id },
       update: {},
@@ -62,7 +65,8 @@ async function main() {
         address: `${Math.floor(Math.random() * 200) + 1} Đường nhánh, ${districts[Math.floor(Math.random() * districts.length)]}`,
         phone,
         description: `Quán ăn phục vụ nhiệt tình chu đáo. Thực phẩm tươi ngon đảm bảo vệ sinh. Mang đến trải nghiệm tốt nhất!`,
-        lat, lng, rating: 4.0 + Math.random(), totalOrders: 0
+        lat, lng, rating: 4.0 + Math.random(), totalOrders: 0,
+        tags: Array.from(new Set(randomTags))
       },
     });
     createdStores.push(store);

@@ -5,6 +5,7 @@ import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notifications';
 import NotificationPanel from '@/components/NotificationPanel';
+import SearchAutocomplete from '@/components/SearchAutocomplete';
 
 export default function Navbar() {
   const totalItems = useCartStore((state) => state.totalItems);
@@ -26,6 +27,12 @@ export default function Navbar() {
           <span className="hidden sm:inline tracking-tight">HOANG FOOD</span>
         </Link>
 
+        {(!user || user.role === 'CUSTOMER') && (
+          <div className="flex-1 max-w-md mx-6">
+            <SearchAutocomplete />
+          </div>
+        )}
+
         <div className="flex items-center gap-3 sm:gap-6">
           {(!user || (user.role !== 'RESTAURANT' && user.role !== 'ADMIN')) && (
             <Link
@@ -33,6 +40,15 @@ export default function Navbar() {
               className="text-sm font-bold text-gray-600 transition-colors hover:text-primary-600"
             >
               Quán ăn
+            </Link>
+          )}
+
+          {user && user.role !== 'RESTAURANT' && user.role !== 'ADMIN' && (
+            <Link
+              href="/orders"
+              className="text-sm font-bold text-gray-600 transition-colors hover:text-primary-600 hidden sm:block"
+            >
+              Đơn hàng
             </Link>
           )}
 

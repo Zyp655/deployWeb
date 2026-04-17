@@ -9,6 +9,9 @@ export default function StoresPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTag, setActiveTag] = useState<string>('Tất cả');
+
+  const STORE_TAGS = ['Tất cả', 'Cơm', 'Bún/Phở', 'Cafe', 'Trà Sữa', 'Ăn Vặt', 'Đồ Âu', 'Sushi'];
 
   const resolveImageUrl = (url: string | null) => {
     if (!url) return null;
@@ -17,28 +20,31 @@ export default function StoresPage() {
   };
 
   useEffect(() => {
+    setLoading(true);
+    const tagFilter = activeTag === 'Tất cả' ? undefined : activeTag;
+    
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          fetchStores(lat, lng)
+          fetchStores(lat, lng, tagFilter)
             .then(setStores)
             .catch(console.error)
             .finally(() => setLoading(false));
         },
         (error) => {
-          fetchStores().then(setStores).catch(console.error).finally(() => setLoading(false));
+          fetchStores(undefined, undefined, tagFilter).then(setStores).catch(console.error).finally(() => setLoading(false));
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
-      fetchStores()
+      fetchStores(undefined, undefined, tagFilter)
         .then(setStores)
         .catch(console.error)
         .finally(() => setLoading(false));
     }
-  }, []);
+  }, [activeTag]);
 
   if (loading) {
     return (
@@ -73,8 +79,8 @@ export default function StoresPage() {
 
       <div className="container mx-auto max-w-6xl px-6 -mt-8 relative z-20">
         
-        {/* Search & Filter Bar Placeholder */}
-        <div className="bg-white rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 flex items-center justify-between mb-12 flex-wrap gap-4">
+        {/* Search & Filter Bar */}
+        <div className="bg-white rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 flex items-center justify-between mb-4 flex-wrap gap-4">
           <div className="flex-1 min-w-[280px] relative">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -91,6 +97,23 @@ export default function StoresPage() {
              <button className="px-5 py-3 rounded-xl bg-gray-50 font-bold text-gray-700 hover:bg-gray-100 transition-colors border border-gray-200 text-sm">Bộ lọc</button>
              <button className="px-5 py-3 rounded-xl bg-gray-900 font-bold text-white hover:bg-gray-800 transition-colors shadow-md text-sm">Gần tôi nhất</button>
           </div>
+        </div>
+
+        {/* Categories Bar */}
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
+          {STORE_TAGS.map(tag => (
+            <button
+              key={tag}
+              onClick={() => setActiveTag(tag)}
+              className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all ${
+                activeTag === tag
+                  ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
+                  : 'border-transparent bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
         </div>
 
         {/* Store Grid */}
@@ -145,15 +168,27 @@ export default function StoresPage() {
                   </div>
 
                   {/* Rating */}
-                  <div className="mt-auto flex items-center gap-3 pt-5 flex-wrap">
-                    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1">
-                      <StarRating value={store.rating} readOnly size="sm" />
-                      <span className="text-sm font-bold text-gray-700">{store.rating > 0 ? store.rating : 'Mới'}</span>
+                  <div className="mt-auto flex items-center justify-between pt-5 flex-wrap gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1">
+                        <StarRating value={store.rating} readOnly size="sm" />
+                        <span className="text-sm font-bold text-gray-700">{store.rating > 0 ? store.rating.toFixed(1) : 'Mới'}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-400 flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                        {store.totalOrders} lượt đặt
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-400 flex items-center gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                      {store.totalOrders} lượt đặt
-                    </span>
+
+                    {store.tags && store.tags.length > 0 && (
+                      <div className="flex gap-1">
+                        {store.tags.slice(0, 2).map((t, i) => (
+                          <span key={i} className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

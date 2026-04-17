@@ -35,9 +35,19 @@ export class SellerController {
     return this.sellerService.getStats(req.user.id);
   }
 
+  @Get('stats/advanced')
+  async getAdvancedStats(@Request() req: AuthenticatedRequest) {
+    return this.sellerService.getAdvancedStats(req.user.id);
+  }
+
   @Get('products')
   async getProducts(@Request() req: AuthenticatedRequest) {
     return this.sellerService.getProducts(req.user.id);
+  }
+
+  @Get('flash-sales')
+  async getFlashSales(@Request() req: AuthenticatedRequest) {
+    return this.sellerService.getFlashSales(req.user.id);
   }
 
   @Post('products')

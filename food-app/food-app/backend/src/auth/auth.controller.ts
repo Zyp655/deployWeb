@@ -19,4 +19,18 @@ export class AuthController {
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
+
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('reset-password')
+  async resetPassword(
+    @Body() body: { email: string; token: string; newPassword: string },
+  ) {
+    return this.authService.resetPassword(body.email, body.token, body.newPassword);
+  }
 }

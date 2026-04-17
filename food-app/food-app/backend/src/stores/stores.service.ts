@@ -1,29 +1,34 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { Prisma } from '@prisma/client';
 import { isProductTimeValid } from '../utils/time-utils';
 
 @Injectable()
 export class StoresService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(lat?: number, lng?: number, radiusKm: number = 10) {
+  async findAll(lat?: number, lng?: number, radiusKm: number = 10, tag?: string) {
     if (lat !== undefined && lng !== undefined) {
+      const tagFilter = tag ? Prisma.sql`AND ${tag} = ANY("tags")` : Prisma.empty;
       // Postgres Raw Query with Haversine Formula for Geolocation
-      const stores = await this.prisma.$queryRaw<any[]>`
+      return await this.prisma.$queryRaw<any[]>`
         SELECT * FROM (
-          SELECT id, name, description, image, "cover_image" as "coverImage", address, "is_open" as "isOpen", "open_time" as "openTime", "close_time" as "closeTime", rating, "total_orders" as "totalOrders", lat, lng,
+          SELECT id, name, description, image, "cover_image" as "coverImage", address, "is_open" as "isOpen", "open_time" as "openTime", "close_time" as "closeTime", rating, "total_orders" as "totalOrders", lat, lng, tags,
           (6371 * acos(cos(radians(${lat})) * cos(radians(lat)) * cos(radians(lng) - radians(${lng})) + sin(radians(${lat})) * sin(radians(lat)))) AS distance
           FROM stores
           WHERE "is_open" = true AND lat IS NOT NULL AND lng IS NOT NULL
+          ${tagFilter}
         ) AS sub
         WHERE distance <= ${radiusKm}
         ORDER BY distance ASC
       `;
-      return stores;
     }
 
     const stores = await this.prisma.store.findMany({
-      where: { isOpen: true },
+      where: { 
+        isOpen: true,
+        ...(tag ? { tags: { has: tag } } : {})
+      },
       orderBy: { rating: 'desc' },
       select: {
         id: true,
@@ -39,6 +44,7 @@ export class StoresService {
         closeTime: true,
         rating: true,
         totalOrders: true,
+        tags: true,
       },
     });
     return stores;

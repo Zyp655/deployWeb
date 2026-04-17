@@ -13,6 +13,17 @@ export class ProductsController {
     return this.productsService.getRecommended(token);
   }
 
+  @Get('flash-sales')
+  async getFlashSales() {
+    return this.productsService.getFlashSaleProducts();
+  }
+
+  @Get('search/suggest')
+  async searchSuggest(@Query('q') q: string) {
+    if (!q) return { products: [], stores: [] };
+    return this.productsService.searchSuggest(q);
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     return this.productsService.findById(id);

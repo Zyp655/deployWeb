@@ -41,8 +41,18 @@ export class OrdersService {
     }
     const storeId = storeIds[0] || null;
 
+    const now = new Date();
     let total = dto.items.reduce((sum, item) => {
-      const basePrice = priceMap.get(item.productId) || 0;
+      const product = products.find(p => p.id === item.productId);
+      let basePrice = priceMap.get(item.productId) || 0;
+      
+      // Flash sale check
+      if (product && product.salePrice != null && product.flashSaleStart && product.flashSaleEnd) {
+         if (now >= product.flashSaleStart && now <= product.flashSaleEnd) {
+            basePrice = product.salePrice;
+         }
+      }
+
       let optionsPrice = 0;
       if (item.selectedOptions && Array.isArray(item.selectedOptions)) {
         optionsPrice = item.selectedOptions.reduce((optSum, opt) => optSum + (Number(opt.price) || 0), 0);
@@ -113,6 +123,33 @@ export class OrdersService {
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
+    // Validate scheduledAt
+    let parsedScheduledAt: Date | null = null;
+    let isScheduled = false;
+    if (dto.scheduledAt) {
+      const scheduledDate = new Date(dto.scheduledAt);
+      if (scheduledDate.getTime() < Date.now() + 30 * 60000) {
+        throw new BadRequestException('Thời gian giao hàng hẹn trước phải cách hiện tại ít nhất 30 phút');
+      }
+      // Khung giờ mở cửa validation
+      if (storeObj?.openTime && storeObj?.closeTime) {
+         const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', hour12: false });
+         const scheduledTimeStr = formatter.format(scheduledDate);
+         
+         if (storeObj.openTime <= storeObj.closeTime) {
+            if (scheduledTimeStr < storeObj.openTime || scheduledTimeStr > storeObj.closeTime) {
+               throw new BadRequestException(`Cửa hàng chỉ mở cửa từ ${storeObj.openTime} đến ${storeObj.closeTime}`);
+            }
+         } else {
+            if (scheduledTimeStr < storeObj.openTime && scheduledTimeStr > storeObj.closeTime) {
+               throw new BadRequestException(`Cửa hàng chỉ mở cửa từ ${storeObj.openTime} đến ${storeObj.closeTime}`);
+            }
+         }
+      }
+      parsedScheduledAt = scheduledDate;
+      isScheduled = true;
+    }
+
     const order = await this.prisma.order.create({
       data: {
         userId,
@@ -127,9 +164,17 @@ export class OrdersService {
         deliveryLat: dto.userLat || null,
         deliveryLng: dto.userLng || null,
         paymentMethod: dto.paymentMethod,
+        scheduledAt: parsedScheduledAt,
+        isScheduled,
         items: {
           create: dto.items.map((item) => {
-            const basePrice = priceMap.get(item.productId) || 0;
+            const product = products.find(p => p.id === item.productId);
+            let basePrice = priceMap.get(item.productId) || 0;
+            if (product && product.salePrice != null && product.flashSaleStart && product.flashSaleEnd) {
+               if (now >= product.flashSaleStart && now <= product.flashSaleEnd) {
+                  basePrice = product.salePrice;
+               }
+            }
             let optionsPrice = 0;
             if (item.selectedOptions && Array.isArray(item.selectedOptions)) {
               optionsPrice = item.selectedOptions.reduce((optSum, opt) => optSum + (Number(opt.price) || 0), 0);
@@ -174,6 +219,8 @@ export class OrdersService {
       deliveryAddress: order.deliveryAddress,
       deliveryPhone: order.deliveryPhone,
       paymentMethod: dto.paymentMethod,
+      scheduledAt: order.scheduledAt,
+      isScheduled: order.isScheduled,
       items: (order as any).items.map((item: any) => ({
         id: item.id,
         productName: item.product.name,
@@ -202,12 +249,18 @@ export class OrdersService {
       total: order.total,
       shippingFee: order.shippingFee,
       note: order.note,
+      scheduledAt: order.scheduledAt,
+      isScheduled: order.isScheduled,
       items: order.items.map((item) => ({
         id: item.id,
+        productId: item.productId,
         productName: item.product.name,
+        productImage: item.product.image,
+        productCategory: item.product.category,
         quantity: item.quantity,
         price: item.price,
         selectedOptions: item.selectedOptions,
+        product: item.product,
       })),
       createdAt: order.createdAt,
     }));
@@ -217,7 +270,7 @@ export class OrdersService {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, userId },
       include: {
-        store: { select: { name: true, address: true, phone: true } },
+        store: { select: { name: true, address: true, phone: true, lat: true, lng: true } },
         driver: { select: { id: true, name: true, phone: true } },
         items: {
           include: { product: true },
@@ -239,18 +292,24 @@ export class OrdersService {
       shippingFee: order.shippingFee,
       deliveryAddress: order.deliveryAddress,
       deliveryPhone: order.deliveryPhone,
+      deliveryLat: order.deliveryLat,
+      deliveryLng: order.deliveryLng,
       note: order.note,
       paymentMethod: order.paymentMethod,
+      scheduledAt: order.scheduledAt,
+      isScheduled: order.isScheduled,
       store: order.store,
       driver: order.driver,
       items: order.items.map((item) => ({
         id: item.id,
+        productId: item.productId,
         productName: item.product.name,
         productImage: item.product.image,
         productCategory: item.product.category,
         quantity: item.quantity,
         price: item.price,
         selectedOptions: item.selectedOptions,
+        product: item.product,
       })),
       history: order.history.map((h) => ({
         status: h.status,
@@ -357,5 +416,61 @@ export class OrdersService {
     }
     
     return updatedOrder;
+  }
+
+  async cancelOrder(orderId: string, userId: string, reason?: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, userId },
+      include: { store: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
+
+    if (order.status !== 'PENDING' && order.status !== 'CONFIRMED') {
+      throw new BadRequestException(
+        'Chỉ có thể huỷ đơn hàng ở trạng thái Chờ xác nhận hoặc Đã xác nhận',
+      );
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'CANCELLED',
+        rejectReason: reason || 'Khách hàng huỷ đơn',
+      },
+    });
+
+    await this.prisma.orderHistory.create({
+      data: {
+        orderId,
+        status: 'CANCELLED',
+        note: reason || 'Khách hàng huỷ đơn',
+      },
+    });
+
+    if (order.couponCode) {
+      await this.prisma.coupon.updateMany({
+        where: { code: order.couponCode, usedCount: { gt: 0 } },
+        data: { usedCount: { decrement: 1 } },
+      });
+    }
+
+    if (order.paymentMethod !== 'COD') {
+      await this.prisma.transaction.updateMany({
+        where: { orderId, status: 'SUCCESS' },
+        data: { status: 'REFUNDED' },
+      });
+    }
+
+    this.gateway.emitOrderStatusUpdate(userId, orderId, 'CANCELLED', reason || 'Khách hàng huỷ đơn');
+
+    return {
+      id: updatedOrder.id,
+      status: updatedOrder.status,
+      message: 'Đã huỷ đơn hàng thành công',
+      refunded: order.paymentMethod !== 'COD',
+    };
   }
 }

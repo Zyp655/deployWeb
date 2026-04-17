@@ -107,9 +107,16 @@ export default function SellerOrdersPage() {
                       👤 {order.user.name} • {order.user.email}
                       {order.user.phone && ` • 📞 ${order.user.phone}`}
                     </p>
-                    <p className="text-xs text-[#e4beb9] mt-1">
-                      {new Date(order.createdAt).toLocaleString('vi-VN')}
-                    </p>
+                    <div className="flex gap-2 mt-1">
+                      <p className="text-xs text-[#e4beb9]">
+                        Tạo lúc: {new Date(order.createdAt).toLocaleString('vi-VN')}
+                      </p>
+                      {order.isScheduled && order.scheduledAt && (
+                        <p className="text-xs text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-full flex items-center">
+                          📅 Giao hẹn: {new Date(order.scheduledAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <span className="text-lg font-extrabold text-primary">{formatPrice(order.total)}</span>
                 </div>

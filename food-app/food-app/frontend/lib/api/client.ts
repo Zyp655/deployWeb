@@ -38,9 +38,18 @@ export interface Product {
   storeId?: string | null;
   saleStartTime?: string | null;
   saleEndTime?: string | null;
+  salePrice?: number | null;
+  flashSaleStart?: string | null;
+  flashSaleEnd?: string | null;
   averageRating?: number;
   totalReviews?: number;
   options?: OptionGroup[];
+}
+
+export interface FlashSaleProduct extends Product {
+  salePrice: number;
+  flashSaleStart: string;
+  flashSaleEnd: string;
 }
 
 export interface AuthUser {
@@ -124,12 +133,17 @@ export async function fetchProducts(filters?: {
   return apiClient<Product[]>(`/products${query ? `?${query}` : ''}`);
 }
 
+export async function fetchFlashSaleProducts(): Promise<FlashSaleProduct[]> {
+  return apiClient<FlashSaleProduct[]>('/products/flash-sales');
+}
+
 // ─── Stores (For Customers) ──────────────────────────
 
-export async function fetchStores(lat?: number, lng?: number): Promise<Store[]> {
+export async function fetchStores(lat?: number, lng?: number, tag?: string): Promise<Store[]> {
   const params = new URLSearchParams();
   if (lat) params.append('lat', lat.toString());
   if (lng) params.append('lng', lng.toString());
+  if (tag) params.append('tag', tag);
   const query = params.toString();
   return apiClient<Store[]>(`/stores${query ? `?${query}` : ''}`);
 }
@@ -270,6 +284,10 @@ export async function searchSemanticProducts(query: string, token?: string): Pro
   });
 }
 
+export async function fetchSearchSuggestions(query: string): Promise<{ products: Partial<Product>[]; stores: Partial<Store>[] }> {
+  return apiClient<{ products: Partial<Product>[]; stores: Partial<Store>[] }>(`/products/search/suggest?q=${encodeURIComponent(query)}`);
+}
+
 // ─── Categories ─────────────────────────────────────────
 
 // ─── Reviews ─────────────────────────────────────────
@@ -318,6 +336,24 @@ export async function loginUser(
   });
 }
 
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  return apiClient('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(
+  email: string,
+  token: string,
+  newPassword: string,
+): Promise<{ message: string }> {
+  return apiClient('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email, token, newPassword }),
+  });
+}
+
 // ─── Orders ──────────────────────────────────────────
 
 export interface OrderItem {
@@ -325,9 +361,11 @@ export interface OrderItem {
   productName: string;
   productImage?: string;
   productCategory?: string;
+  productId?: string;
   quantity: number;
   price: number;
   selectedOptions?: SelectedOption[];
+  product?: Product;
 }
 
 export interface OrderHistoryItem {
@@ -346,14 +384,18 @@ export interface Order {
   note: string | null;
   deliveryAddress?: string;
   deliveryPhone?: string;
+  deliveryLat?: number | null;
+  deliveryLng?: number | null;
   paymentMethod?: string;
-  store?: { name: string; address: string | null; phone: string | null };
+  store?: { name: string; address: string | null; phone: string | null; lat?: number | null; lng?: number | null };
   driver?: { id: string; name: string; phone: string | null };
   items: OrderItem[];
   history: OrderHistoryItem[];
   storeRating?: number | null;
   driverRating?: number | null;
   reviewComment?: string | null;
+  scheduledAt?: string | null;
+  isScheduled?: boolean;
   createdAt: string;
 }
 
@@ -370,6 +412,7 @@ export interface CreateOrderPayload {
   couponCode?: string;
   userLat?: number;
   userLng?: number;
+  scheduledAt?: string;
 }
 
 export async function createOrder(
@@ -393,6 +436,39 @@ export async function fetchOrderById(
 ): Promise<Order> {
   return apiClient<Order>(`/orders/${orderId}`, { token });
 }
+
+export async function cancelOrder(
+  orderId: string,
+  reason: string,
+  token: string,
+): Promise<{ id: string; status: string; message: string; refunded: boolean }> {
+  return apiClient(`/orders/${orderId}/cancel`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason }),
+    token,
+  });
+}
+
+export async function fetchMyOrdersPaginated(
+  token: string,
+  params?: { status?: string; search?: string; page?: number; limit?: number },
+): Promise<Order[]> {
+  const orders = await apiClient<Order[]>('/orders/my', { token });
+  let filtered = orders;
+  if (params?.status && params.status !== 'ALL') {
+    filtered = filtered.filter(o => o.status === params.status);
+  }
+  if (params?.search) {
+    const q = params.search.toLowerCase();
+    filtered = filtered.filter(o =>
+      o.id.toLowerCase().includes(q) ||
+      o.store?.name?.toLowerCase().includes(q) ||
+      o.items.some(i => i.productName.toLowerCase().includes(q))
+    );
+  }
+  return filtered;
+}
+
 
 // ─── Admin Dashboard ─────────────────────────────────
 
@@ -536,8 +612,30 @@ export interface SellerStats {
   topProducts: { name: string; totalSold: number }[];
 }
 
+export interface SellerAdvancedStats {
+  topCustomers: { name: string; email: string; totalOrders: number; totalSpent: number }[];
+  conversion: { delivered: number; cancelled: number; pending: number; rate: number };
+  comparison: {
+    weekly: {
+      thisWeek: { orders: number; revenue: number };
+      lastWeek: { orders: number; revenue: number };
+      change: { orders: number; revenue: number };
+    };
+    monthly: {
+      thisMonth: { orders: number; revenue: number };
+      lastMonth: { orders: number; revenue: number };
+      change: { orders: number; revenue: number };
+    };
+  };
+  heatmap: { hour: number; count: number }[];
+}
+
 export async function fetchSellerStats(token: string): Promise<SellerStats> {
   return apiClient<SellerStats>('/seller/stats', { token });
+}
+
+export async function fetchSellerAdvancedStats(token: string): Promise<SellerAdvancedStats> {
+  return apiClient<SellerAdvancedStats>('/seller/stats/advanced', { token });
 }
 
 export interface SellerOrder extends Order {
@@ -645,6 +743,7 @@ export interface Store {
   closeTime: string | null;
   rating: number;
   totalOrders: number;
+  tags?: string[];
   distance?: number;
 }
 

@@ -57,4 +57,13 @@ export class OrdersController {
   ) {
     return this.ordersService.reviewOrder(id, req.user.id, dto);
   }
+
+  @Patch(':id/cancel')
+  async cancelOrder(
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.ordersService.cancelOrder(id, req.user.id, body.reason);
+  }
 }
