@@ -9,7 +9,7 @@ const formatPrice = (price: number) =>
 
 const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = {
   PENDING: { label: 'Chờ xác nhận', bg: 'bg-amber-500/10', text: 'text-amber-600' },
-
+  CONFIRMED: { label: 'Đã xác nhận', bg: 'bg-blue-500/10', text: 'text-blue-600' },
   PREPARING: { label: 'Đang chuẩn bị', bg: 'bg-indigo-500/10', text: 'text-indigo-600' },
   PREPARED: { label: 'Chờ shipper', bg: 'bg-amber-600/10', text: 'text-amber-700' },
   DELIVERING: { label: 'Đang giao', bg: 'bg-violet-500/10', text: 'text-violet-600' },
@@ -18,7 +18,8 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = 
 };
 
 const NEXT_STATUS: Record<string, string> = {
-  PENDING: 'PREPARING',
+  PENDING: 'CONFIRMED',
+  CONFIRMED: 'PREPARING',
   PREPARING: 'PREPARED',
 };
 
@@ -52,11 +53,26 @@ export default function SellerOrdersPage() {
     try {
       const { rejectSellerOrder } = await import('@/lib/api/client');
       await rejectSellerOrder(orderId, reason, token);
-      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'CANCELLED' } : o)));
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'CANCELLED', refundStatus: o.paymentMethod !== 'COD' ? 'PENDING' : 'NONE' } : o)));
     } catch (err) { console.error(err); alert('Có lỗi xảy ra'); }
   };
 
-  const filtered = filter === 'ALL' ? orders : orders.filter((o) => o.status === filter);
+  const handleConfirmRefund = async (orderId: string) => {
+    if (!token) return;
+    if (!window.confirm('Xác nhận bạn đã chuyển khoản hoàn tiền cho khách hàng?')) return;
+    try {
+      const { confirmSellerRefund } = await import('@/lib/api/client');
+      await confirmSellerRefund(orderId, token);
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, refundStatus: 'COMPLETED', refundedAt: new Date().toISOString() } : o)));
+    } catch (err) { console.error(err); alert('Có lỗi xảy ra'); }
+  };
+
+  const pendingRefundCount = orders.filter((o) => (o as any).refundStatus === 'PENDING').length;
+  const filtered = filter === 'ALL'
+    ? orders
+    : filter === 'REFUND'
+      ? orders.filter((o) => (o as any).refundStatus === 'PENDING')
+      : orders.filter((o) => o.status === filter);
 
   if (loading) {
     return <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="h-20 bg-white rounded-2xl animate-pulse" />)}</div>;
@@ -70,7 +86,7 @@ export default function SellerOrdersPage() {
       </header>
 
       <div className="flex gap-1.5 bg-[#efecff] p-1 rounded-xl flex-wrap w-fit">
-        {['ALL', 'PENDING', 'PREPARING', 'PREPARED', 'DELIVERING', 'DELIVERED', 'CANCELLED'].map((st) => (
+        {['ALL', 'PENDING', 'CONFIRMED', 'PREPARING', 'PREPARED', 'DELIVERING', 'DELIVERED', 'CANCELLED'].map((st) => (
           <button
             key={st}
             onClick={() => setFilter(st)}
@@ -82,6 +98,16 @@ export default function SellerOrdersPage() {
             {st !== 'ALL' && ` (${orders.filter((o) => o.status === st).length})`}
           </button>
         ))}
+        {pendingRefundCount > 0 && (
+          <button
+            onClick={() => setFilter('REFUND')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              filter === 'REFUND' ? 'bg-white text-amber-600 shadow-sm' : 'text-amber-600 hover:text-amber-700'
+            }`}
+          >
+            💰 Chờ hoàn tiền ({pendingRefundCount})
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -94,13 +120,27 @@ export default function SellerOrdersPage() {
           {filtered.map((order) => {
             const st = STATUS_MAP[order.status] || { label: order.status, bg: 'bg-gray-100', text: 'text-gray-700' };
             const nextSt = NEXT_STATUS[order.status];
+            const refundStatus = (order as any).refundStatus as string | undefined;
             return (
-              <div key={order.id} className="ds-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_50px_rgba(26,26,46,0.1)]">
+              <div key={order.id} className={`ds-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_50px_rgba(26,26,46,0.1)] ${refundStatus === 'PENDING' ? 'ring-2 ring-amber-300' : ''}`}>
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <p className="text-sm font-bold text-[#1a1a2e]">#{order.id.slice(0, 8)}</p>
                       <span className={`ds-badge ${st.bg} ${st.text}`}>{st.label}</span>
+                      {order.paymentMethod && order.paymentMethod !== 'COD' && (
+                        <span className="ds-badge bg-blue-500/10 text-blue-600">
+                          {order.paymentMethod === 'SEPAY' && '🏦 VietQR'}
+                          {order.paymentMethod === 'MOMO' && '🟣 MoMo'}
+                          {order.paymentMethod === 'VNPAY' && '🔴 VNPay'}
+                        </span>
+                      )}
+                      {refundStatus === 'PENDING' && (
+                        <span className="ds-badge bg-amber-500/10 text-amber-600 animate-pulse">💰 Chờ hoàn tiền</span>
+                      )}
+                      {refundStatus === 'COMPLETED' && (
+                        <span className="ds-badge bg-emerald-500/10 text-emerald-600">✅ Đã hoàn tiền</span>
+                      )}
                     </div>
                     <p className="text-xs text-[#906f6c] mt-1">
                       👤 {order.user.name} • {order.user.email}
@@ -135,31 +175,32 @@ export default function SellerOrdersPage() {
                   ))}
                 </div>
 
-                {(nextSt || order.status === 'PENDING') && (
-                  <div className="mt-4 flex gap-2 items-center flex-wrap">
-                    {nextSt && (
-                      <button
-                        onClick={() => handleStatusChange(order.id, nextSt)}
-                        className="ds-gradient-cta px-4 py-2 text-xs"
-                      >
-                        ✅ {STATUS_MAP[nextSt]?.label || nextSt}
-                      </button>
-                    )}
-                    {order.status === 'PENDING' && order.paymentMethod === 'SEPAY' && (
-                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 flex items-center gap-1.5">
-                        🏦 Chuyển khoản VietQR
-                      </span>
-                    )}
-                    {order.status === 'PENDING' && (
-                      <button
-                        onClick={() => handleReject(order.id)}
-                        className="rounded-xl bg-primary/5 px-4 py-2 text-xs font-bold text-primary border border-primary/10 transition-all hover:bg-primary/10 active:scale-95"
-                      >
-                        ❌ Từ chối
-                      </button>
-                    )}
-                  </div>
-                )}
+                <div className="mt-4 flex gap-2 items-center flex-wrap">
+                  {nextSt && (
+                    <button
+                      onClick={() => handleStatusChange(order.id, nextSt)}
+                      className="ds-gradient-cta px-4 py-2 text-xs"
+                    >
+                      ✅ {STATUS_MAP[nextSt]?.label || nextSt}
+                    </button>
+                  )}
+                  {order.status === 'PENDING' && (
+                    <button
+                      onClick={() => handleReject(order.id)}
+                      className="rounded-xl bg-primary/5 px-4 py-2 text-xs font-bold text-primary border border-primary/10 transition-all hover:bg-primary/10 active:scale-95"
+                    >
+                      ❌ Từ chối
+                    </button>
+                  )}
+                  {refundStatus === 'PENDING' && (
+                    <button
+                      onClick={() => handleConfirmRefund(order.id)}
+                      className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-amber-600 active:scale-95 flex items-center gap-1.5"
+                    >
+                      💰 Xác nhận đã hoàn tiền ({formatPrice(order.total)})
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}

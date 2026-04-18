@@ -322,13 +322,27 @@ export default function OrderDetailPage() {
               {order.paymentMethod === 'VNPAY' && '🔴 VNPay'}
             </p>
             {order.status === 'CANCELLED' && order.paymentMethod !== 'COD' && (
-              <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
-                <p className="text-sm font-bold text-amber-700">💰 Hoàn tiền</p>
-                <p className="text-xs text-amber-600 mt-1">
-                  Số tiền <span className="font-bold">{formatPrice(order.total)}</span> sẽ được hoàn lại vào tài khoản của bạn trong vòng 1-3 ngày làm việc.
-                  Nếu sau 3 ngày chưa nhận được, vui lòng liên hệ hotline hỗ trợ.
-                </p>
-              </div>
+              <>
+                {order.refundStatus === 'COMPLETED' ? (
+                  <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+                    <p className="text-sm font-bold text-emerald-700">✅ Đã hoàn tiền</p>
+                    <p className="text-xs text-emerald-600 mt-1">
+                      Số tiền <span className="font-bold">{formatPrice(order.total)}</span> đã được hoàn vào tài khoản của bạn
+                      {order.refundedAt && ` lúc ${new Date(order.refundedAt).toLocaleString('vi-VN')}`}.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      <p className="text-sm font-bold text-amber-700">💰 Đang chờ hoàn tiền</p>
+                    </div>
+                    <p className="text-xs text-amber-600 mt-1">
+                      Số tiền <span className="font-bold">{formatPrice(order.total)}</span> sẽ được cửa hàng hoàn lại vào tài khoản của bạn trong 1-3 ngày làm việc.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
