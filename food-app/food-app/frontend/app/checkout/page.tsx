@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
@@ -61,8 +61,10 @@ export default function CheckoutPage() {
     }
   }, [user, token, openAuthModal]);
 
+  const isOrderPlaced = useRef(false);
+
   useEffect(() => {
-    if (items.length === 0) {
+    if (items.length === 0 && !isOrderPlaced.current) {
       router.push('/menu');
     }
   }, [items.length, router]);
@@ -181,6 +183,7 @@ export default function CheckoutPage() {
         token,
       );
 
+      isOrderPlaced.current = true;
       clearCart();
 
       if (paymentMethod === 'MOMO') {
