@@ -9,7 +9,7 @@ const formatPrice = (price: number) =>
 
 const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = {
   PENDING: { label: 'Chờ xác nhận', bg: 'bg-amber-500/10', text: 'text-amber-600' },
-  CONFIRMED: { label: 'Đã xác nhận', bg: 'bg-blue-500/10', text: 'text-blue-600' },
+
   PREPARING: { label: 'Đang chuẩn bị', bg: 'bg-indigo-500/10', text: 'text-indigo-600' },
   PREPARED: { label: 'Chờ shipper', bg: 'bg-amber-600/10', text: 'text-amber-700' },
   DELIVERING: { label: 'Đang giao', bg: 'bg-violet-500/10', text: 'text-violet-600' },
@@ -70,7 +70,7 @@ export default function SellerOrdersPage() {
       </header>
 
       <div className="flex gap-1.5 bg-[#efecff] p-1 rounded-xl flex-wrap w-fit">
-        {['ALL', 'PENDING', 'CONFIRMED', 'PREPARING', 'PREPARED', 'DELIVERING', 'DELIVERED', 'CANCELLED'].map((st) => (
+        {['ALL', 'PENDING', 'PREPARING', 'PREPARED', 'DELIVERING', 'DELIVERED', 'CANCELLED'].map((st) => (
           <button
             key={st}
             onClick={() => setFilter(st)}

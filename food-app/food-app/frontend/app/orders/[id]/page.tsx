@@ -319,7 +319,18 @@ export default function OrderDetailPage() {
             <p className="text-sm text-gray-600">
               {order.paymentMethod === 'COD' && '💵 Thanh toán khi nhận hàng (COD)'}
               {order.paymentMethod === 'SEPAY' && '🏦 Chuyển khoản (VietQR)'}
+              {order.paymentMethod === 'MOMO' && '🟣 Ví MoMo'}
+              {order.paymentMethod === 'VNPAY' && '🔴 VNPay'}
             </p>
+            {order.status === 'CANCELLED' && order.paymentMethod !== 'COD' && (
+              <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
+                <p className="text-sm font-bold text-amber-700">💰 Hoàn tiền</p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Số tiền <span className="font-bold">{formatPrice(order.total)}</span> sẽ được hoàn lại vào tài khoản của bạn trong vòng 1-3 ngày làm việc.
+                  Nếu sau 3 ngày chưa nhận được, vui lòng liên hệ hotline hỗ trợ.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -420,6 +431,15 @@ export default function OrderDetailPage() {
             <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-fade-up">
               <h3 className="text-lg font-bold text-gray-900 mb-1">🚫 Huỷ đơn hàng</h3>
               <p className="text-sm text-gray-500 mb-4">Chọn lý do huỷ đơn hàng của bạn</p>
+
+              {order.paymentMethod !== 'COD' && (
+                <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-4">
+                  <p className="text-sm font-bold text-amber-700">⚠️ Đơn hàng đã thanh toán</p>
+                  <p className="text-xs text-amber-600 mt-1">
+                    Số tiền <span className="font-bold">{formatPrice(order.total)}</span> sẽ được hoàn lại vào tài khoản ngân hàng của bạn trong 1-3 ngày làm việc sau khi huỷ.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2 mb-4">
                 {['Đổi ý, không muốn đặt nữa', 'Đặt nhầm món / sai địa chỉ', 'Thời gian chờ quá lâu', 'Tìm được quán khác rẻ hơn', 'Lý do khác'].map((reason) => (
