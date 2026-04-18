@@ -181,16 +181,18 @@ export class PaymentsService {
   async createSepayPayment(orderId: string, amount: number) {
     const bankName = process.env.SEPAY_BANK_NAME || 'MBBank';
     const accountNumber = process.env.SEPAY_ACCOUNT_NUMBER || '';
+    const accountName = process.env.SEPAY_ACCOUNT_NAME || 'HOANG FOOD';
     
     const shortCode = orderId.substring(orderId.length - 8).toUpperCase();
     const content = `HOANG${shortCode}`;
-    const qrUrl = `https://img.vietqr.io/image/${bankName}-${accountNumber}-compact2.png?amount=${amount}&addInfo=${content}&accountName=HOANG%20FOOD`;
+    const qrUrl = `https://img.vietqr.io/image/${bankName}-${accountNumber}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(content)}&accountName=${encodeURIComponent(accountName)}`;
     
     return {
       success: true,
       qrUrl,
       bankName,
       accountNumber,
+      accountName,
       content,
     };
   }
