@@ -17,7 +17,6 @@ const formatPrice = (price: number) =>
 const PAYMENT_METHODS = [
   { id: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: '💵' },
   { id: 'SEPAY', label: 'Chuyển khoản (VietQR)', icon: '🏦' },
-  { id: 'MOMO', label: 'Ví MoMo', icon: '🟣' },
   { id: 'VNPAY', label: 'VNPay', icon: '🔴' },
 ];
 
@@ -214,18 +213,7 @@ export default function CheckoutPage() {
       isOrderPlaced.current = true;
       clearCart();
 
-      if (paymentMethod === 'MOMO') {
-        const momoResult = await createMoMoPayment(
-          order.id,
-          couponResult ? couponResult.finalTotal : totalPrice(),
-          `Thanh toán đơn hàng ${order.id}`,
-          token,
-        );
-        if (momoResult.payUrl) {
-          window.location.href = momoResult.payUrl;
-          return;
-        }
-      } else if (paymentMethod === 'VNPAY') {
+      if (paymentMethod === 'VNPAY') {
         const vnpayResult = await createVNPayPayment(
           order.id,
           couponResult ? couponResult.finalTotal : totalPrice(),
