@@ -105,13 +105,13 @@ export default function SepayPaymentPage({ params }: { params: { id: string } })
 
   if (error) {
      return (
-       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-         <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-sm w-full">
-            <h2 className="text-red-500 font-bold text-xl mb-2">Lỗi thanh toán</h2>
-            <p className="text-gray-600 text-sm mb-6">{error}</p>
+       <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4">
+         <div className="bg-white p-10 rounded-[2rem] shadow-[0_8px_24px_rgba(25,28,29,0.06)] text-center max-w-sm w-full">
+            <h2 className="text-[#ba1a1a] font-bold text-2xl mb-3">Lỗi thanh toán</h2>
+            <p className="text-[#5A4136] text-[15px] mb-8">{error}</p>
             <button 
               onClick={() => router.push(`/orders/${unwrappedParams.id}`)}
-              className="bg-primary text-white font-bold py-3 px-6 rounded-xl w-full hover:brightness-110 active:scale-[0.98] transition-all"
+              className="bg-gradient-to-br from-[#FF6B00] to-[#A04100] text-white font-bold py-4 px-6 rounded-full w-full hover:shadow-lg active:scale-[0.98] transition-all"
             >
               Quay lại đơn hàng
             </button>
@@ -121,84 +121,90 @@ export default function SepayPaymentPage({ params }: { params: { id: string } })
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12 px-4">
-       <div className="max-w-md mx-auto bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-br from-primary to-accent p-6 text-center text-white">
-             <h1 className="text-2xl font-extrabold mb-1">Thanh toán VietQR</h1>
-             <p className="text-white/90 text-sm font-medium">Đơn hàng tự động duyệt từ 10-30 giây</p>
+    <main className="min-h-screen bg-[#F8F9FA] flex flex-col items-center py-12 px-4 font-sans">
+       <div className="max-w-md w-full bg-white rounded-[2rem] shadow-[0_8px_24px_rgba(25,28,29,0.06)] overflow-hidden">
+          <div className="bg-gradient-to-br from-[#FF6B00] to-[#A04100] p-8 text-center text-white shadow-inner relative overflow-hidden">
+             {/* Decorative element background */}
+             <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -translate-y-12 translate-x-12 blur-2xl"></div>
+             
+             <h1 className="text-[26px] font-extrabold tracking-tight mb-2 relative z-10">Thanh toán VietQR</h1>
+             <p className="text-white/90 text-[15px] font-medium relative z-10">Hệ thống sẽ duyệt trong 10-30 giây</p>
           </div>
           
           <div className="p-8 pb-10">
              {qrUrl ? (
                 timeLeft > 0 ? (
                   <div className="flex flex-col items-center">
-                    <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-sm font-bold mb-4 flex items-center gap-2 border border-red-100">
-                      <span>⏳ Hết hạn trong:</span>
-                      <span className="font-mono text-base">{formatTime(timeLeft)}</span>
+                    <div className="bg-[#FFDBCC] text-[#A04100] px-5 py-2.5 rounded-full text-sm font-bold mb-8 flex items-center gap-2 shadow-sm border border-[#FFB693]/30">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      <span>Hết hạn trong:</span>
+                      <span className="font-mono text-base tracking-wider">{formatTime(timeLeft)}</span>
                     </div>
 
-                    <div className="bg-white p-3 rounded-2xl shadow-md border border-gray-100 mb-6 relative w-64 h-64 flex items-center justify-center overflow-hidden">
-                       {/* Bỏ next/image thay bằng thẻ img để load QR external dễ hơn */}
+                    <div className="bg-white p-4 rounded-[2rem] shadow-[0_12px_36px_rgba(255,107,0,0.12)] mb-8 relative w-64 h-64 flex items-center justify-center overflow-hidden transition-all hover:scale-105 duration-300 ring-1 ring-gray-50">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img 
                         src={qrUrl} 
                         alt="Mã VietQR" 
-                        className="w-full h-full object-contain rounded-xl"
+                        className="w-full h-full object-contain rounded-2xl"
                       />
                    </div>
                    
-                   <p className="text-sm text-gray-500 mb-4 text-center leading-relaxed">
-                     Mở ứng dụng ngân hàng trên điện thoại để quét mã QR hoặc chuyển khoản thủ công.
+                   <p className="text-[15px] text-[#5A4136] mb-6 text-center leading-relaxed font-medium px-4">
+                     Mở ứng dụng ngân hàng và <b>quét mã QR</b> hoặc chuyển khoản theo thông tin bên dưới:
                    </p>
 
                    {bankInfo && (
-                     <div className="w-full bg-gray-50/50 rounded-xl p-4 space-y-3 mb-6 border border-gray-100/50">
-                        <div className="flex justify-between items-center text-sm">
-                           <span className="text-gray-500">Ngân hàng</span>
-                           <span className="font-bold text-gray-900">{bankInfo.bankName}</span>
+                     <div className="w-full bg-[#f3f4f5] rounded-[1.5rem] p-5 space-y-4 mb-8">
+                        <div className="flex justify-between items-center text-[15px]">
+                           <span className="text-[#5A4136]">Ngân hàng</span>
+                           <span className="font-bold text-[#191C1D]">{bankInfo.bankName}</span>
                         </div>
-                        <div className="flex justify-between items-center text-sm">
-                           <span className="text-gray-500">Số tài khoản</span>
-                           <span className="font-bold text-gray-900 flex items-center gap-2">
+                        <div className="flex justify-between items-center text-[15px]">
+                           <span className="text-[#5A4136]">Số tài khoản</span>
+                           <span className="font-bold text-[#191C1D] flex items-center gap-2">
                              {bankInfo.accountNumber}
                              <button 
                                onClick={() => navigator.clipboard.writeText(bankInfo.accountNumber)}
-                               className="text-primary hover:text-accent transition-colors"
+                               className="text-[#FF6B00] hover:text-[#A04100] transition-colors p-1"
                                title="Sao chép"
                              >
-                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                                  <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
                                  <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
                                </svg>
                              </button>
                            </span>
                         </div>
-                        <div className="flex justify-between items-center text-sm">
-                           <span className="text-gray-500">Số tiền</span>
-                           <span className="font-extrabold text-primary text-base flex items-center gap-2">
+                        <div className="flex justify-between items-center text-[15px]">
+                           <span className="text-[#5A4136]">Số tiền</span>
+                           <span className="font-extrabold text-[#FF6B00] text-lg flex items-center gap-2">
                              {formatPrice(bankInfo.amount)}
                              <button 
                                onClick={() => navigator.clipboard.writeText(bankInfo.amount.toString())}
-                               className="text-primary hover:text-accent transition-colors"
+                               className="text-[#FF6B00] hover:text-[#A04100] transition-colors p-1"
                                title="Sao chép"
                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                                  <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
                                  <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
                                </svg>
                              </button>
                            </span>
                         </div>
-                        <div className="border-t border-gray-200/60 pt-3 mt-1 flex justify-between items-center text-sm">
-                           <span className="text-gray-500 font-medium">Nội dung CK</span>
-                           <span className="font-black text-gray-900 bg-yellow-100/80 px-2 py-1 rounded tracking-widest border border-yellow-200/50 flex items-center gap-2">
+                        
+                        <div className="h-4"></div>
+
+                        <div className="flex justify-between items-center text-[15px] bg-white p-3 px-4 rounded-xl shadow-sm">
+                           <span className="text-[#5A4136] font-medium">Nội dung CK</span>
+                           <span className="font-black text-[#191C1D] tracking-widest flex items-center gap-2">
                              {bankInfo.content}
                              <button 
                                onClick={() => navigator.clipboard.writeText(bankInfo.content)}
-                               className="text-yellow-600 hover:text-yellow-700 transition-colors"
+                               className="text-[#FF6B00] hover:text-[#A04100] transition-colors"
                                title="Sao chép"
                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                                  <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
                                  <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
                                </svg>
@@ -208,40 +214,40 @@ export default function SepayPaymentPage({ params }: { params: { id: string } })
                      </div>
                    )}
 
-                   <div className="flex items-center justify-center gap-3 w-full bg-blue-50/50 py-3 rounded-xl border border-blue-100 mt-2">
-                      <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                      <span className="text-primary font-bold text-sm tracking-wide">Đang chờ thanh toán...</span>
+                   <div className="flex items-center justify-center gap-3 w-full bg-[#FFB693]/20 py-4 rounded-[1rem] mt-2">
+                      <div className="w-5 h-5 rounded-full border-[3px] border-[#FF6B00] border-t-transparent animate-spin" />
+                      <span className="text-[#A04100] font-bold text-[15px] tracking-wide">Đang chờ thanh toán...</span>
                    </div>
                 </div>
                 ) : (
                   <div className="flex flex-col items-center text-center py-6">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-4xl mb-4">
+                    <div className="w-24 h-24 bg-[#f3f4f5] rounded-full flex items-center justify-center text-4xl mb-6 shadow-sm">
                       ⏱️
                     </div>
-                    <h2 className="text-gray-900 font-bold text-xl mb-2">Mã QR đã hết hạn</h2>
-                    <p className="text-gray-500 text-sm mb-6">Xin lỗi, thời gian thanh toán cho đơn hàng này đã kết thúc. Vui lòng đặt lại đơn hàng mới.</p>
+                    <h2 className="text-[#191C1D] font-bold text-2xl mb-3">Mã QR đã hết hạn</h2>
+                    <p className="text-[#5A4136] text-[15px] mb-8 leading-relaxed">Xin lỗi, thời gian chờ đã kết thúc. Vui lòng quay lại thực đơn để đặt lại đơn hàng mới.</p>
                     <button 
                       onClick={() => router.push(`/menu`)}
-                      className="bg-primary text-white font-bold py-3 px-6 rounded-xl w-full hover:brightness-110 active:scale-[0.98] transition-all"
+                      className="bg-gradient-to-br from-[#FF6B00] to-[#A04100] text-white font-bold text-[15px] py-4 px-8 rounded-full w-full shadow-[0_8px_24px_rgba(255,107,0,0.25)] hover:shadow-[0_12px_28px_rgba(255,107,0,0.35)] hover:-translate-y-0.5 active:scale-[0.98] transition-all"
                     >
                       Quay lại thực đơn
                     </button>
                   </div>
                 )
              ) : (
-                <div className="py-16 text-center">
-                  <div className="w-10 h-10 rounded-full border-4 border-gray-200 border-t-primary animate-spin mx-auto mb-4" />
-                  <p className="text-gray-400 font-medium text-sm">Đang khởi tạo giao dịch...</p>
+                <div className="py-20 text-center flex flex-col items-center">
+                  <div className="w-12 h-12 rounded-full border-4 border-[#F3F4F5] border-t-[#FF6B00] animate-spin mb-6" />
+                  <p className="text-[#5A4136] font-medium text-[15px]">Đang khởi tạo giao dịch...</p>
                 </div>
              )}
           </div>
           
-          <div className="px-6 py-5 bg-gray-50 border-t border-gray-100 text-center">
+          <div className="p-6 bg-white flex justify-center pb-8 pt-2">
             <button 
               onClick={() => router.push(`/orders/${unwrappedParams.id}`)}
-              className="text-gray-500 font-semibold text-sm hover:text-gray-800 transition"
+              className="text-[#A04100] font-bold text-[15px] hover:text-[#7A3000] hover:underline transition-all"
             >
-              Tôi đã thanh toán, xem đơn hàng ngay
+              Trở về chi tiết đơn hàng
             </button>
           </div>
        </div>
