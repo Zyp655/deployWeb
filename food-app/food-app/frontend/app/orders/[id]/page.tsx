@@ -320,6 +320,7 @@ export default function OrderDetailPage() {
               {order.paymentMethod === 'COD' && '💵 Thanh toán khi nhận hàng (COD)'}
               {order.paymentMethod === 'MOMO' && '🟣 Ví MoMo'}
               {order.paymentMethod === 'VNPAY' && '🔴 VNPay'}
+              {order.paymentMethod === 'SEPAY' && '🏦 Chuyển khoản (VietQR)'}
             </p>
           </div>
         )}
