@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
-import { createOrder, createMoMoPayment, createVNPayPayment, fetchActiveCoupons, CouponPublic, fetchStoreById } from '@/lib/api/client';
+import { createOrder, createMoMoPayment, createVNPayPayment, createSepayPayment, fetchActiveCoupons, CouponPublic, fetchStoreById } from '@/lib/api/client';
 
 const GOONG_API_KEY = process.env.NEXT_PUBLIC_GOONG_API_KEY || '';
 
@@ -13,6 +13,7 @@ const formatPrice = (price: number) =>
 
 const PAYMENT_METHODS = [
   { id: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: '💵' },
+  { id: 'SEPAY', label: 'Chuyển khoản (VietQR)', icon: '🏦' },
   { id: 'MOMO', label: 'Ví MoMo', icon: '🟣' },
   { id: 'VNPAY', label: 'VNPay', icon: '🔴' },
 ];
@@ -204,6 +205,10 @@ export default function CheckoutPage() {
           window.location.href = vnpayResult.paymentUrl;
           return;
         }
+      } else if (paymentMethod === 'SEPAY') {
+        // Redirect to QR waiting room
+        router.push(`/payment/sepay/${order.id}`);
+        return;
       }
 
       router.push(`/orders/${order.id}`);

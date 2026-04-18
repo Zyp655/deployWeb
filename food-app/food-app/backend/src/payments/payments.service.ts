@@ -176,4 +176,66 @@ export class PaymentsService {
       return { success: false, message: 'Chữ ký không hợp lệ' };
     }
   }
+
+  // SePay Payment
+  async createSepayPayment(orderId: string, amount: number) {
+    const bankName = process.env.SEPAY_BANK_NAME || 'MBBank';
+    const accountNumber = process.env.SEPAY_ACCOUNT_NUMBER || '';
+    
+    const shortCode = orderId.substring(orderId.length - 8).toUpperCase();
+    const content = `HOANG${shortCode}`;
+    const qrUrl = `https://qr.sepay.vn/img?acc=${accountNumber}&bank=${bankName}&amount=${amount}&des=${content}`;
+    
+    return {
+      success: true,
+      qrUrl,
+      bankName,
+      accountNumber,
+      content,
+    };
+  }
+
+  async handleSepayWebhook(body: any, authHeader?: string) {
+    const apiToken = process.env.SEPAY_API_KEY;
+    if (apiToken && (!authHeader || !authHeader.includes(apiToken))) {
+      return { success: false, message: 'Unauthorized' };
+    }
+
+    if (body.transferType !== 'in' || body.transferAmount <= 0) {
+      return { success: false, message: 'Not an incoming transfer' };
+    }
+
+    const content = (body.content || '').toUpperCase();
+    
+    // Find checking orders that are PENDING
+    const orders = await this.prisma.order.findMany({
+      where: {
+        status: { in: ['PENDING'] },
+      }
+    });
+
+    let matchedOrder = null;
+    for (const order of orders) {
+      const shortCode = order.id.substring(order.id.length - 8).toUpperCase();
+      if (content.includes(`HOANG${shortCode}`)) {
+        matchedOrder = order;
+        break;
+      }
+    }
+
+    if (!matchedOrder) {
+      return { success: false, message: 'Order not found for content' };
+    }
+
+    if (body.transferAmount < matchedOrder.total) { 
+       return { success: false, message: 'Transfer amount is less than order total' };
+    }
+
+    await this.prisma.order.update({
+      where: { id: matchedOrder.id },
+      data: { status: 'CONFIRMED' },
+    });
+
+    return { success: true, message: 'Xác nhận thanh toán thành công' };
+  }
 }

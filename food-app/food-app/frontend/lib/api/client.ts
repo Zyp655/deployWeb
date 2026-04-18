@@ -524,6 +524,18 @@ export async function createVNPayPayment(
   });
 }
 
+export async function createSepayPayment(
+  orderId: string,
+  amount: number,
+  token: string,
+): Promise<{ success: boolean; qrUrl: string; bankName: string; accountNumber: string; content: string }> {
+  return apiClient('/payments/sepay/create', {
+    method: 'POST',
+    body: JSON.stringify({ orderId, amount }),
+    token,
+  });
+}
+
 // ─── Profile ─────────────────────────────────────────
 
 export interface UserProfile {

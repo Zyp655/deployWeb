@@ -43,4 +43,20 @@ export class PaymentsController {
   async vnpayCallback(@Query() query: any) {
     return this.paymentsService.verifyVNPayCallback(query);
   }
+  @Post('sepay/create')
+  @UseGuards(JwtAuthGuard)
+  async createSepayPayment(
+    @Body() body: { orderId: string; amount: number },
+  ) {
+    return this.paymentsService.createSepayPayment(
+      body.orderId,
+      body.amount,
+    );
+  }
+
+  @Post('sepay/webhook')
+  async sepayWebhook(@Body() body: any, @Req() req: Request) {
+    const authHeader = req.headers['authorization'];
+    return this.paymentsService.handleSepayWebhook(body, authHeader);
+  }
 }
