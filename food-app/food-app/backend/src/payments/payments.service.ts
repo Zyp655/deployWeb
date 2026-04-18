@@ -135,7 +135,7 @@ export class PaymentsService {
       // Payment success
       await this.prisma.order.update({
         where: { id: orderId },
-        data: { status: 'CONFIRMED' },
+        data: { status: 'PREPARING' },
       });
       return { success: true, message: 'Thanh toán thành công' };
     } else {
@@ -166,7 +166,7 @@ export class PaymentsService {
       if (responseCode === '00') {
         await this.prisma.order.update({
           where: { id: orderId },
-          data: { status: 'CONFIRMED' },
+          data: { status: 'PREPARING' },
         });
         return { success: true, message: 'Thanh toán thành công' };
       } else {
@@ -235,7 +235,7 @@ export class PaymentsService {
 
     await this.prisma.order.update({
       where: { id: matchedOrder.id },
-      data: { status: 'CONFIRMED' },
+      data: { status: 'PREPARING' },
     });
 
     return { success: true, message: 'Xác nhận thanh toán thành công' };

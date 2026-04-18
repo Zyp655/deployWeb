@@ -12,7 +12,6 @@ const formatPrice = (price: number) =>
 const STATUS_TABS = [
   { id: 'ALL', label: 'Tất cả', icon: '📋' },
   { id: 'PENDING', label: 'Chờ xác nhận', icon: '⏳' },
-  { id: 'CONFIRMED', label: 'Đã xác nhận', icon: '✅' },
   { id: 'PREPARING', label: 'Đang nấu', icon: '👨‍🍳' },
   { id: 'DELIVERING', label: 'Đang giao', icon: '🛵' },
   { id: 'DELIVERED', label: 'Đã giao', icon: '🎉' },
@@ -21,7 +20,6 @@ const STATUS_TABS = [
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: string }> = {
   PENDING: { label: 'Chờ xác nhận', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: '⏳' },
-  CONFIRMED: { label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: '✅' },
   PREPARING: { label: 'Đang chuẩn bị', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: '👨‍🍳' },
   PREPARED: { label: 'Chờ tài xế', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', icon: '📦' },
   PICKING_UP: { label: 'Lấy hàng', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: '🏃' },

@@ -4,10 +4,9 @@ import { useAuthStore } from '@/store/auth';
 import { fetchAdminOrders, updateOrderStatus, Order } from '@/lib/api/client';
 import { useEffect, useState } from 'react';
 
-const STATUSES = ['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'DELIVERED', 'CANCELLED'];
+const STATUSES = ['PENDING', 'PREPARING', 'DELIVERING', 'DELIVERED', 'CANCELLED'];
 const STATUS_STYLE: Record<string, { label: string; bg: string; text: string }> = {
-  PENDING: { label: 'Chờ xử lý', bg: 'bg-amber-500/10', text: 'text-amber-600' },
-  CONFIRMED: { label: 'Đã xác nhận', bg: 'bg-blue-500/10', text: 'text-blue-600' },
+  PENDING: { label: 'Chờ xác nhận', bg: 'bg-amber-500/10', text: 'text-amber-600' },
   PREPARING: { label: 'Đang nấu', bg: 'bg-indigo-500/10', text: 'text-indigo-600' },
   DELIVERING: { label: 'Đang giao', bg: 'bg-violet-500/10', text: 'text-violet-600' },
   DELIVERED: { label: 'Thành công', bg: 'bg-emerald-500/10', text: 'text-emerald-600' },

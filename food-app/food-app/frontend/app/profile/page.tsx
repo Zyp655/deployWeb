@@ -13,7 +13,6 @@ const formatPrice = (price: number) =>
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-700' },
-  CONFIRMED: { label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-700' },
   PREPARING: { label: 'Đang chuẩn bị', color: 'bg-indigo-100 text-indigo-700' },
   DELIVERING: { label: 'Đang giao', color: 'bg-purple-100 text-purple-700' },
   DELIVERED: { label: 'Đã giao', color: 'bg-green-100 text-green-700' },

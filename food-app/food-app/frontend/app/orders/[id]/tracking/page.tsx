@@ -179,8 +179,7 @@ export default function TrackingPage() {
 
 function formatStatus(status: string) {
   const map: Record<string, string> = {
-    PENDING: 'Chờ xử lý',
-    CONFIRMED: 'Quán đã nhận',
+    PENDING: 'Chờ xác nhận',
     PREPARING: 'Đang nấu',
     PREPARED: 'Chờ tài xế lấy',
     DELIVERING: 'Tài xế đang giao',

@@ -8,8 +8,7 @@ import { useNotificationStore } from '@/store/notifications';
 const WS_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 const STATUS_MAP: Record<string, { label: string; icon: string }> = {
-  PENDING: { label: 'Chờ xử lý', icon: '⏳' },
-  CONFIRMED: { label: 'Đã xác nhận', icon: '✅' },
+  PENDING: { label: 'Chờ xác nhận', icon: '⏳' },
   PREPARING: { label: 'Đang chuẩn bị', icon: '🍳' },
   PREPARED: { label: 'Sẵn sàng giao', icon: '📦' },
   PICKING_UP: { label: 'Tài xế đang lấy hàng', icon: '🏃' },

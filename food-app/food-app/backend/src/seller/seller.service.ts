@@ -368,7 +368,6 @@ export class SellerService {
   private validateStatusTransition(currentStatus: OrderStatus, newStatus: OrderStatus) {
     const flow: OrderStatus[] = [
       OrderStatus.PENDING,
-      OrderStatus.CONFIRMED,
       OrderStatus.PREPARING,
       OrderStatus.PREPARED,
       OrderStatus.PICKING_UP,

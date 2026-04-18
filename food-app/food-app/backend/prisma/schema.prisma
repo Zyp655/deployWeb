@@ -138,6 +138,8 @@ model Order {
   paymentMethod   String?     @default("COD") @map("payment_method")
   scheduledAt     DateTime?   @map("scheduled_at")
   isScheduled     Boolean     @default(false) @map("is_scheduled")
+  refundStatus    RefundStatus @default(NONE) @map("refund_status")
+  refundedAt      DateTime?   @map("refunded_at")
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
 
@@ -161,6 +163,12 @@ enum OrderStatus {
   DELIVERING
   DELIVERED
   CANCELLED
+}
+
+enum RefundStatus {
+  NONE
+  PENDING
+  COMPLETED
 }
 
 model OrderItem {

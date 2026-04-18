@@ -19,7 +19,6 @@ const formatPrice = (price: number) =>
 
 const STEPS = [
   { id: 'PENDING', label: 'Chờ nhận', icon: '⏳' },
-  { id: 'CONFIRMED', label: 'Đã nhận', icon: '✅' },
   { id: 'PREPARING', label: 'Đang nấu', icon: '👨‍🍳' },
   { id: 'PREPARED', label: 'Chờ tài xế', icon: '📦' },
   { id: 'PICKING_UP', label: 'Lấy hàng', icon: '🏃' },
@@ -375,7 +374,7 @@ export default function OrderDetailPage() {
             </button>
           )}
 
-          {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
+          {order.status === 'PENDING' && (
             <button
               onClick={() => setShowCancelModal(true)}
               className="flex-1 rounded-xl border-2 border-red-200 bg-red-50 py-3 text-center text-sm font-bold text-red-600 transition-colors hover:bg-red-100 hover:border-red-300"

@@ -428,9 +428,9 @@ export class OrdersService {
       throw new NotFoundException('Không tìm thấy đơn hàng');
     }
 
-    if (order.status !== 'PENDING' && order.status !== 'CONFIRMED') {
+    if (order.status !== 'PENDING') {
       throw new BadRequestException(
-        'Chỉ có thể huỷ đơn hàng ở trạng thái Chờ xác nhận hoặc Đã xác nhận',
+        'Chỉ có thể huỷ đơn hàng ở trạng thái Chờ xác nhận',
       );
     }
 
