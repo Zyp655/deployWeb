@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import { createOrder, createMoMoPayment, createVNPayPayment, createSepayPayment, fetchActiveCoupons, CouponPublic, fetchStoreById } from '@/lib/api/client';
 import dynamic from 'next/dynamic';
 
-const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false, loading: () => <div className="h-[300px] w-full bg-gray-100 rounded-2xl animate-pulse flex items-center justify-center text-gray-400">Đang tải bản đồ...</div> });
+const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
 
 const GOONG_API_KEY = process.env.NEXT_PUBLIC_GOONG_API_KEY || '';
 
