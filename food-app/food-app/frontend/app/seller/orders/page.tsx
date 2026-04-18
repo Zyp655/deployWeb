@@ -18,8 +18,7 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = 
 };
 
 const NEXT_STATUS: Record<string, string> = {
-  PENDING: 'CONFIRMED',
-  CONFIRMED: 'PREPARING',
+  PENDING: 'PREPARING',
   PREPARING: 'PREPARED',
 };
 
