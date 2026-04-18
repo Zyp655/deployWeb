@@ -137,14 +137,19 @@ export default function SellerOrdersPage() {
                 </div>
 
                 {(nextSt || order.status === 'PENDING') && (
-                  <div className="mt-4 flex gap-2">
-                    {nextSt && (
+                  <div className="mt-4 flex gap-2 items-center">
+                    {nextSt && !(order.status === 'PENDING' && ['SEPAY', 'MOMO', 'VNPAY'].includes(order.paymentMethod)) && (
                       <button
                         onClick={() => handleStatusChange(order.id, nextSt)}
                         className="ds-gradient-cta px-4 py-2 text-xs"
                       >
                         ✅ {STATUS_MAP[nextSt]?.label || nextSt}
                       </button>
+                    )}
+                    {order.status === 'PENDING' && ['SEPAY', 'MOMO', 'VNPAY'].includes(order.paymentMethod) && (
+                      <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full border-2 border-amber-500 border-t-transparent animate-spin"/> Đợi khách thanh toán
+                      </span>
                     )}
                     {order.status === 'PENDING' && (
                       <button

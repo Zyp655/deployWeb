@@ -357,12 +357,21 @@ export default function OrderDetailPage() {
 
         {/* Actions */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          {order.status === 'PENDING' && ['SEPAY', 'MOMO', 'VNPAY'].includes(order.paymentMethod) && (
+            <button
+              onClick={() => router.push(`/payment/${order.paymentMethod.toLowerCase()}/${order.id}`)}
+              className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 py-3 text-center text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:brightness-110 active:scale-95"
+            >
+              💳 Thanh toán lại
+            </button>
+          )}
+
           {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
             <button
               onClick={() => setShowCancelModal(true)}
               className="flex-1 rounded-xl border-2 border-red-200 bg-red-50 py-3 text-center text-sm font-bold text-red-600 transition-colors hover:bg-red-100 hover:border-red-300"
             >
-              🚫 Huỷ đơn hàng
+              🚫 Huỷ đơn
             </button>
           )}
 
