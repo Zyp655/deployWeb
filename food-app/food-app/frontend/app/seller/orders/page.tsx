@@ -137,8 +137,8 @@ export default function SellerOrdersPage() {
                 </div>
 
                 {(nextSt || order.status === 'PENDING') && (
-                  <div className="mt-4 flex gap-2 items-center">
-                    {nextSt && !(order.status === 'PENDING' && order.paymentMethod === 'SEPAY') && (
+                  <div className="mt-4 flex gap-2 items-center flex-wrap">
+                    {nextSt && (
                       <button
                         onClick={() => handleStatusChange(order.id, nextSt)}
                         className="ds-gradient-cta px-4 py-2 text-xs"
@@ -147,8 +147,8 @@ export default function SellerOrdersPage() {
                       </button>
                     )}
                     {order.status === 'PENDING' && order.paymentMethod === 'SEPAY' && (
-                      <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full border-2 border-amber-500 border-t-transparent animate-spin"/> Đợi khách thanh toán
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                        🏦 Chuyển khoản VietQR
                       </span>
                     )}
                     {order.status === 'PENDING' && (
