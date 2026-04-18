@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { AuthUser } from '@/lib/api/client';
 
 interface AuthStore {
@@ -15,21 +16,33 @@ interface AuthStore {
   setAuthModalMode: (mode: 'login' | 'register') => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  user: null,
-  token: null,
-  isAuthModalOpen: false,
-  authModalMode: 'login',
-  isAdmin: false,
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isAuthModalOpen: false,
+      authModalMode: 'login',
+      isAdmin: false,
 
-  setAuth: (user, token) => set({ user, token, isAuthModalOpen: false, isAdmin: user.role === 'ADMIN' }),
+      setAuth: (user, token) => set({ user, token, isAuthModalOpen: false, isAdmin: user.role === 'ADMIN' }),
 
-  logout: () => set({ user: null, token: null, isAdmin: false }),
+      logout: () => set({ user: null, token: null, isAdmin: false }),
 
-  openAuthModal: (mode = 'login') =>
-    set({ isAuthModalOpen: true, authModalMode: mode }),
+      openAuthModal: (mode = 'login') =>
+        set({ isAuthModalOpen: true, authModalMode: mode }),
 
-  closeAuthModal: () => set({ isAuthModalOpen: false }),
+      closeAuthModal: () => set({ isAuthModalOpen: false }),
 
-  setAuthModalMode: (mode) => set({ authModalMode: mode }),
-}));
+      setAuthModalMode: (mode) => set({ authModalMode: mode }),
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAdmin: state.isAdmin,
+      }),
+    }
+  )
+);
