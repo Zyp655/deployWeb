@@ -30,6 +30,7 @@ model User {
   receivedMessages ChatMessage[]  @relation("ReceivedMessages")
   partnerRequests  PartnerRequest[]
   addresses        UserAddress[]
+  wallet           Wallet?
 
   @@map("users")
 }
@@ -365,4 +366,63 @@ model PasswordReset {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("password_resets")
+}
+
+model Wallet {
+  id               String               @id @default(uuid())
+  userId           String               @unique @map("user_id")
+  balance          Float                @default(0)
+  bankName         String?              @map("bank_name")
+  accountNumber    String?              @map("account_number")
+  accountHostName  String?              @map("account_host_name")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+
+  user             User                 @relation(fields: [userId], references: [id])
+  transactions     WalletTransaction[]
+  withdrawals      WithdrawalRequest[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id              String                @id @default(uuid())
+  walletId        String                @map("wallet_id")
+  amount          Float
+  type            WalletTransactionType
+  referenceId     String?               @map("reference_id")
+  description     String?
+  createdAt       DateTime              @default(now()) @map("created_at")
+
+  wallet          Wallet                @relation(fields: [walletId], references: [id])
+
+  @@map("wallet_transactions")
+}
+
+model WithdrawalRequest {
+  id              String             @id @default(uuid())
+  walletId        String             @map("wallet_id")
+  amount          Float
+  status          WithdrawalStatus   @default(PENDING)
+  adminNote       String?            @map("admin_note")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  wallet          Wallet             @relation(fields: [walletId], references: [id])
+
+  @@map("withdrawal_requests")
+}
+
+enum WalletTransactionType {
+  EARNING
+  COMMISSION
+  DEDUCTION
+  WITHDRAWAL
+  DEPOSIT
+}
+
+enum WithdrawalStatus {
+  PENDING
+  COMPLETED
+  REJECTED
 }

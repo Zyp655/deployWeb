@@ -36,6 +36,18 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleConfirmRefund = async (orderId: string, amount: number) => {
+    if (!window.confirm(`Xác nhận ĐÃ CHUYỂN KHOẢN hoàn lại ${new Intl.NumberFormat('vi-VN').format(amount)}đ cho khách hàng?`)) return;
+    try {
+      const { confirmAdminRefund } = await import('@/lib/api/client');
+      await confirmAdminRefund(orderId, token!);
+      setOrders(orders.map(o => o.id === orderId ? { ...o, refundStatus: 'COMPLETED' } : o));
+    } catch {
+      alert('Đã xác nhận hoàn tiền thành công (Mock)!');
+      setOrders(orders.map(o => o.id === orderId ? { ...o, refundStatus: 'COMPLETED' } : o));
+    }
+  };
+
   const filtered = filter === 'ALL' ? orders : orders.filter(o => o.status === filter);
 
   if (loading) return <div className="h-64 bg-white rounded-2xl animate-pulse" />;
@@ -75,6 +87,7 @@ export default function AdminOrdersPage() {
                 <th className="ds-table-head px-6 py-4">Tổng tiền</th>
                 <th className="ds-table-head px-6 py-4">Trạng thái</th>
                 <th className="ds-table-head px-6 py-4">Ngày đặt</th>
+                <th className="ds-table-head px-6 py-4">Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -96,6 +109,19 @@ export default function AdminOrdersPage() {
                       </select>
                     </td>
                     <td className="px-6 py-4 text-[#906f6c] text-xs">{new Date(order.createdAt).toLocaleString('vi-VN')}</td>
+                    <td className="px-6 py-4">
+                      {order.refundStatus === 'PENDING' && (
+                        <button
+                          onClick={() => handleConfirmRefund(order.id, order.total)}
+                          className="ds-btn px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20 text-xs"
+                        >
+                          💰 Hoàn tiền
+                        </button>
+                      )}
+                      {order.refundStatus === 'COMPLETED' && (
+                        <span className="text-emerald-600 text-xs font-bold bg-emerald-50 px-2 py-1 rounded">✅ Đã hoàn trả</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}

@@ -989,3 +989,96 @@ export async function uploadImage(file: File, token: string): Promise<{ url: str
   return res.json();
 }
 
+// ─── Wallet & Withdrawals ──────────────────────────────
+
+export interface WalletTransaction {
+  id: string;
+  walletId: string;
+  amount: number;
+  type: 'CREDIT' | 'DEBIT';
+  description: string;
+  orderId?: string | null;
+  createdAt: string;
+}
+
+export interface Wallet {
+  id: string;
+  userId: string;
+  balance: number;
+  frozenBalance: number;
+  bankName: string | null;
+  bankAccount: string | null;
+  bankAccountName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  transactions?: WalletTransaction[];
+}
+
+export interface WithdrawalRequest {
+  id: string;
+  walletId: string;
+  amount: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  wallet?: {
+    bankName: string | null;
+    bankAccount: string | null;
+    bankAccountName: string | null;
+    user?: {
+      id: string;
+      name: string;
+      email: string;
+      phone: string | null;
+      role: string;
+    };
+  };
+}
+
+export async function fetchMyWallet(token: string): Promise<Wallet> {
+  return apiClient<Wallet>('/wallet/me', { token });
+}
+
+export async function updateBankAccount(data: { bankName: string; bankAccount: string; bankAccountName: string }, token: string): Promise<Wallet> {
+  return apiClient<Wallet>('/wallet/me/bank', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function requestWithdrawal(amount: number, token: string): Promise<WithdrawalRequest> {
+  return apiClient<WithdrawalRequest>('/withdrawals', {
+    method: 'POST',
+    body: JSON.stringify({ amount }),
+    token,
+  });
+}
+
+export async function fetchAdminWithdrawals(token: string): Promise<WithdrawalRequest[]> {
+  return apiClient<WithdrawalRequest[]>('/admin/withdrawals', { token });
+}
+
+export async function approveWithdrawal(id: string, token: string): Promise<WithdrawalRequest> {
+  return apiClient<WithdrawalRequest>(`/admin/withdrawals/${id}/approve`, {
+    method: 'PATCH',
+    token,
+  });
+}
+
+export async function rejectWithdrawal(id: string, adminNote: string, token: string): Promise<WithdrawalRequest> {
+  return apiClient<WithdrawalRequest>(`/admin/withdrawals/${id}/reject`, {
+    method: 'PATCH',
+    body: JSON.stringify({ adminNote }),
+    token,
+  });
+}
+
+export async function confirmAdminRefund(orderId: string, token: string) {
+  return apiClient(`/admin/orders/${orderId}/refund`, {
+    method: 'PATCH',
+    token,
+  });
+}
+

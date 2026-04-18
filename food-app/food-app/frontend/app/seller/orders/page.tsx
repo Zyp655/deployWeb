@@ -57,15 +57,7 @@ export default function SellerOrdersPage() {
     } catch (err) { console.error(err); alert('Có lỗi xảy ra'); }
   };
 
-  const handleConfirmRefund = async (orderId: string) => {
-    if (!token) return;
-    if (!window.confirm('Xác nhận bạn đã chuyển khoản hoàn tiền cho khách hàng?')) return;
-    try {
-      const { confirmSellerRefund } = await import('@/lib/api/client');
-      await confirmSellerRefund(orderId, token);
-      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, refundStatus: 'COMPLETED', refundedAt: new Date().toISOString() } : o)));
-    } catch (err) { console.error(err); alert('Có lỗi xảy ra'); }
-  };
+
 
   const pendingRefundCount = orders.filter((o) => (o as any).refundStatus === 'PENDING').length;
   const filtered = filter === 'ALL'
@@ -192,14 +184,7 @@ export default function SellerOrdersPage() {
                       ❌ Từ chối
                     </button>
                   )}
-                  {refundStatus === 'PENDING' && (
-                    <button
-                      onClick={() => handleConfirmRefund(order.id)}
-                      className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-amber-600 active:scale-95 flex items-center gap-1.5"
-                    >
-                      💰 Xác nhận đã hoàn tiền ({formatPrice(order.total)})
-                    </button>
-                  )}
+
                 </div>
               </div>
             );

@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: '/driver/orders', label: 'Đơn mới', icon: '🔔' },
   { href: '/driver/my-orders', label: 'Lịch sử', icon: '📋' },
   { href: '/driver/earnings', label: 'Thu nhập', icon: '💰' },
+  { href: '/driver/wallet', label: 'Ví của tôi', icon: '💳' },
   { href: '/driver/settings', label: 'Tài khoản', icon: '⚙️' },
 ];
 

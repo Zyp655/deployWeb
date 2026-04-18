@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { OrdersGateway } from '../gateway/orders.gateway';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, WalletTransactionType } from '@prisma/client';
 import { calculateDistance } from '../utils/geo';
 
 @Injectable()
@@ -130,6 +130,12 @@ export class DriverService {
       throw new BadRequestException('Đơn hàng này đã được nhận hoặc không ở trạng thái chờ tài xế');
     }
 
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId: driverId } });
+    const maxDebt = process.env.MAX_DRIVER_DEBT ? parseFloat(process.env.MAX_DRIVER_DEBT) : -200000;
+    if (wallet && wallet.balance < maxDebt) {
+      throw new BadRequestException('Số dư ví âm quá giới hạn, vui lòng nạp thêm tiền để nhận đơn');
+    }
+
     const updated = await this.prisma.order.update({
       where: { id: orderId },
       data: {
@@ -188,6 +194,7 @@ export class DriverService {
   async completeOrder(driverId: string, orderId: string) {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, driverId },
+      include: { store: true },
     });
 
     if (!order) throw new NotFoundException('Đơn hàng không tồn tại hoặc bạn không phải người nhận đơn này');
@@ -195,11 +202,32 @@ export class DriverService {
       throw new BadRequestException('Chỉ có thể hoàn thành đơn đang giao');
     }
 
-    const { baseFee, bonus } = this.calculateDriverFee(order.shippingFee);
-    const totalFee = baseFee + bonus;
+    const sellerRate = process.env.SELLER_RATE ? parseFloat(process.env.SELLER_RATE) : 0.90;
+    const driverRate = process.env.DRIVER_RATE ? parseFloat(process.env.DRIVER_RATE) : 0.80;
 
-    const [updated] = await this.prisma.$transaction([
-      this.prisma.order.update({
+    const totalFoodAmount = order.total - order.shippingFee;
+    const sellerShare = totalFoodAmount * sellerRate;
+
+    const baseFee = order.shippingFee * driverRate;
+    const bonus = this.isPeakHour() ? Math.round(baseFee * 0.2) : 0;
+    const driverShare = baseFee + bonus;
+
+    let driverAmount = 0;
+    let driverTxType: WalletTransactionType | any;
+    let driverDesc = '';
+
+    if (order.paymentMethod === 'COD') {
+      driverAmount = -(order.total - driverShare);
+      driverTxType = 'DEDUCTION';
+      driverDesc = `Thu tiền hộ đơn COD #${orderId} (đã trừ phí giao của tài xế)`;
+    } else {
+      driverAmount = driverShare;
+      driverTxType = 'EARNING';
+      driverDesc = `Cộng phí giao đơn thẻ #${orderId}`;
+    }
+
+    const [updated] = await this.prisma.$transaction(async (tx) => {
+      const o = await tx.order.update({
         where: { id: orderId },
         data: {
           status: OrderStatus.DELIVERED,
@@ -207,25 +235,65 @@ export class DriverService {
             create: { status: OrderStatus.DELIVERED, note: 'Tài xế đã giao hàng thành công' },
           },
         },
-      }),
-      this.prisma.driverEarning.create({
+      });
+
+      await tx.driverEarning.create({
         data: {
           driverId,
           orderId,
           baseFee,
           bonus,
           tip: 0,
-          totalFee,
+          totalFee: driverShare,
         },
-      }),
-      this.prisma.driverProfile.update({
+      });
+
+      await tx.driverProfile.update({
         where: { userId: driverId },
         data: {
           totalDeliveries: { increment: 1 },
-          totalEarnings: { increment: totalFee },
+          totalEarnings: { increment: driverShare },
         },
-      }),
-    ]);
+      });
+
+      // 1. Upsert Driver Wallet
+      const driverWallet = await tx.wallet.upsert({
+        where: { userId: driverId },
+        update: { balance: { increment: driverAmount } },
+        create: { userId: driverId, balance: driverAmount },
+      });
+
+      await tx.walletTransaction.create({
+        data: {
+          walletId: driverWallet.id,
+          amount: driverAmount,
+          type: driverTxType as any,
+          referenceId: orderId,
+          description: driverDesc,
+        },
+      });
+
+      // 2. Upsert Seller Wallet (Seller always gets their share positively)
+      if (order.store?.ownerId) {
+         const sellerWallet = await tx.wallet.upsert({
+           where: { userId: order.store.ownerId },
+           update: { balance: { increment: sellerShare } },
+           create: { userId: order.store.ownerId, balance: sellerShare },
+         });
+
+         await tx.walletTransaction.create({
+           data: {
+             walletId: sellerWallet.id,
+             amount: sellerShare,
+             type: 'EARNING',
+             referenceId: orderId,
+             description: `Doanh thu đơn hàng #${orderId}`,
+           },
+         });
+      }
+
+      return [o];
+    });
 
     this.gateway.emitOrderStatusUpdate(order.userId, order.id, OrderStatus.DELIVERED, 'Giao hàng thành công');
 
@@ -404,12 +472,26 @@ export class DriverService {
           },
         },
       },
-      include: { user: { select: { id: true, name: true, phone: true } } },
+      include: { 
+        user: { 
+          select: { id: true, name: true, phone: true, wallet: true }
+        } 
+      },
     });
 
     if (onlineDrivers.length === 0) return null;
 
-    const driversWithDistance = onlineDrivers
+    const maxDebt = process.env.MAX_DRIVER_DEBT ? parseFloat(process.env.MAX_DRIVER_DEBT) : -200000;
+    
+    // Filter drivers that don't have too much debt
+    const eligibleDrivers = onlineDrivers.filter(d => {
+      if (!d.user.wallet) return true;
+      return d.user.wallet.balance >= maxDebt;
+    });
+
+    if (eligibleDrivers.length === 0) return null;
+
+    const driversWithDistance = eligibleDrivers
       .map(driver => ({
         ...driver,
         distance: calculateDistance(driver.currentLat!, driver.currentLng!, order.store!.lat!, order.store!.lng!),

@@ -244,9 +244,11 @@ export class PaymentsService {
 
     this.gateway.emitOrderStatusUpdate(matchedOrder.userId, matchedOrder.id, 'PREPARING');
 
-    const store = await this.prisma.store.findUnique({ where: { id: matchedOrder.storeId } });
-    if (store) {
-      this.gateway.emitOrderStatusUpdate(store.ownerId, matchedOrder.id, 'PREPARING', 'Khách đã thanh toán');
+    if (matchedOrder.storeId) {
+      const store = await this.prisma.store.findUnique({ where: { id: matchedOrder.storeId } });
+      if (store) {
+        this.gateway.emitOrderStatusUpdate(store.ownerId, matchedOrder.id, 'PREPARING', 'Khách đã thanh toán');
+      }
     }
 
     return { success: true, message: 'Xác nhận thanh toán thành công' };

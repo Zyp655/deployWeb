@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: '/admin/reviews', label: 'Đánh giá', icon: '⭐' },
   { href: '/admin/coupons', label: 'Khuyến mãi', icon: '🏷️' },
   { href: '/admin/partner-requests', label: 'Duyệt Đối tác', icon: '📝' },
+  { href: '/admin/withdrawals', label: 'Thanh toán & Rút tiền', icon: '💸' },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

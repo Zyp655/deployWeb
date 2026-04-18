@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: '/seller/products', label: 'Sản phẩm', icon: '🍔' },
   { href: '/seller/promotions', label: 'Khuyến mãi', icon: '🏷️' },
   { href: '/seller/reviews', label: 'Đánh giá', icon: '⭐' },
+  { href: '/seller/wallet', label: 'Ví của tôi', icon: '💳' },
 ];
 
 export default function SellerLayout({ children }: { children: ReactNode }) {
