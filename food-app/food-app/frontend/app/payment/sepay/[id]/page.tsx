@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { fetchOrderById, createSepayPayment } from '@/lib/api/client';
@@ -8,8 +8,8 @@ import { fetchOrderById, createSepayPayment } from '@/lib/api/client';
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
-export default function SepayPaymentPage({ params }: { params: Promise<{ id: string }> }) {
-  const unwrappedParams = use(params);
+export default function SepayPaymentPage({ params }: { params: { id: string } }) {
+  const unwrappedParams = params;
   const router = useRouter();
   const { user, token } = useAuthStore();
   

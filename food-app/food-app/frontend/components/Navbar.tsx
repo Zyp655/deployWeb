@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
@@ -15,6 +16,13 @@ export default function Navbar() {
   const openAuthModal = useAuthStore((state) => state.openAuthModal);
   const toggleNotifications = useNotificationStore((s) => s.togglePanel);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return <div className="sticky top-4 z-50 px-4"><nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 rounded-full glass-nav shadow-lg shadow-gray-200/50"></nav></div>;
+  }
 
   return (
     <div className="sticky top-4 z-50 px-4">
