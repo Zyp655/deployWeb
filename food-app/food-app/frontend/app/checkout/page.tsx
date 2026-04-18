@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
 import { createOrder, createMoMoPayment, createVNPayPayment, createSepayPayment, fetchActiveCoupons, CouponPublic, fetchStoreById } from '@/lib/api/client';
+import dynamic from 'next/dynamic';
+
+const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false, loading: () => <div className="h-[300px] w-full bg-gray-100 rounded-2xl animate-pulse flex items-center justify-center text-gray-400">Đang tải bản đồ...</div> });
 
 const GOONG_API_KEY = process.env.NEXT_PUBLIC_GOONG_API_KEY || '';
 
@@ -23,6 +26,8 @@ export default function CheckoutPage() {
   const { items, totalPrice, totalItems, clearCart } = useCartStore();
   const { user, token, openAuthModal } = useAuthStore();
 
+  const [mounted, setMounted] = useState(false);
+
   const [address, setAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [note, setNote] = useState('');
@@ -33,6 +38,7 @@ export default function CheckoutPage() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [eta, setEta] = useState<{ distance: string; duration: string; text: string } | null>(null);
   const [etaLoading, setEtaLoading] = useState(false);
+  const [loadingMap, setLoadingMap] = useState(false);
 
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
@@ -49,6 +55,11 @@ export default function CheckoutPage() {
   const [showCouponPicker, setShowCouponPicker] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     if (!user || !token) {
       openAuthModal('login');
     }
@@ -59,7 +70,7 @@ export default function CheckoutPage() {
         { enableHighAccuracy: true, timeout: 5000 }
       );
     }
-  }, [user, token, openAuthModal]);
+  }, [user, token, openAuthModal, mounted]);
 
   const isOrderPlaced = useRef(false);
 
@@ -134,6 +145,23 @@ export default function CheckoutPage() {
       return `Giảm ${c.discountValue}%${c.maxDiscount ? ` (tối đa ${formatPrice(c.maxDiscount)})` : ''}`;
     }
     return `Giảm ${formatPrice(c.discountValue)}`;
+  };
+
+  const geocodeAddress = async () => {
+    if (!address.trim()) return;
+    setLoadingMap(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', Việt Nam')}&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        setUserLocation({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+      } else {
+        alert('Không định vị được địa chỉ này trên bản đồ. Vui lòng di chuyển ghim đỏ thủ công.');
+      }
+    } catch (err) {
+      console.warn('Lỗi Geocoding:', err);
+    }
+    setLoadingMap(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -223,6 +251,7 @@ export default function CheckoutPage() {
     }
   };
 
+  if (!mounted) return null;
   if (items.length === 0) return null;
 
   return (
@@ -404,14 +433,38 @@ export default function CheckoutPage() {
           {/* Delivery Address */}
           <section className="rounded-2xl bg-white p-5 shadow-sm">
             <h2 className="text-lg font-bold text-gray-900 mb-3">📍 Địa chỉ giao hàng</h2>
-            <textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Số nhà, tên đường, phường/xã, quận/huyện, thành phố..."
-              required
-              rows={3}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-all resize-none mb-4"
-            />
+            <div className="relative mb-3">
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Số nhà, tên đường, phường/xã, quận/huyện, thành phố..."
+                required
+                rows={2}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-all resize-none"
+              />
+              <button
+                type="button"
+                onClick={geocodeAddress}
+                disabled={loadingMap || !address.trim()}
+                className="absolute bottom-3 right-3 bg-white border border-gray-200 shadow-sm text-primary font-bold text-xs px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center gap-1"
+              >
+                {loadingMap ? <span className="animate-spin w-3 h-3 border-2 border-primary border-t-transparent rounded-full" /> : '📍'} 
+                {loadingMap ? 'Đang tìm...' : 'Ghim Map'}
+              </button>
+            </div>
+            
+            {/* Map Picker */}
+            <div className="mb-4 relative rounded-2xl overflow-hidden ring-1 ring-black/5">
+              <MapPicker 
+                lat={userLocation?.lat} 
+                lng={userLocation?.lng} 
+                onLocationChange={(lat, lng) => setUserLocation({ lat, lng })}
+              />
+              <div className="absolute top-2 left-2 z-10 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] sm:text-xs font-semibold text-gray-600 shadow-sm border border-gray-200 pointer-events-none">
+                Bấm vào bản đồ để chọn vi trí chính xác
+              </div>
+            </div>
+
             {/* ETA Widget */}
             {(eta || etaLoading) && (
               <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4 flex items-center justify-between">
