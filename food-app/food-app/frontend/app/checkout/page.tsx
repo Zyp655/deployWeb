@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
-import { createOrder, createVNPayPayment, createSepayPayment, fetchActiveCoupons, CouponPublic, fetchStoreById } from '@/lib/api/client';
+import { createOrder, createSepayPayment, fetchActiveCoupons, CouponPublic, fetchStoreById } from '@/lib/api/client';
 import dynamic from 'next/dynamic';
 
 const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
@@ -17,7 +17,6 @@ const formatPrice = (price: number) =>
 const PAYMENT_METHODS = [
   { id: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: '💵' },
   { id: 'SEPAY', label: 'Chuyển khoản (VietQR)', icon: '🏦' },
-  { id: 'VNPAY', label: 'VNPay', icon: '🔴' },
 ];
 
 export default function CheckoutPage() {
@@ -213,19 +212,7 @@ export default function CheckoutPage() {
       isOrderPlaced.current = true;
       clearCart();
 
-      if (paymentMethod === 'VNPAY') {
-        const vnpayResult = await createVNPayPayment(
-          order.id,
-          couponResult ? couponResult.finalTotal : totalPrice(),
-          `Thanh toán đơn hàng ${order.id}`,
-          token,
-        );
-        if (vnpayResult.paymentUrl) {
-          window.location.href = vnpayResult.paymentUrl;
-          return;
-        }
-      } else if (paymentMethod === 'SEPAY') {
-        // Redirect to QR waiting room
+      if (paymentMethod === 'SEPAY') {
         router.push(`/payment/sepay/${order.id}`);
         return;
       }
