@@ -8,9 +8,8 @@ async function bootstrap() {
   // Global validation pipe — validate all incoming DTOs
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  // CORS — chỉ cho phép frontend origin
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: '*', // Allow all origins for production testing
   });
 
   const port = process.env.PORT || 4000;
