@@ -108,6 +108,10 @@ async function apiClient<T>(
   });
 
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('auth-storage');
+      window.dispatchEvent(new Event('storage'));
+    }
     const body = await res.json().catch(() => ({}));
     throw new Error(body.message || `API error: ${res.status} ${res.statusText}`);
   }
