@@ -339,7 +339,7 @@ export default function CustomerTrackingMap({
             {paymentMethod && (
               <>
                 <span className="text-gray-700">•</span>
-                <span>{paymentMethod === 'COD' ? '💵 COD' : paymentMethod === 'MOMO' ? '🟣 MoMo' : '🔴 VNPay'}</span>
+                <span>{paymentMethod === 'COD' ? '💵 COD' : paymentMethod === 'SEPAY' ? '🏦 VietQR' : '🔴 VNPay'}</span>
               </>
             )}
           </div>

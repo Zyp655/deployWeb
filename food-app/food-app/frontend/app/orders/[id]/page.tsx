@@ -318,7 +318,6 @@ export default function OrderDetailPage() {
             <h2 className="text-lg font-bold text-gray-900 mb-1">Phương thức thanh toán</h2>
             <p className="text-sm text-gray-600">
               {order.paymentMethod === 'COD' && '💵 Thanh toán khi nhận hàng (COD)'}
-              {order.paymentMethod === 'MOMO' && '🟣 Ví MoMo'}
               {order.paymentMethod === 'VNPAY' && '🔴 VNPay'}
               {order.paymentMethod === 'SEPAY' && '🏦 Chuyển khoản (VietQR)'}
             </p>
@@ -357,9 +356,9 @@ export default function OrderDetailPage() {
 
         {/* Actions */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          {order.status === 'PENDING' && ['SEPAY', 'MOMO', 'VNPAY'].includes(order.paymentMethod) && (
+          {order.status === 'PENDING' && order.paymentMethod && ['SEPAY', 'VNPAY'].includes(order.paymentMethod) && (
             <button
-              onClick={() => router.push(`/payment/${order.paymentMethod.toLowerCase()}/${order.id}`)}
+              onClick={() => router.push(`/payment/${order.paymentMethod?.toLowerCase() || ''}/${order.id}`)}
               className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 py-3 text-center text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:brightness-110 active:scale-95"
             >
               💳 Thanh toán lại
