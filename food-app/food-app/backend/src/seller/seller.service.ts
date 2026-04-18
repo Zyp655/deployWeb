@@ -452,11 +452,14 @@ export class SellerService {
       throw new BadRequestException('Chỉ có thể từ chối đơn hàng đang chờ xác nhận');
     }
 
+    const needsRefund = order.paymentMethod !== 'COD';
+
     const updated = await this.prisma.order.update({
       where: { id: orderId },
       data: { 
         status: OrderStatus.CANCELLED,
         rejectReason: reason,
+        refundStatus: needsRefund ? 'PENDING' : 'NONE',
         history: {
           create: { 
             status: OrderStatus.CANCELLED,
@@ -469,5 +472,24 @@ export class SellerService {
     this.gateway.emitOrderStatusUpdate(order.userId, order.id, OrderStatus.CANCELLED, reason);
 
     return updated;
+  }
+
+  async confirmRefund(userId: string, orderId: string) {
+    const store = await this.getStoreByOwner(userId);
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, storeId: store.id, status: OrderStatus.CANCELLED, refundStatus: 'PENDING' },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng cần hoàn tiền');
+    }
+
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        refundStatus: 'COMPLETED',
+        refundedAt: new Date(),
+      },
+    });
   }
 }

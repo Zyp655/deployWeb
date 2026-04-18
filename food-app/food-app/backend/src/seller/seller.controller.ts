@@ -92,4 +92,12 @@ export class SellerController {
   ) {
     return this.sellerService.rejectOrder(req.user.id, id, body.reason);
   }
+
+  @Patch('orders/:id/refund')
+  async confirmRefund(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return this.sellerService.confirmRefund(req.user.id, id);
+  }
 }

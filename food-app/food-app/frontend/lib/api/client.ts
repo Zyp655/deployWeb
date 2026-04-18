@@ -400,6 +400,8 @@ export interface Order {
   reviewComment?: string | null;
   scheduledAt?: string | null;
   isScheduled?: boolean;
+  refundStatus?: string;
+  refundedAt?: string | null;
   createdAt: string;
 }
 
@@ -674,6 +676,13 @@ export async function rejectSellerOrder(orderId: string, reason: string, token: 
   return apiClient(`/seller/orders/${orderId}/reject`, {
     method: 'PATCH',
     body: JSON.stringify({ reason }),
+    token,
+  });
+}
+
+export async function confirmSellerRefund(orderId: string, token: string) {
+  return apiClient(`/seller/orders/${orderId}/refund`, {
+    method: 'PATCH',
     token,
   });
 }

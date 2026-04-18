@@ -1,10 +1,14 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { OrdersGateway } from '../gateway/orders.gateway';
 import * as crypto from 'crypto';
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly gateway: OrdersGateway,
+  ) {}
 
   // MoMo Payment
   async createMoMoPayment(orderId: string, amount: number, orderInfo: string) {
@@ -237,6 +241,13 @@ export class PaymentsService {
       where: { id: matchedOrder.id },
       data: { status: 'PREPARING' },
     });
+
+    this.gateway.emitOrderStatusUpdate(matchedOrder.userId, matchedOrder.id, 'PREPARING');
+
+    const store = await this.prisma.store.findUnique({ where: { id: matchedOrder.storeId } });
+    if (store) {
+      this.gateway.emitOrderStatusUpdate(store.ownerId, matchedOrder.id, 'PREPARING', 'Khách đã thanh toán');
+    }
 
     return { success: true, message: 'Xác nhận thanh toán thành công' };
   }

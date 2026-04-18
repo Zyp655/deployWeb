@@ -208,6 +208,10 @@ export class OrdersService {
       },
     });
 
+    if (storeObj) {
+      this.gateway.emitOrderStatusUpdate(storeObj.ownerId, order.id, 'PENDING', 'Có đơn hàng mới!');
+    }
+
     return {
       id: order.id,
       status: order.status,
@@ -249,8 +253,11 @@ export class OrdersService {
       total: order.total,
       shippingFee: order.shippingFee,
       note: order.note,
+      paymentMethod: order.paymentMethod,
       scheduledAt: order.scheduledAt,
       isScheduled: order.isScheduled,
+      refundStatus: order.refundStatus,
+      refundedAt: order.refundedAt,
       items: order.items.map((item) => ({
         id: item.id,
         productId: item.productId,
@@ -263,7 +270,7 @@ export class OrdersService {
         product: item.product,
       })),
       createdAt: order.createdAt,
-    }));
+}));
   }
 
   async findById(orderId: string, userId: string) {
@@ -298,6 +305,8 @@ export class OrdersService {
       paymentMethod: order.paymentMethod,
       scheduledAt: order.scheduledAt,
       isScheduled: order.isScheduled,
+      refundStatus: order.refundStatus,
+      refundedAt: order.refundedAt,
       store: order.store,
       driver: order.driver,
       items: order.items.map((item) => ({
@@ -428,17 +437,20 @@ export class OrdersService {
       throw new NotFoundException('Không tìm thấy đơn hàng');
     }
 
-    if (order.status !== 'PENDING') {
+    if (order.status !== 'PENDING' && order.status !== 'CONFIRMED') {
       throw new BadRequestException(
-        'Chỉ có thể huỷ đơn hàng ở trạng thái Chờ xác nhận',
+        'Chỉ có thể huỷ đơn hàng ở trạng thái Chờ xác nhận hoặc Đã xác nhận',
       );
     }
+
+    const needsRefund = order.paymentMethod !== 'COD';
 
     const updatedOrder = await this.prisma.order.update({
       where: { id: orderId },
       data: {
         status: 'CANCELLED',
         rejectReason: reason || 'Khách hàng huỷ đơn',
+        refundStatus: needsRefund ? 'PENDING' : 'NONE',
       },
     });
 
@@ -457,7 +469,7 @@ export class OrdersService {
       });
     }
 
-    if (order.paymentMethod !== 'COD') {
+    if (needsRefund) {
       await this.prisma.transaction.updateMany({
         where: { orderId, status: 'SUCCESS' },
         data: { status: 'REFUNDED' },
@@ -469,8 +481,10 @@ export class OrdersService {
     return {
       id: updatedOrder.id,
       status: updatedOrder.status,
-      message: 'Đã huỷ đơn hàng thành công',
-      refunded: order.paymentMethod !== 'COD',
+      message: needsRefund
+        ? 'Đã huỷ đơn hàng. Seller sẽ hoàn tiền trong 1-3 ngày làm việc.'
+        : 'Đã huỷ đơn hàng thành công',
+      refunded: needsRefund,
     };
   }
 }
