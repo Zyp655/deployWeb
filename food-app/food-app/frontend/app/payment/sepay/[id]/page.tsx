@@ -18,6 +18,7 @@ export default function SepayPaymentPage({ params }: { params: Promise<{ id: str
   const [bankInfo, setBankInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
 
   // Fetch initial info
   useEffect(() => {
@@ -77,6 +78,23 @@ export default function SepayPaymentPage({ params }: { params: Promise<{ id: str
     return () => clearInterval(interval);
   }, [token, order, unwrappedParams.id, router]);
 
+  // Countdown timer
+  useEffect(() => {
+    if (timeLeft <= 0 || !qrUrl) return;
+    
+    const timerId = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+    
+    return () => clearInterval(timerId);
+  }, [timeLeft, qrUrl]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   if (!user || loading) {
      return (
        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -112,9 +130,15 @@ export default function SepayPaymentPage({ params }: { params: Promise<{ id: str
           
           <div className="p-8 pb-10">
              {qrUrl ? (
-                <div className="flex flex-col items-center">
-                   <div className="bg-white p-3 rounded-2xl shadow-md border border-gray-100 mb-6 relative w-64 h-64 flex items-center justify-center overflow-hidden">
-                      {/* Bỏ next/image thay bằng thẻ img để load QR external dễ hơn */}
+                timeLeft > 0 ? (
+                  <div className="flex flex-col items-center">
+                    <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-sm font-bold mb-4 flex items-center gap-2 border border-red-100">
+                      <span>⏳ Hết hạn trong:</span>
+                      <span className="font-mono text-base">{formatTime(timeLeft)}</span>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-2xl shadow-md border border-gray-100 mb-6 relative w-64 h-64 flex items-center justify-center overflow-hidden">
+                       {/* Bỏ next/image thay bằng thẻ img để load QR external dễ hơn */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img 
                         src={qrUrl} 
@@ -189,6 +213,21 @@ export default function SepayPaymentPage({ params }: { params: Promise<{ id: str
                       <span className="text-primary font-bold text-sm tracking-wide">Đang chờ thanh toán...</span>
                    </div>
                 </div>
+                ) : (
+                  <div className="flex flex-col items-center text-center py-6">
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-4xl mb-4">
+                      ⏱️
+                    </div>
+                    <h2 className="text-gray-900 font-bold text-xl mb-2">Mã QR đã hết hạn</h2>
+                    <p className="text-gray-500 text-sm mb-6">Xin lỗi, thời gian thanh toán cho đơn hàng này đã kết thúc. Vui lòng đặt lại đơn hàng mới.</p>
+                    <button 
+                      onClick={() => router.push(`/menu`)}
+                      className="bg-primary text-white font-bold py-3 px-6 rounded-xl w-full hover:brightness-110 active:scale-[0.98] transition-all"
+                    >
+                      Quay lại thực đơn
+                    </button>
+                  </div>
+                )
              ) : (
                 <div className="py-16 text-center">
                   <div className="w-10 h-10 rounded-full border-4 border-gray-200 border-t-primary animate-spin mx-auto mb-4" />

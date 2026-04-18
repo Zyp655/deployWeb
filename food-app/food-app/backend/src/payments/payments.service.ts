@@ -184,7 +184,7 @@ export class PaymentsService {
     
     const shortCode = orderId.substring(orderId.length - 8).toUpperCase();
     const content = `HOANG${shortCode}`;
-    const qrUrl = `https://qr.sepay.vn/img?acc=${accountNumber}&bank=${bankName}&amount=${amount}&des=${content}`;
+    const qrUrl = `https://img.vietqr.io/image/${bankName}-${accountNumber}-compact2.png?amount=${amount}&addInfo=${content}&accountName=HOANG%20FOOD`;
     
     return {
       success: true,
