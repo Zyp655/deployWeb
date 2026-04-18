@@ -144,6 +144,19 @@ export default function AuthModal() {
             </div>
           </div>
 
+          <div className="flex justify-end">
+             <Link
+                href="/forgot-password"
+                onClick={() => {
+                   closeAuthModal();
+                   resetForm();
+                }}
+                className="text-xs font-semibold text-primary hover:text-primary-600 transition-colors"
+             >
+                Quên mật khẩu?
+             </Link>
+          </div>
+
           <button
             type="submit"
             disabled={loading}

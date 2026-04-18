@@ -90,7 +90,7 @@ export default function StoreDetailPage() {
                 <div className="flex items-center gap-4 text-sm text-gray-200">
                   <div className="flex items-center gap-1.5">
                     <StarRating value={store.rating} readOnly size="sm" />
-                    <span className="font-bold text-white">{store.rating}</span>
+                    <span className="font-bold text-white">{store.rating > 0 ? store.rating.toFixed(1) : 'Mới'}</span>
                     <span className="text-white/60">({store.totalOrders}+ đơn)</span>
                   </div>
                   <span className="w-1 h-1 rounded-full bg-gray-400" />

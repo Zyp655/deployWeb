@@ -220,7 +220,7 @@ export default function HomePage() {
                   <div className="mt-auto pt-4 flex items-center gap-3">
                     <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
                       <StarRating value={store.rating} readOnly size="sm" />
-                      <span className="text-xs font-bold text-gray-700 ml-1">{store.rating > 0 ? store.rating : 'Mới'}</span>
+                      <span className="text-xs font-bold text-gray-700 ml-1">{store.rating > 0 ? store.rating.toFixed(1) : 'Mới'}</span>
                     </div>
                     <span className="text-xs font-medium text-gray-400">• {store.totalOrders} đơn</span>
                   </div>
