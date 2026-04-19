@@ -17,7 +17,7 @@ import { PrismaService } from '../prisma.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET', 'your-jwt-secret-here'),
-        signOptions: { expiresIn: '15m' },
+        signOptions: { expiresIn: '7d' },
       }),
     }),
   ],
