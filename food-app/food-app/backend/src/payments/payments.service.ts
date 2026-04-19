@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { OrdersGateway } from '../gateway/orders.gateway';
+import { WalletTransactionType } from '@prisma/client';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -9,6 +10,34 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly gateway: OrdersGateway,
   ) {}
+
+  private async creditSellerWallet(orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { store: true },
+    });
+    if (!order || !order.store?.ownerId) return;
+
+    const sellerRate = process.env.SELLER_RATE ? parseFloat(process.env.SELLER_RATE) : 0.90;
+    const totalFoodAmount = order.total - order.shippingFee + order.discount;
+    const sellerShare = Math.round(totalFoodAmount * sellerRate);
+
+    const sellerWallet = await this.prisma.wallet.upsert({
+      where: { userId: order.store.ownerId },
+      update: { balance: { increment: sellerShare } },
+      create: { userId: order.store.ownerId, balance: sellerShare },
+    });
+
+    await this.prisma.walletTransaction.create({
+      data: {
+        walletId: sellerWallet.id,
+        amount: sellerShare,
+        type: WalletTransactionType.EARNING,
+        referenceId: orderId,
+        description: `Doanh thu đơn hàng #${orderId.substring(orderId.length - 8).toUpperCase()}`,
+      },
+    });
+  }
 
   // MoMo Payment
   async createMoMoPayment(orderId: string, amount: number, orderInfo: string) {
@@ -132,15 +161,14 @@ export class PaymentsService {
   }
 
   async handleMoMoCallback(body: any) {
-    // Verify signature
     const { orderId, resultCode, message } = body;
     
     if (resultCode === 0) {
-      // Payment success
       await this.prisma.order.update({
         where: { id: orderId },
         data: { status: 'PREPARING' },
       });
+      await this.creditSellerWallet(orderId);
       return { success: true, message: 'Thanh toán thành công' };
     } else {
       return { success: false, message: message || 'Thanh toán thất bại' };
@@ -172,6 +200,7 @@ export class PaymentsService {
           where: { id: orderId },
           data: { status: 'PREPARING' },
         });
+        await this.creditSellerWallet(orderId);
         return { success: true, message: 'Thanh toán thành công' };
       } else {
         return { success: false, message: 'Thanh toán thất bại' };
@@ -241,6 +270,8 @@ export class PaymentsService {
       where: { id: matchedOrder.id },
       data: { status: 'PREPARING' },
     });
+
+    await this.creditSellerWallet(matchedOrder.id);
 
     this.gateway.emitOrderStatusUpdate(matchedOrder.userId, matchedOrder.id, 'PREPARING');
 

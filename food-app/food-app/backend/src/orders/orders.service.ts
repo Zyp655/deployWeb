@@ -437,13 +437,15 @@ export class OrdersService {
       throw new NotFoundException('Không tìm thấy đơn hàng');
     }
 
-    if (order.status !== 'PENDING' && order.status !== 'CONFIRMED') {
+    const cancellableStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'PREPARED'];
+    if (!cancellableStatuses.includes(order.status)) {
       throw new BadRequestException(
-        'Chỉ có thể huỷ đơn hàng ở trạng thái Chờ xác nhận hoặc Đã xác nhận',
+        'Không thể huỷ đơn hàng đang trong quá trình giao hàng',
       );
     }
 
-    const needsRefund = order.paymentMethod !== 'COD';
+    const isOnlinePaid = order.paymentMethod !== 'COD';
+    const needsRefund = isOnlinePaid && order.status !== 'PENDING';
 
     const updatedOrder = await this.prisma.order.update({
       where: { id: orderId },
@@ -476,13 +478,40 @@ export class OrdersService {
       });
     }
 
+    if (isOnlinePaid && order.status !== 'PENDING' && order.store?.ownerId) {
+      const sellerRate = process.env.SELLER_RATE ? parseFloat(process.env.SELLER_RATE) : 0.90;
+      const totalFoodAmount = order.total - order.shippingFee + order.discount;
+      const sellerShare = Math.round(totalFoodAmount * sellerRate);
+
+      const sellerWallet = await this.prisma.wallet.findUnique({
+        where: { userId: order.store.ownerId },
+      });
+
+      if (sellerWallet) {
+        await this.prisma.wallet.update({
+          where: { id: sellerWallet.id },
+          data: { balance: { decrement: sellerShare } },
+        });
+
+        await this.prisma.walletTransaction.create({
+          data: {
+            walletId: sellerWallet.id,
+            amount: -sellerShare,
+            type: 'DEDUCTION',
+            referenceId: orderId,
+            description: `Hoàn trừ đơn huỷ #${orderId.substring(orderId.length - 8).toUpperCase()}`,
+          },
+        });
+      }
+    }
+
     this.gateway.emitOrderStatusUpdate(userId, orderId, 'CANCELLED', reason || 'Khách hàng huỷ đơn');
 
     return {
       id: updatedOrder.id,
       status: updatedOrder.status,
       message: needsRefund
-        ? 'Đã huỷ đơn hàng. Seller sẽ hoàn tiền trong 1-3 ngày làm việc.'
+        ? 'Đã huỷ đơn hàng. Admin sẽ hoàn tiền trong 1-3 ngày làm việc.'
         : 'Đã huỷ đơn hàng thành công',
       refunded: needsRefund,
     };

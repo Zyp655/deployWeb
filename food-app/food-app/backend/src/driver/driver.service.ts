@@ -273,8 +273,8 @@ export class DriverService {
         },
       });
 
-      // 2. Upsert Seller Wallet (Seller always gets their share positively)
-      if (order.store?.ownerId) {
+      // Seller Wallet: chỉ cộng nếu COD (Online đã cộng lúc thanh toán)
+      if (order.paymentMethod === 'COD' && order.store?.ownerId) {
          const sellerWallet = await tx.wallet.upsert({
            where: { userId: order.store.ownerId },
            update: { balance: { increment: sellerShare } },
@@ -287,7 +287,7 @@ export class DriverService {
              amount: sellerShare,
              type: 'EARNING',
              referenceId: orderId,
-             description: `Doanh thu đơn hàng #${orderId}`,
+             description: `Doanh thu đơn COD #${orderId}`,
            },
          });
       }
