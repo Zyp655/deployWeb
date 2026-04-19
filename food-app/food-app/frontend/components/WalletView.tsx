@@ -162,25 +162,15 @@ export default function WalletView() {
                 >
                   <option value="" disabled>Chọn ngân hàng</option>
                   <option value="Vietcombank">Vietcombank</option>
-                  <option value="VietinBank">VietinBank</option>
-                  <option value="BIDV">BIDV</option>
-                  <option value="Agribank">Agribank</option>
+                  <option value="MBBank">MBBank</option>
                   <option value="Techcombank">Techcombank</option>
-                  <option value="MB Bank">MB Bank</option>
-                  <option value="VPBank">VPBank</option>
                   <option value="ACB">ACB</option>
-                  <option value="Sacombank">Sacombank</option>
-                  <option value="TPBank">TPBank</option>
+                  <option value="VPBank">VPBank</option>
                   <option value="VIB">VIB</option>
-                  <option value="HDBank">HDBank</option>
-                  <option value="SHB">SHB</option>
-                  <option value="SeABank">SeABank</option>
+                  <option value="Sacombank">Sacombank</option>
+                  <option value="VietinBank">VietinBank</option>
+                  <option value="TPBank">TPBank</option>
                   <option value="MSB">MSB</option>
-                  <option value="LPBank">LPBank</option>
-                  <option value="Nam A Bank">Nam A Bank</option>
-                  <option value="Timo">Timo</option>
-                  <option value="Cake">Cake by VPBank</option>
-                  <option value="TNEX">TNEX</option>
                 </select>
               </div>
               <div>
