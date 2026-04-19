@@ -19,39 +19,7 @@ export default function AdminWithdrawalsPage() {
       const data = await fetchAdminWithdrawals(token!);
       setRequests(data);
     } catch (err) {
-      // Mock data if backend not ready
-      setRequests([
-        {
-          id: 'w1',
-          walletId: 'mock-w-1',
-          amount: 500000,
-          status: 'PENDING',
-          adminNote: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          wallet: {
-            bankName: 'Vietcombank',
-            bankAccount: '0123456789',
-            bankAccountName: 'NGUYEN VAN A',
-            user: { id: 'u1', name: 'Seller Quán Cơm', email: 'seller@test.com', phone: '090123456', role: 'RESTAURANT' }
-          }
-        },
-        {
-          id: 'w2',
-          walletId: 'mock-w-2',
-          amount: 150000,
-          status: 'APPROVED',
-          adminNote: null,
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 86000000).toISOString(),
-          wallet: {
-            bankName: 'MB Bank',
-            bankAccount: '99998888',
-            bankAccountName: 'TRAN VAN B',
-            user: { id: 'u2', name: 'Tài xế B', email: 'driver@test.com', phone: '098877665', role: 'DRIVER' }
-          }
-        }
-      ]);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -64,9 +32,8 @@ export default function AdminWithdrawalsPage() {
       await approveWithdrawal(id, token!);
       alert('Đã phê duyệt thành công!');
       loadRequests();
-    } catch (err) {
-      alert('Đã phê duyệt thành công (Mock)!');
-      setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'APPROVED' } : r));
+    } catch (err: any) {
+      alert(err.message || 'Phê duyệt thất bại!');
     }
   };
 

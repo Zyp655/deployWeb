@@ -24,6 +24,7 @@ import { join } from 'path';
 import { UploadModule } from './upload/upload.module';
 import { ChatModule } from './chat/chat.module';
 import { PartnerRequestsModule } from './partner-requests/partner-requests.module';
+import { WalletModule } from './wallet/wallet.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { PartnerRequestsModule } from './partner-requests/partner-requests.modul
     UploadModule,
     ChatModule,
     PartnerRequestsModule,
+    WalletModule,
   ],
   providers: [
     {

@@ -34,29 +34,6 @@ export default function WalletView() {
       setBankAccountName(data.bankAccountName || '');
     } catch (err) {
       console.error(err);
-      // Fallback for mocked UI if backend isn't ready
-      const mockWallet: Wallet = {
-        id: 'mock-id',
-        userId: 'mock-user-id',
-        balance: 1500000,
-        frozenBalance: 200000,
-        bankName: '',
-        bankAccount: '',
-        bankAccountName: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        transactions: [
-          {
-            id: 't1',
-            walletId: 'mock-id',
-            amount: 50000,
-            type: 'CREDIT',
-            description: 'Doanh thu đơn hàng #ORDER-123',
-            createdAt: new Date().toISOString()
-          }
-        ]
-      };
-      setWallet(mockWallet);
     } finally {
       setLoading(false);
     }
@@ -71,9 +48,7 @@ export default function WalletView() {
       setWallet(updated);
       alert('Cập nhật thông tin ngân hàng thành công!');
     } catch (err: any) {
-      // Mock logic fallback
-      alert('Cập nhật thông tin ngân hàng thành công (Mock)!');
-      setWallet((prev) => prev ? { ...prev, bankName, bankAccount, bankAccountName } : null);
+      alert(err.message || 'Cập nhật thất bại!');
     } finally {
       setIsUpdatingBank(false);
     }
@@ -101,13 +76,7 @@ export default function WalletView() {
       setWithdrawAmount('');
       loadWallet(); // Reload to deduct balance
     } catch (err: any) {
-      alert('Đã gửi yêu cầu rút tiền thành công (Mock)! Yêu cầu đang chờ duyệt.');
-      setWithdrawAmount('');
-      setWallet((prev) => prev ? { 
-        ...prev, 
-        balance: prev.balance - amount, 
-        frozenBalance: prev.frozenBalance + amount 
-      } : null);
+      alert(err.message || 'Gửi yêu cầu rút tiền thất bại!');
     } finally {
       setIsWithdrawing(false);
     }

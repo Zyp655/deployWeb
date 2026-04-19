@@ -372,6 +372,7 @@ model Wallet {
   id               String               @id @default(uuid())
   userId           String               @unique @map("user_id")
   balance          Float                @default(0)
+  frozenBalance    Float                @default(0) @map("frozen_balance")
   bankName         String?              @map("bank_name")
   accountNumber    String?              @map("account_number")
   accountHostName  String?              @map("account_host_name")

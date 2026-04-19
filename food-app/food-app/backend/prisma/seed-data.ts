@@ -14,6 +14,21 @@ function daysAgo(n: number): Date {
 async function main() {
   console.log('🌱 Seeding dữ liệu trực quan cho Admin / Seller / Driver ...');
   const hash = await bcrypt.hash('123456', 10);
+  const adminHash = await bcrypt.hash('Admin@123', 10);
+
+  // ── Admin ──
+  await prisma.user.upsert({
+    where: { email: 'admin@foodapp.com' },
+    update: { password: adminHash, role: 'ADMIN' },
+    create: {
+      email: 'admin@foodapp.com',
+      name: 'System Admin',
+      password: adminHash,
+      role: 'ADMIN',
+      phone: '0900000000'
+    },
+  });
+  console.log('✅ 1 admin');
 
   // ── Customers ──
   const customerEmails = [
