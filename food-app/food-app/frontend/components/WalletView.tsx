@@ -153,15 +153,35 @@ export default function WalletView() {
             </h3>
             <form onSubmit={handleUpdateBank} className="grid grid-cols-1 md:grid-cols-2 gap-4 border-l-4 border-primary pl-4 bg-white">
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-[#5b403d] mb-1">Tên Ngân Hàng (VD: Vietcombank, MB Bank...)</label>
-                <input 
-                  type="text" 
+                <label className="block text-xs font-bold text-[#5b403d] mb-1">Ngân Hàng</label>
+                <select
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="ds-input bg-[#f8f6ff] w-full border border-[#efecff]" 
-                  placeholder="Nhập tên ngân hàng"
+                  className="ds-input bg-[#f8f6ff] w-full border border-[#efecff] text-[#1a1a2e]" 
                   required
-                />
+                >
+                  <option value="" disabled>Chọn ngân hàng</option>
+                  <option value="Vietcombank">Vietcombank</option>
+                  <option value="VietinBank">VietinBank</option>
+                  <option value="BIDV">BIDV</option>
+                  <option value="Agribank">Agribank</option>
+                  <option value="Techcombank">Techcombank</option>
+                  <option value="MB Bank">MB Bank</option>
+                  <option value="VPBank">VPBank</option>
+                  <option value="ACB">ACB</option>
+                  <option value="Sacombank">Sacombank</option>
+                  <option value="TPBank">TPBank</option>
+                  <option value="VIB">VIB</option>
+                  <option value="HDBank">HDBank</option>
+                  <option value="SHB">SHB</option>
+                  <option value="SeABank">SeABank</option>
+                  <option value="MSB">MSB</option>
+                  <option value="LPBank">LPBank</option>
+                  <option value="Nam A Bank">Nam A Bank</option>
+                  <option value="Timo">Timo</option>
+                  <option value="Cake">Cake by VPBank</option>
+                  <option value="TNEX">TNEX</option>
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-bold text-[#5b403d] mb-1">Số Tài Khoản</label>
