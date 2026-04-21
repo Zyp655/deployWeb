@@ -54,34 +54,34 @@ async function main() {
 
   // ── Sellers + Stores + Products ──
   const seller1 = await prisma.user.upsert({
-    where: { email: 'seller_hadong_1@test.com' },
+    where: { email: 'seller_ankhanh_1@test.com' },
     update: {},
-    create: { email: 'seller_hadong_1@test.com', name: 'Chủ Quán Phở', password: hash, role: 'RESTAURANT', phone: '0911111111' },
+    create: { email: 'seller_ankhanh_1@test.com', name: 'Chủ Quán Phở', password: hash, role: 'RESTAURANT', phone: '0911111111' },
   });
   const store1 = await prisma.store.upsert({
     where: { ownerId: seller1.id },
     update: { totalOrders: 45, rating: 4.8 },
     create: {
-      name: 'Quán Phở Bò Tái - Hà Đông', ownerId: seller1.id,
-      address: 'Đường Trần Phú, Cầu Trắng, Hà Đông, Hà Nội', phone: '0911111111',
-      description: 'Phở bò gia truyền ngon nhất khu vực Hà Đông',
-      lat: 20.9716, lng: 105.7725, rating: 4.8, totalOrders: 45,
+      name: 'Quán Phở Bò Tái - An Khánh', ownerId: seller1.id,
+      address: 'Chợ An Khánh, An Dương, Hải Phòng', phone: '0911111111',
+      description: 'Phở bò gia truyền ngon nhất khu vực An Khánh',
+      lat: 20.8710, lng: 106.6280, rating: 4.8, totalOrders: 45,
     },
   });
 
   const seller2 = await prisma.user.upsert({
-    where: { email: 'seller_hadong_2@test.com' },
+    where: { email: 'seller_ankhanh_2@test.com' },
     update: {},
-    create: { email: 'seller_hadong_2@test.com', name: 'Chủ Bún Chả', password: hash, role: 'RESTAURANT', phone: '0922222222' },
+    create: { email: 'seller_ankhanh_2@test.com', name: 'Chủ Bún Chả', password: hash, role: 'RESTAURANT', phone: '0922222222' },
   });
   const store2 = await prisma.store.upsert({
     where: { ownerId: seller2.id },
     update: { totalOrders: 32, rating: 4.5 },
     create: {
-      name: 'Bún Chả Văn Quán - Hà Đông', ownerId: seller2.id,
-      address: 'Khu Đô Thị Văn Quán, Hà Đông, Hà Nội', phone: '0922222222',
+      name: 'Bún Chả An Khánh - Hải Phòng', ownerId: seller2.id,
+      address: 'Đường liên xã An Khánh, An Dương, Hải Phòng', phone: '0922222222',
       description: 'Bún chả nướng than hoa thơm lừng',
-      lat: 20.9760, lng: 105.7790, rating: 4.5, totalOrders: 32,
+      lat: 20.8735, lng: 106.6320, rating: 4.5, totalOrders: 32,
     },
   });
   console.log('✅ 2 sellers + stores');
@@ -144,7 +144,7 @@ async function main() {
     create: {
       userId: driver1.id, vehicleType: 'MOTORBIKE', vehiclePlate: '29-B1 12345',
       idCardNumber: '001099012345', isOnline: true, isVerified: true,
-      currentLat: 20.9716, currentLng: 105.7725,
+      currentLat: 20.8710, currentLng: 106.6280,
       totalDeliveries: 38, totalEarnings: 1520000, averageRating: 4.9,
     },
   });
@@ -160,7 +160,7 @@ async function main() {
     create: {
       userId: driver2.id, vehicleType: 'MOTORBIKE', vehiclePlate: '30-H1 67890',
       idCardNumber: '001099067890', isOnline: true, isVerified: true,
-      currentLat: 20.9760, currentLng: 105.7790,
+      currentLat: 20.8735, currentLng: 106.6320,
       totalDeliveries: 22, totalEarnings: 880000, averageRating: 4.7,
     },
   });
@@ -190,11 +190,11 @@ async function main() {
   // ── Orders (30 đơn trong 14 ngày) ──
   const paymentMethods = ['COD', 'MOMO', 'VNPAY'];
   const addresses = [
-    'Số 10, Trần Phú, Hà Đông, Hà Nội',
-    'KĐT Văn Quán, Hà Đông, Hà Nội',
-    'Phố Lê Lợi, Hà Đông, Hà Nội',
-    'Ngõ 68 Quang Trung, Hà Đông, Hà Nội',
-    'Tòa HH Linh Đàm, Hoàng Mai, Hà Nội',
+    'Thôn 1, An Khánh, An Dương, Hải Phòng',
+    'Thôn 2, An Khánh, An Dương, Hải Phòng',
+    'Gần chợ An Khánh, An Dương, Hải Phòng',
+    'Đường liên xã, An Khánh, An Dương, Hải Phòng',
+    'Khu dân cư An Khánh, An Dương, Hải Phòng',
   ];
 
   const orderConfigs = [
@@ -266,8 +266,8 @@ async function main() {
         discount: 0,
         deliveryAddress: addresses[Math.floor(Math.random() * addresses.length)],
         deliveryPhone: customer.phone,
-        deliveryLat: 20.97 + (Math.random() - 0.5) * 0.02,
-        deliveryLng: 105.77 + (Math.random() - 0.5) * 0.02,
+        deliveryLat: 20.87 + (Math.random() - 0.5) * 0.02,
+        deliveryLng: 106.63 + (Math.random() - 0.5) * 0.02,
         paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
         storeRating,
         driverRating,
@@ -366,8 +366,8 @@ async function main() {
   console.log('────────────────────────────────────────');
   console.log('Tài khoản test (password: 123456):');
   console.log('  Admin:    admin@foodapp.com / Admin@123');
-  console.log('  Seller 1: seller_hadong_1@test.com');
-  console.log('  Seller 2: seller_hadong_2@test.com');
+  console.log('  Seller 1: seller_ankhanh_1@test.com');
+  console.log('  Seller 2: seller_ankhanh_2@test.com');
   console.log('  Driver 1: driver1@foodapp.com');
   console.log('  Driver 2: driver2@foodapp.com');
   console.log('  Customer: customer_a@test.com → customer_h@test.com');

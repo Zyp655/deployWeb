@@ -29,7 +29,7 @@ async function main() {
     'Gà Rán Xốt Hàn Quốc', 'Sushi Cá Hồi 88', 'Chè Ngon Cô Ba',
     'Bún Trộn Nam Bộ', 'Pizza Nhất Nướng'
   ];
-  const districts = ['Quận 1', 'Quận 3', 'Quận 5', 'Quận 10', 'Cầu Giấy', 'Hà Đông', 'Hoàn Kiếm'];
+  const districts = ['An Khánh', 'An Dương', 'Lê Chân', 'Ngô Quyền', 'Hải An', 'Kiến An', 'Đồ Sơn'];
 
   function getRandomName() {
     return `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${middleNames[Math.floor(Math.random() * middleNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
@@ -50,8 +50,8 @@ async function main() {
       create: { email, name, password: hash, role: 'RESTAURANT', phone },
     });
 
-    const lat = 20.90 + Math.random() * 0.15;
-    const lng = 105.70 + Math.random() * 0.15;
+    const lat = 20.87 + Math.random() * 0.02;
+    const lng = 106.62 + Math.random() * 0.02;
 
     const STORE_TAGS = ['Cơm', 'Bún/Phở', 'Cafe', 'Trà Sữa', 'Ăn Vặt', 'Đồ Âu', 'Sushi'];
     const randomTags = [STORE_TAGS[Math.floor(Math.random() * STORE_TAGS.length)], STORE_TAGS[Math.floor(Math.random() * STORE_TAGS.length)]];
@@ -137,8 +137,8 @@ async function main() {
         vehiclePlate: `29-H${Math.floor(Math.random() * 9)} ${Math.floor(1000 + Math.random() * 90000)}`,
         idCardNumber: `001${Math.floor(100000000 + Math.random() * 900000000)}`,
         isOnline: true, isVerified: true,
-        currentLat: 20.90 + Math.random() * 0.15,
-        currentLng: 105.70 + Math.random() * 0.15,
+        currentLat: 20.87 + Math.random() * 0.02,
+        currentLng: 106.62 + Math.random() * 0.02,
         totalDeliveries: Math.floor(Math.random() * 50),
         totalEarnings: Math.floor(Math.random() * 2000000),
         averageRating: 4.8,
@@ -183,9 +183,9 @@ async function main() {
           status: 'DELIVERED',
           total: total,
           shippingFee: shippingFee,
-          deliveryAddress: 'Đia chỉ ngẫu nhiên, HN',
-          deliveryLat: (store.lat || 20.90) + 0.01,
-          deliveryLng: (store.lng || 105.70) + 0.01,
+          deliveryAddress: 'Địa chỉ ngẫu nhiên, An Khánh, Hải Phòng',
+          deliveryLat: (store.lat || 20.87) + 0.01,
+          deliveryLng: (store.lng || 106.62) + 0.01,
           paymentMethod: 'COD',
           createdAt,
           items: {

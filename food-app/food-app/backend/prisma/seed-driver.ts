@@ -28,8 +28,8 @@ async function main() {
       idCardNumber: '001099012345',
       isOnline: true,
       isVerified: true,
-      currentLat: 20.9716,
-      currentLng: 105.7725,
+      currentLat: 20.8710,
+      currentLng: 106.6280,
     },
   });
 
@@ -57,8 +57,8 @@ async function main() {
       idCardNumber: '001099067890',
       isOnline: true,
       isVerified: true,
-      currentLat: 20.9760,
-      currentLng: 105.7790,
+      currentLat: 20.8735,
+      currentLng: 106.6320,
     },
   });
 
