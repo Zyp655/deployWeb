@@ -106,8 +106,8 @@ export default function TrackingPage() {
       <div className="flex-1 w-full bg-gray-200">
         <Map
           initialViewState={{
-            longitude: driverLocation?.lng || 105.8342, // Defaults to Hanoi
-            latitude: driverLocation?.lat || 21.0278,
+            longitude: driverLocation?.lng || 106.6280, // Defaults to An Khanh, Hai Phong
+            latitude: driverLocation?.lat || 20.8710,
             zoom: 15
           }}
           style={{ width: '100%', height: '100%' }}

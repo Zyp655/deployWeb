@@ -3,10 +3,10 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-const HA_DONG_COORDS = [
-  { lat: 20.9716, lng: 105.7725 }, // Gần Cầu Trắng, Hà Đông
-  { lat: 20.9760, lng: 105.7790 }, // Gần Văn Quán, Hà Đông
-  { lat: 20.9630, lng: 105.7650 }, // Gần La Khê, Hà Đông
+const AN_KHANH_COORDS = [
+  { lat: 20.8710, lng: 106.6280 }, // Gần chợ An Khánh, Hải Phòng
+  { lat: 20.8735, lng: 106.6320 }, // Gần UBND xã An Khánh, Hải Phòng
+  { lat: 20.8680, lng: 106.6250 }, // Gần đường liên xã An Khánh, Hải Phòng
 ];
 
 async function main() {
@@ -16,11 +16,11 @@ async function main() {
 
   // 1. Tạo Customer User
   const customer = await prisma.user.upsert({
-    where: { email: 'khachhang_hadong@test.com' },
+    where: { email: 'khachhang_ankhanh@test.com' },
     update: {},
     create: {
-      email: 'khachhang_hadong@test.com',
-      name: 'Khách Hàng Hà Đông',
+      email: 'khachhang_ankhanh@test.com',
+      name: 'Khách Hàng An Khánh',
       password: passwordHash,
       role: 'CUSTOMER',
       phone: '0987654321',
@@ -30,10 +30,10 @@ async function main() {
 
   // 2. Tạo Seller 1
   const seller1 = await prisma.user.upsert({
-    where: { email: 'seller_hadong_1@test.com' },
+    where: { email: 'seller_ankhanh_1@test.com' },
     update: {},
     create: {
-      email: 'seller_hadong_1@test.com',
+      email: 'seller_ankhanh_1@test.com',
       name: 'Chủ Quán Phở',
       password: passwordHash,
       role: 'RESTAURANT',
@@ -43,15 +43,15 @@ async function main() {
 
   const store1 = await prisma.store.upsert({
     where: { ownerId: seller1.id },
-    update: { lat: HA_DONG_COORDS[0].lat, lng: HA_DONG_COORDS[0].lng },
+    update: { lat: AN_KHANH_COORDS[0].lat, lng: AN_KHANH_COORDS[0].lng },
     create: {
-      name: 'Quán Phở Bò Tái - Hà Đông',
+      name: 'Quán Phở Bò Tái - An Khánh',
       ownerId: seller1.id,
-      address: 'Đường Trần Phú, Cầu Trắng, Hà Đông, Hà Nội',
+      address: 'Chợ An Khánh, An Dương, Hải Phòng',
       phone: '0911111111',
-      description: 'Phở bò gia truyền ngon nhất khu vực Hà Đông',
-      lat: HA_DONG_COORDS[0].lat,
-      lng: HA_DONG_COORDS[0].lng,
+      description: 'Phở bò gia truyền ngon nhất khu vực An Khánh',
+      lat: AN_KHANH_COORDS[0].lat,
+      lng: AN_KHANH_COORDS[0].lng,
       rating: 4.8,
     },
   });
@@ -59,10 +59,10 @@ async function main() {
 
   // 3. Tạo Seller 2
   const seller2 = await prisma.user.upsert({
-    where: { email: 'seller_hadong_2@test.com' },
+    where: { email: 'seller_ankhanh_2@test.com' },
     update: {},
     create: {
-      email: 'seller_hadong_2@test.com',
+      email: 'seller_ankhanh_2@test.com',
       name: 'Chủ Bún Chả',
       password: passwordHash,
       role: 'RESTAURANT',
@@ -72,15 +72,15 @@ async function main() {
 
   const store2 = await prisma.store.upsert({
     where: { ownerId: seller2.id },
-    update: { lat: HA_DONG_COORDS[1].lat, lng: HA_DONG_COORDS[1].lng },
+    update: { lat: AN_KHANH_COORDS[1].lat, lng: AN_KHANH_COORDS[1].lng },
     create: {
-      name: 'Bún Chả Văn Quán - Hà Đông',
+      name: 'Bún Chả An Khánh - Hải Phòng',
       ownerId: seller2.id,
-      address: 'Khu Đô Thị Văn Quán, Hà Đông, Hà Nội',
+      address: 'Đường liên xã An Khánh, An Dương, Hải Phòng',
       phone: '0922222222',
       description: 'Bún chả nướng than hoa thơm lừng',
-      lat: HA_DONG_COORDS[1].lat,
-      lng: HA_DONG_COORDS[1].lng,
+      lat: AN_KHANH_COORDS[1].lat,
+      lng: AN_KHANH_COORDS[1].lng,
       rating: 4.5,
     },
   });
@@ -164,7 +164,7 @@ async function main() {
     }
   }
 
-  console.log(`✅ Đã tạo dữ liệu các món ăn cho 2 quán ở Hà Đông!`);
+  console.log(`✅ Đã tạo dữ liệu các món ăn cho 2 quán ở An Khánh, Hải Phòng!`);
 }
 
 main()
